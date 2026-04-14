@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, ReactElement } from 'react';
-import api from '../../../services/api';
+import api from '@/services/api';
 import NavBar from '../../../components/NavBar';
 import { TeacherProfile } from '@/types';
 
