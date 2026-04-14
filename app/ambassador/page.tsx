@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import api from '../../services/api';
+import api from '@/services/api';
 
 export default function AmbassadorPage() {
   const [data, setData] = useState<any>(null); // Keep as any for now as ambassador data structure is dynamic
