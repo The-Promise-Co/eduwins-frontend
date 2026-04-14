@@ -2,8 +2,8 @@
 
 import { useState, useEffect, ReactElement, ChangeEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import api from '../../services/api';
-import DashboardNavigation from '../../components/DashboardNavigation';
+import api from '@/services/api';
+import DashboardNavigation from '@/components/DashboardNavigation';
 import { User } from '@/types';
 
 interface ProfileCompletion {

@@ -2,8 +2,8 @@
 
 import { useState, useEffect, ChangeEvent, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import api from '../../services/api';
-import DashboardNavigation from '../../components/DashboardNavigation';
+import api from '@/services/api';
+import DashboardNavigation from '@/components/DashboardNavigation';
 import { TeacherProfile } from '@/types';
 
 export default function EditProfilePage() {

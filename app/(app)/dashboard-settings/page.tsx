@@ -2,7 +2,7 @@
 
 import { useState, useEffect, ReactElement, ChangeEvent, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import DashboardNavigation from '../../components/DashboardNavigation';
+import DashboardNavigation from '@/components/DashboardNavigation';
 import { User } from '@/types';
 
 interface Settings {

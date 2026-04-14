@@ -2,7 +2,7 @@
 
 import { useState, useEffect, ChangeEvent, FormEvent } from 'react';
 import Link from 'next/link';
-import api from '../../services/api';
+import api from '@/services/api';
 import { User, VaultItem } from '@/types';
 
 export default function DigitalVaultPage() {

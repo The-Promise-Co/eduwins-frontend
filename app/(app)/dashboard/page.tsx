@@ -1,14 +1,96 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
-import api from '../../../services/api';
-import { User, TeacherProfile, Booking } from '@/types';
+import api from '@/services/api';
+import { TeacherProfile, User, Booking } from '@/types';
+
+interface FeatureCard {
+  icon: string;
+  title: string;
+  description: string;
+  href: string;
+  color: string;
+  role?: string;
+}
+
+const FEATURE_CARDS: FeatureCard[] = [
+  {
+    icon: '🔍',
+    title: 'Find a Teacher',
+    description: 'Browse our verified network of expert tutors and book your first session today.',
+    href: '/search',
+    color: 'bg-blue-50 border-blue-100',
+  },
+  {
+    icon: '📅',
+    title: 'My Schedule',
+    description: 'View your upcoming lessons, manage bookings, and confirm completed sessions.',
+    href: '/schedule',
+    color: 'bg-amber-50 border-amber-100',
+  },
+  {
+    icon: '📦',
+    title: 'Digital Vault',
+    description: 'Buy and sell lesson notes, videos, and study materials from top educators.',
+    href: '/vault',
+    color: 'bg-purple-50 border-purple-100',
+  },
+  {
+    icon: '📊',
+    title: 'Progress Reports',
+    description: 'Track weekly educational growth, attendance, and skill improvement scores.',
+    href: '/progress-reports',
+    color: 'bg-green-50 border-green-100',
+  },
+  {
+    icon: '💰',
+    title: 'Earnings',
+    description: 'Review your income, track payments, and manage your withdrawal requests.',
+    href: '/earnings',
+    color: 'bg-emerald-50 border-emerald-100',
+    role: 'teacher',
+  },
+  {
+    icon: '🤝',
+    title: 'Welfare Fund',
+    description: 'Your protected savings account — 10% of every lesson payment secured for you.',
+    href: '/welfare-fund',
+    color: 'bg-indigo-50 border-indigo-100',
+    role: 'teacher',
+  },
+  {
+    icon: '💎',
+    title: 'Go Premium',
+    description: 'Unlock advanced features, boost your profile visibility, and earn more.',
+    href: '/premium-subscription',
+    color: 'bg-rose-50 border-rose-100',
+    role: 'teacher',
+  },
+  {
+    icon: '🎖️',
+    title: 'Ambassador',
+    description: 'Join our ambassador programme, refer users, and earn rewards every month.',
+    href: '/ambassador',
+    color: 'bg-orange-50 border-orange-100',
+  },
+  {
+    icon: '💬',
+    title: 'Chat',
+    description: 'Communicate directly with your teachers or students in real-time.',
+    href: '/chat',
+    color: 'bg-teal-50 border-teal-100',
+  },
+  {
+    icon: '⚙️',
+    title: 'Account Settings',
+    description: 'Update your personal details, password, and notification preferences.',
+    href: '/dashboard-settings',
+    color: 'bg-gray-50 border-gray-100',
+  },
+];
 
 export default function DashboardPage() {
-  const router = useRouter();
-  const pathname = usePathname();
   const [user, setUser] = useState<TeacherProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [children, setChildren] = useState<User[]>([]);
@@ -16,10 +98,8 @@ export default function DashboardPage() {
   const [otpInput, setOtpInput] = useState<Record<string, string>>({});
   const [confirmMessage, setConfirmMessage] = useState('');
   const [confirmError, setConfirmError] = useState('');
-  const [origin, setOrigin] = useState('');
 
   useEffect(() => {
-    setOrigin(window.location.origin);
     const userJson = localStorage.getItem('user');
     if (userJson) {
       setUser(JSON.parse(userJson));
@@ -35,14 +115,12 @@ export default function DashboardPage() {
             api.get('/lessons/parent/children'),
             api.get('/lessons/parent/pending'),
           ]);
-
           setChildren(childrenRes.data.children || []);
           setPendingLessons(pendingRes.data.lessons || []);
         } catch (err) {
           console.error('Unable to load parent dashboard data:', err);
         }
       };
-
       fetchParentData();
     }
   }, [loading, user]);
@@ -50,13 +128,11 @@ export default function DashboardPage() {
   const handleApproveLesson = async (lessonId: any) => {
     setConfirmMessage('');
     setConfirmError('');
-
     const otp = otpInput[lessonId];
     if (!otp) {
       setConfirmError('OTP is required to confirm this lesson.');
       return;
     }
-
     try {
       await api.post(`/lessons/${lessonId}/confirm`, { otp });
       setConfirmMessage('Lesson confirmed successfully!');
@@ -64,280 +140,193 @@ export default function DashboardPage() {
       setOtpInput(prev => ({ ...prev, [lessonId]: '' }));
     } catch (err: any) {
       setConfirmError(err.response?.data?.error || 'Unable to confirm lesson.');
-      console.error('Confirm lesson error:', err);
     }
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#001A72] mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
-        </div>
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#001A72]" />
       </div>
     );
   }
 
-  const isParent = user?.role === 'parent';
+  const visibleCards = FEATURE_CARDS.filter(c => !c.role || c.role === user?.role);
+  const firstName = (user?.fullName || user?.full_name || 'there').split(' ')[0];
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Dashboard Header */}
-      <div className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 py-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-[#001A72]">
-                Welcome, {user?.fullName || 'User'}!
-              </h1>
-              <p className="text-gray-600 mt-1">
-                {isParent ? 'Parent Dashboard' : 'Tutor Dashboard'}
-              </p>
-            </div>
-          </div>
+    <div className="space-y-6 max-w-7xl mx-auto">
+
+      {/* Welcome */}
+      <div>
+        <h2 className="text-xl font-bold text-gray-900">
+          Welcome, <span className="text-[#001A72]">{firstName}</span> 👋
+        </h2>
+      </div>
+
+      {/* Promo Banner */}
+      <div className="relative rounded-2xl bg-gradient-to-r from-[#001A72] to-[#0028a5] overflow-hidden px-8 py-6 flex items-center justify-between">
+        <div className="relative z-10">
+          <p className="text-[#FFB81C] font-bold text-xs tracking-widest uppercase mb-1">Platform Overview</p>
+          <h3 className="text-white font-black text-lg leading-snug max-w-xs">
+            Discover EduWins' powerful learning possibilities
+          </h3>
+          <p className="text-white/60 text-xs mt-2 max-w-sm">
+            Connect with expert tutors, track progress, manage earnings, and grow your educational journey — all in one place.
+          </p>
+        </div>
+        <div className="hidden md:flex gap-2 absolute right-8 top-1/2 -translate-y-1/2">
+          <div className="w-20 h-20 rounded-2xl bg-[#FFB81C]/20 backdrop-blur-sm flex items-center justify-center text-4xl">🎓</div>
+          <div className="w-14 h-14 rounded-xl bg-white/10 backdrop-blur-sm flex items-center justify-center text-3xl self-end">📚</div>
+          <div className="w-12 h-12 rounded-lg bg-[#FFB81C]/30 backdrop-blur-sm flex items-center justify-center text-2xl">⭐</div>
         </div>
       </div>
 
-      {/* Navigation Tabs */}
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="flex gap-0 overflow-x-auto">
-            <DashboardLink href="/dashboard" active={pathname === '/dashboard'}>Dashboard</DashboardLink>
-            <DashboardLink href="/profile-edit" active={pathname === '/profile-edit'}>Edit Profile</DashboardLink>
-            {user?.role === 'teacher' && (
-              <>
-                <DashboardLink href="/profile-builder" active={pathname === '/profile-builder'}>🎯 Profile Builder</DashboardLink>
-                <DashboardLink href="/premium-subscription" active={pathname === '/premium-subscription'}>💎 Premium</DashboardLink>
-                {user?.is_premium && (
-                  <DashboardLink href="/premium-content" active={pathname === '/premium-content'}>📺 My Content</DashboardLink>
-                )}
-                <DashboardLink href="/welfare-fund" active={pathname === '/welfare-fund'}>🤝 Welfare Fund</DashboardLink>
-              </>
-            )}
-            <DashboardLink href="/schedule" active={pathname === '/schedule'}>View Schedule</DashboardLink>
-            <DashboardLink href="/earnings" active={pathname === '/earnings'}>Earnings</DashboardLink>
-            <DashboardLink href="/progress" active={pathname === '/progress'}>Report</DashboardLink>
-            <DashboardLink href="/dashboard-settings" active={pathname === '/dashboard-settings'}>Settings</DashboardLink>
-          </div>
-        </div>
-      </div>
-
-      {/* Dashboard Content */}
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="grid md:grid-cols-3 gap-4 mb-8">
-          <div className="bg-white rounded-lg shadow p-4">
-            <p className="text-sm text-gray-600">Your referral code</p>
-            <p className="text-lg font-bold text-[#001A72]">{user?.referralCode || 'N/A'}</p>
-            <p className="text-xs break-all mt-2">Share: {origin}/register?ref={user?.referralCode || ''}</p>
-          </div>
-          <div className="bg-white rounded-lg shadow p-4">
-            <p className="text-sm text-gray-600">Referred users</p>
-            <p className="text-3xl font-bold text-[#FFB81C]">{user?.referralCount || 0}</p>
-          </div>
-          <div className="bg-white rounded-lg shadow p-4">
-            <p className="text-sm text-gray-600">Referral rewards</p>
-            <p className="text-3xl font-bold text-green-600">₦{(user?.referralCount || 0) * 500}</p>
-          </div>
-          <div className="bg-white rounded-lg shadow p-4">
-            <p className="text-sm text-gray-600">Welfare boost (teachers)</p>
-            <p className="text-3xl font-bold text-blue-600">₦{user?.welfareBoost?.toLocaleString() || 0}</p>
-          </div>
-          <div className="bg-white rounded-lg shadow p-4">
-            <p className="text-sm text-gray-600">Parent discount credit</p>
-            <p className="text-3xl font-bold text-green-700">₦{user?.referralDiscount?.toLocaleString() || 0}</p>
-          </div>
-        </div>
-
-        {isParent ? (
-          // Parent Dashboard
-          <div className="space-y-6">
-            <div className="grid md:grid-cols-4 gap-4">
-              <StatCard title="Children" value={children.length || 0} />
-              <StatCard title="Pending Confirmations" value={pendingLessons.length || 0} color="text-[#FFB81C]" />
-              <StatCard title="Referral Income" value={`₦${(user?.referralCount || 0) * 1000}`} color="text-green-600" />
-              <StatCard title="Referral Discount" value={`₦${user?.referralDiscount?.toLocaleString() || 0}`} color="text-green-700" />
-            </div>
-
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-xl font-bold text-[#001A72] mb-4">Your Children</h2>
-              {children.length === 0 ? (
-                <p className="text-sm text-gray-600">You have no children linked yet.</p>
-              ) : (
-                <div className="grid md:grid-cols-auto gap-3">
-                  {children.map((child) => (
-                    <div key={child.id} className="border border-gray-200 rounded-lg p-4">
-                      <h3 className="font-semibold text-gray-900">{child.name}</h3>
-                      <p className="text-sm text-gray-600">{child.email}</p>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-xl font-bold text-[#001A72] mb-4">Lesson Confirmation Security</h2>
-              <p className="text-gray-600 mb-4">
-                Parent must approve session logs in your portal. After teacher marks a lesson completed, you receive OTP via SMS. Enter OTP below to confirm.
-              </p>
-
-              {confirmMessage && <div className="mb-4 p-3 bg-green-100 border border-green-300 text-green-700 rounded">{confirmMessage}</div>}
-              {confirmError && <div className="mb-4 p-3 bg-red-100 border border-red-300 text-red-700 rounded">{confirmError}</div>}
-
-              {pendingLessons.length === 0 ? (
-                <p className="text-sm text-gray-600">No lessons pending confirmation.</p>
-              ) : (
-                <div className="space-y-4">
-                  {pendingLessons.map((lesson) => (
-                    <div key={lesson.lesson_id || lesson.id} className="border border-gray-200 rounded-lg p-4">
-                      <div className="flex flex-wrap items-center justify-between gap-3">
-                        <div>
-                          <h3 className="font-semibold text-gray-900">{lesson.subject || 'Lesson'}</h3>
-                          <p className="text-sm text-gray-600">Teacher: {lesson.teacher_name || lesson.teacherName}</p>
-                          <p className="text-sm text-gray-600">When: {lesson.scheduled_time ? new Date(lesson.scheduled_time).toLocaleString() : 'TBD'}</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-xs text-gray-500">Status: {lesson.status || 'Pending'}</p>
-                        </div>
-                      </div>
-                      <div className="mt-3 flex flex-col md:flex-row gap-2">
-                        <input
-                          value={otpInput[lesson.lesson_id || lesson.id || ''] || ''}
-                          onChange={(e) => setOtpInput((prev) => ({ ...prev, [lesson.lesson_id || lesson.id || '']: e.target.value }))}
-                          placeholder="Enter OTP received by SMS"
-                          className="flex-1 border border-gray-300 rounded px-3 py-2"
-                        />
-                        <button
-                          onClick={() => handleApproveLesson(lesson.lesson_id || lesson.id)}
-                          className="bg-[#001A72] text-white px-5 py-2 rounded hover:bg-[#001A72]/90 transition"
-                        >
-                          Approve Lesson
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
+      {/* Stats Row */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {user?.role === 'teacher' ? (
+          <>
+            <StatBox label="Referral Code" value={user?.referralCode || 'N/A'} sub="Share with friends" accent="text-[#001A72]" />
+            <StatBox label="Referred Users" value={String(user?.referralCount || 0)} sub="Total referrals" accent="text-[#FFB81C]" />
+            <StatBox label="Referral Rewards" value={`₦${((user?.referralCount || 0) * 500).toLocaleString()}`} sub="Earned" accent="text-green-600" />
+            <StatBox label="Welfare Boost" value={`₦${(user?.welfareBoost || 0).toLocaleString()}`} sub="Your savings" accent="text-indigo-600" />
+          </>
         ) : (
-          // Tutor Dashboard
-          <div className="space-y-6">
-            <div className="grid md:grid-cols-4 gap-4">
-              <StatCard title="Active Students" value="8" />
-              <StatCard title="Monthly Earnings" value="₦45,000" color="text-green-600" />
-              <StatCard title="Rating" value="4.9 ⭐" color="text-[#FFB81C]" />
-              <StatCard title="Lessons Completed" value="124" />
-            </div>
-
-            <div className="grid md:grid-cols-3 gap-6">
-              <div className="md:col-span-2 bg-white rounded-lg shadow p-6">
-                <h2 className="text-xl font-bold text-[#001A72] mb-4">Upcoming Lessons</h2>
-                <div className="space-y-4">
-                  {[1, 2, 3].map((i) => (
-                    <div key={i} className="border border-gray-200 rounded p-4 hover:shadow-md transition">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h3 className="font-semibold text-gray-800">Student Name {i}</h3>
-                          <p className="text-sm text-gray-600">Mathematics • Tomorrow at 3:00 PM</p>
-                        </div>
-                        <button className="bg-[#001A72] text-white px-4 py-2 rounded hover:bg-[#001A72]/90 transition">
-                          Start Lesson
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="bg-white rounded-lg shadow p-6">
-                <h2 className="text-xl font-bold text-[#001A72] mb-4">Quick Actions</h2>
-                <div className="space-y-3">
-                  <Link href="/profile-edit" className="block w-full text-center bg-[#FFB81C] text-[#001A72] py-2 rounded-lg font-semibold hover:bg-[#FFB81C]/90 transition">
-                    Edit Profile
-                  </Link>
-                  <Link href="/schedule" className="block w-full text-center border-2 border-[#001A72] text-[#001A72] py-2 rounded-lg font-semibold hover:bg-[#001A72]/5 transition">
-                    View Schedule
-                  </Link>
-                  <Link href="/earnings" className="block w-full text-center border-2 border-[#001A72] text-[#001A72] py-2 rounded-lg font-semibold hover:bg-[#001A72]/5 transition">
-                    Earnings Report
-                  </Link>
-                  <Link href="/dashboard-settings" className="block w-full text-center border-2 border-[#001A72] text-[#001A72] py-2 rounded-lg font-semibold hover:bg-[#001A72]/5 transition">
-                    Settings
-                  </Link>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-xl font-bold text-[#001A72] mb-4">Statistics</h2>
-              <div className="grid md:grid-cols-2 gap-6">
-                <div>
-                  <p className="text-gray-600 mb-2">Completion Rate</p>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div className="bg-[#001A72] h-2 rounded-full" style={{ width: '98%' }}></div>
-                  </div>
-                  <p className="text-sm text-gray-600 mt-1">98% of lessons completed</p>
-                </div>
-                <div>
-                  <p className="text-gray-600 mb-2">Student Satisfaction</p>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div className="bg-green-600 h-2 rounded-full" style={{ width: '96%' }}></div>
-                  </div>
-                  <p className="text-sm text-gray-600 mt-1">4.9/5.0 average rating</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-gradient-to-br from-purple-50 to-indigo-50 border-2 border-purple-300 rounded-lg p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-bold text-[#001A72]">💰 Your Welfare Fund</h2>
-                <span className="text-sm bg-purple-200 text-purple-700 px-3 py-1 rounded-full font-semibold">10% of earnings</span>
-              </div>
-              <div className="grid md:grid-cols-3 gap-4">
-                <div className="bg-white rounded p-4">
-                  <p className="text-xs font-semibold text-gray-600 mb-1">TOTAL ACCUMULATED</p>
-                  <p className="text-2xl font-bold text-purple-600">₦156,000</p>
-                </div>
-                <div className="bg-white rounded p-4">
-                  <p className="text-xs font-semibold text-gray-600 mb-1">AVAILABLE</p>
-                  <p className="text-2xl font-bold text-indigo-600">₦140,000</p>
-                </div>
-                <div className="bg-white rounded p-4">
-                  <p className="text-xs font-semibold text-gray-600 mb-1">LOCKED THIS MONTH</p>
-                  <p className="text-2xl font-bold text-pink-600">₦16,000</p>
-                </div>
-              </div>
-              <p className="text-sm text-gray-700 mt-4 p-3 bg-white rounded border-l-4 border-purple-500">
-                ℹ️ <strong>What is the Welfare Fund?</strong> 10% of every lesson payment goes into your protected savings account. Locked funds become available on the 5th of each month, ensuring financial stability for you and your students.
-              </p>
-            </div>
-          </div>
+          <>
+            <StatBox label="Referral Code" value={user?.referralCode || 'N/A'} sub="Share with friends" accent="text-[#001A72]" />
+            <StatBox label="Referred Users" value={String(user?.referralCount || 0)} sub="Total referrals" accent="text-[#FFB81C]" />
+            <StatBox label="Referral Income" value={`₦${((user?.referralCount || 0) * 1000).toLocaleString()}`} sub="Earned" accent="text-green-600" />
+            <StatBox label="Children Linked" value={String(children.length)} sub="Active students" accent="text-indigo-600" />
+          </>
         )}
       </div>
+
+      {/* Feature Cards Grid */}
+      <div>
+        <h3 className="text-sm font-bold text-gray-500 uppercase tracking-widest mb-4">Quick Access</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {visibleCards.map((card) => (
+            <FeatureCardItem key={card.href} card={card} />
+          ))}
+        </div>
+      </div>
+
+      {/* Parent: Lesson Confirmation */}
+      {user?.role === 'parent' && (
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+          <h3 className="text-base font-bold text-[#001A72] mb-1">🔐 Lesson Confirmation</h3>
+          <p className="text-xs text-gray-500 mb-4">
+            After a teacher marks a lesson complete, you receive an OTP via SMS. Enter it below to release payment.
+          </p>
+
+          {confirmMessage && (
+            <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded-lg text-sm">{confirmMessage}</div>
+          )}
+          {confirmError && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">{confirmError}</div>
+          )}
+
+          {pendingLessons.length === 0 ? (
+            <p className="text-sm text-gray-400 italic">No lessons pending confirmation.</p>
+          ) : (
+            <div className="space-y-3">
+              {pendingLessons.map((lesson) => (
+                <div key={lesson.lesson_id || lesson.id} className="border border-gray-100 rounded-xl p-4 bg-gray-50">
+                  <div className="flex items-start justify-between gap-4 mb-3">
+                    <div>
+                      <p className="font-semibold text-sm text-gray-800">{lesson.subject || 'Lesson'}</p>
+                      <p className="text-xs text-gray-500 mt-0.5">Teacher: {lesson.teacher_name || lesson.teacherName}</p>
+                      <p className="text-xs text-gray-500">
+                        When: {lesson.scheduled_time ? new Date(lesson.scheduled_time).toLocaleString() : 'TBD'}
+                      </p>
+                    </div>
+                    <span className="text-[10px] font-bold text-amber-600 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
+                      {lesson.status || 'Pending'}
+                    </span>
+                  </div>
+                  <div className="flex gap-2">
+                    <input
+                      value={otpInput[lesson.lesson_id || lesson.id || ''] || ''}
+                      onChange={(e) =>
+                        setOtpInput((prev) => ({
+                          ...prev,
+                          [lesson.lesson_id || lesson.id || '']: e.target.value,
+                        }))
+                      }
+                      placeholder="Enter OTP"
+                      className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#001A72]/20"
+                    />
+                    <button
+                      onClick={() => handleApproveLesson(lesson.lesson_id || lesson.id)}
+                      className="bg-[#001A72] text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-[#001A72]/90 transition"
+                    >
+                      Confirm
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Teacher: Welfare Fund Summary */}
+      {user?.role === 'teacher' && (
+        <div className="bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-100 rounded-2xl p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-base font-bold text-[#001A72]">💰 Your Welfare Fund</h3>
+            <span className="text-xs bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full font-semibold">10% of earnings</span>
+          </div>
+          <div className="grid grid-cols-3 gap-4">
+            <div className="bg-white rounded-xl p-4 shadow-sm">
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Total Accumulated</p>
+              <p className="text-xl font-black text-purple-600">₦156,000</p>
+            </div>
+            <div className="bg-white rounded-xl p-4 shadow-sm">
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Available</p>
+              <p className="text-xl font-black text-indigo-600">₦140,000</p>
+            </div>
+            <div className="bg-white rounded-xl p-4 shadow-sm">
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Locked This Month</p>
+              <p className="text-xl font-black text-pink-600">₦16,000</p>
+            </div>
+          </div>
+          <p className="text-xs text-gray-600 mt-4 p-3 bg-white rounded-lg border-l-4 border-indigo-400 leading-relaxed">
+            ℹ️ <strong>Welfare Fund:</strong> 10% of every lesson payment goes into your protected savings. Funds are released on the 5th of each month.
+          </p>
+          <Link href="/welfare-fund" className="mt-4 inline-flex items-center gap-1 text-xs font-bold text-indigo-600 hover:underline">
+            View full details →
+          </Link>
+        </div>
+      )}
     </div>
   );
 }
 
-function DashboardLink({ href, active, children }: any) {
+function StatBox({ label, value, sub, accent }: { label: string; value: string; sub: string; accent: string }) {
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">{label}</p>
+      <p className={`text-2xl font-black ${accent} leading-tight`}>{value}</p>
+      <p className="text-[10px] text-gray-400 mt-1">{sub}</p>
+    </div>
+  );
+}
+
+function FeatureCardItem({ card }: { card: FeatureCard }) {
   return (
     <Link
-      href={href}
-      className={`px-6 py-4 font-semibold whitespace-nowrap transition border-b-2 ${active
-        ? 'border-[#001A72] text-[#001A72]'
-        : 'border-transparent text-gray-600 hover:text-[#001A72]'
-        }`}
+      href={card.href}
+      className={`group block rounded-2xl border p-5 hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 ${card.color}`}
     >
-      {children}
+      <div className="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center text-xl mb-3">
+        {card.icon}
+      </div>
+      <h4 className="font-bold text-[#001A72] text-sm mb-1">{card.title}</h4>
+      <p className="text-xs text-gray-500 leading-relaxed mb-3">{card.description}</p>
+      <span className="text-xs font-bold text-[#001A72] flex items-center gap-1 group-hover:gap-2 transition-all">
+        Get started <span>→</span>
+      </span>
     </Link>
-  );
-}
-
-function StatCard({ title, value, color = "text-[#001A72]" }: any) {
-  return (
-    <div className={`bg-white rounded-xl shadow p-6 border-l-4 ${color.replace('text-', 'border-')}`}>
-      <h3 className="text-gray-600 text-sm font-medium mb-2">{title}</h3>
-      <p className={`text-3xl font-bold ${color}`}>{value}</p>
-    </div>
   );
 }

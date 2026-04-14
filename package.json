@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@fontsource/dm-sans": "^5.2.8",
     "@fontsource/inter": "^5.2.8",
     "axios": "^1.4.0",
     "clsx": "^2.0.0",

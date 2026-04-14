@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect, ReactElement } from 'react';
 import { AlertCircle, CheckCircle, Clock, XCircle, Plus, Eye, EyeOff, LucideIcon } from 'lucide-react';
-import api from '../../services/api';
-import DashboardNavigation from '../../components/DashboardNavigation';
+import api from '@/services/api';
+import DashboardNavigation from '@/components/DashboardNavigation';
 import { User } from '@/types';
 
 interface BalanceData {

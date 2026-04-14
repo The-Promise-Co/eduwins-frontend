@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect, ReactElement } from 'react';
-import api from '../../services/api';
-import NavBar from '../../components/NavBar';
+import api from '@/services/api';
+import NavBar from '@/components/NavBar';
 import { ProgressReport } from '@/types';
 
 export default function ProgressReportsPage(): ReactElement {

@@ -3,8 +3,8 @@
 import { useState, useEffect, ReactElement } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import api from '../../services/api';
-import DashboardNavigation from '../../components/DashboardNavigation';
+import api from '@/services/api';
+import DashboardNavigation from '@/components/DashboardNavigation';
 import { User } from '@/types';
 
 interface HistoryEntry {
