@@ -1,13 +1,14 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, ChangeEvent, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import api from '../../services/api';
 import DashboardNavigation from '../../components/DashboardNavigation';
+import { TeacherProfile } from '@/types';
 
 export default function EditProfilePage() {
   const router = useRouter();
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState<TeacherProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -51,12 +52,12 @@ export default function EditProfilePage() {
     init();
   }, [router]);
 
-  const handleChange = (e) => {
+  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
     setSuccess('');
@@ -64,10 +65,10 @@ export default function EditProfilePage() {
     try {
       setSaving(true);
 
-      const response = await api.put('/auth/profile', formData);
+      await api.put('/auth/profile', formData);
 
       // Update localStorage with new user data
-      const updatedUser = { ...user, ...formData };
+      const updatedUser = { ...(user || {}), ...formData } as TeacherProfile;
       localStorage.setItem('user', JSON.stringify(updatedUser));
       setUser(updatedUser);
 
@@ -75,7 +76,7 @@ export default function EditProfilePage() {
       setTimeout(() => {
         setSuccess('');
       }, 3000);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Profile update error:', err);
       setError(err.response?.data?.error || 'Failed to update profile. Please try again.');
     } finally {
@@ -166,7 +167,7 @@ export default function EditProfilePage() {
                   name="bio"
                   value={formData.bio}
                   onChange={handleChange}
-                  rows="4"
+                  rows={4}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#001A72]"
                   placeholder="Tell us about yourself..."
                 />

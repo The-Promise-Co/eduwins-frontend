@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, ChangeEvent, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import api from '../../services/api';
@@ -20,10 +20,10 @@ export default function TeacherRegisterPage() {
     qualification: '',
     yearsExperience: '',
     bio: '',
-    profilePhoto: null,
-    videoIntro: null,
-    credentials: null,
-    subjects: [],
+    profilePhoto: null as File | null,
+    videoIntro: null as File | null,
+    credentials: null as File | null,
+    subjects: [] as string[],
     baseHourlyRate: '',
     location: ''
   });
@@ -37,8 +37,9 @@ export default function TeacherRegisterPage() {
     'Piano', 'Saxophone', 'Violin'
   ];
 
-  const handleInputChange = (e) => {
-    const { name, value, type, checked } = e.target;
+  const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const target = e.target as HTMLInputElement;
+    const { name, value, type, checked } = target;
 
     if (name === 'subjects') {
       setFormData(prev => ({
@@ -55,7 +56,7 @@ export default function TeacherRegisterPage() {
     }
   };
 
-  const handleFileChange = (e) => {
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, files } = e.target;
     if (files && files[0]) {
       setFormData(prev => ({
@@ -80,7 +81,7 @@ export default function TeacherRegisterPage() {
       });
       setOtpSent(true);
       setStep(2);
-    } catch (err) {
+    } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to send OTP');
     } finally {
       setLoading(false);
@@ -96,14 +97,14 @@ export default function TeacherRegisterPage() {
         otp: otp
       });
       setStep(3);
-    } catch (err) {
+    } catch (err: any) {
       setError(err.response?.data?.message || 'Invalid OTP');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleRegister = async (e) => {
+  const handleRegister = async (e: FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
@@ -132,7 +133,7 @@ export default function TeacherRegisterPage() {
       localStorage.setItem('token', response.data.token);
       localStorage.setItem('user', JSON.stringify(response.data.user));
       router.push('/dashboard');
-    } catch (err) {
+    } catch (err: any) {
       setError(err.response?.data?.message || 'Registration failed');
     } finally {
       setLoading(false);
@@ -269,7 +270,7 @@ export default function TeacherRegisterPage() {
                   value={otp}
                   onChange={(e) => setOtp(e.target.value)}
                   placeholder="000000"
-                  maxLength="6"
+                  maxLength={6}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg text-center text-2xl tracking-widest focus:ring-2 focus:ring-[#001A72] focus:border-transparent"
                   required
                 />
@@ -353,7 +354,7 @@ export default function TeacherRegisterPage() {
                   value={formData.bio}
                   onChange={handleInputChange}
                   placeholder="Tell parents about your teaching style and experience..."
-                  rows="4"
+                  rows={4}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#001A72] focus:border-transparent"
                 />
               </div>

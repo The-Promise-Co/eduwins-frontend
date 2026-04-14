@@ -72,7 +72,7 @@ export default function ProgressReportsPage(): ReactElement {
                       <div>
                         <p className="text-[10px] font-black text-[#FFB81C] uppercase tracking-[0.2em] mb-1">Learning Period</p>
                         <h3 className="text-2xl font-black text-[#001A72]">
-                          Week of {new Date(report.week_start).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}
+                          Week of {report.week_start ? new Date(report.week_start).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' }) : new Date(report.weekStarting).toLocaleDateString()}
                         </h3>
                         <p className="text-gray-400 font-bold text-sm mt-1 flex items-center gap-2">
                           <span>👨‍🏫</span> Specialist: {report.teacher_name}

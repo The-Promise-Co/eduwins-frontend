@@ -50,7 +50,7 @@ export default function AdminVettingDashboard(): ReactElement {
         const response = await api.get('/admin/stats');
         setStats(response.data || { totalTeachers: 0, totalParents: 0, totalEarnings: 0, welfarePooled: 0 });
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to fetch data:', err);
     } finally {
       setLoading(false);
@@ -61,7 +61,7 @@ export default function AdminVettingDashboard(): ReactElement {
     try {
       await api.put(`/admin/teachers/${teacherId}/approve`);
       fetchData();
-    } catch (err) {
+    } catch (err: any) {
       alert('Failed to approve teacher');
     }
   };
@@ -70,7 +70,7 @@ export default function AdminVettingDashboard(): ReactElement {
     try {
       await api.put(`/admin/teachers/${teacherId}/reject`);
       fetchData();
-    } catch (err) {
+    } catch (err: any) {
       alert('Failed to reject teacher');
     }
   };
@@ -80,7 +80,7 @@ export default function AdminVettingDashboard(): ReactElement {
       await api.put(`/admin/bookings/${bookingId}/release-funds`);
       alert('Funds released successfully!');
       fetchData();
-    } catch (err) {
+    } catch (err: any) {
       alert('Failed to release funds');
     }
   };

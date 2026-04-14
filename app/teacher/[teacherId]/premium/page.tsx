@@ -135,12 +135,14 @@ export default function TeacherPremiumMarketplacePage(): ReactElement {
           <div className="bg-white rounded-[3rem] shadow-2xl p-10 mb-12 border border-blue-50 relative overflow-hidden">
             <div className="relative z-10 flex flex-col md:flex-row items-center md:items-start gap-10">
               <div className="w-32 h-32 bg-gradient-to-br from-[#001A72] via-[#001A72] to-[#FFB81C] rounded-[2rem] flex items-center justify-center text-white text-5xl shadow-xl">
-                {teacher.headshot ? <img src={teacher.headshot} alt="" className="w-full h-full object-cover rounded-[2rem]" /> : '👨‍🏫'}
+                {teacher.headshot || teacher.profilePhoto || teacher.photo_url ? (
+                  <img src={teacher.headshot || teacher.profilePhoto || teacher.photo_url} alt="" className="w-full h-full object-cover rounded-[2rem]" />
+                ) : '👨‍🏫'}
               </div>
               <div className="flex-1 text-center md:text-left">
                 <div className="flex flex-col md:flex-row md:items-center gap-3 mb-4">
                   <h1 className="text-4xl font-black text-[#001A72]">
-                    {teacher.fullName || teacher.name}
+                    {teacher.fullName || teacher.name || teacher.full_name}
                   </h1>
                   <div className="flex justify-center md:justify-start gap-2">
                     <span className="bg-[#FFB81C] text-[#001A72] px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-sm">⭐ Premium Elite</span>
@@ -153,7 +155,7 @@ export default function TeacherPremiumMarketplacePage(): ReactElement {
                   {teacher.bio || 'Professional educator dedicated to excellence in teaching and student success.'}
                 </p>
                 <div className="flex justify-center md:justify-start gap-8">
-                  <Stat label="Total Content" value={content.length.toString()} color="text-[#001A72]" />
+                  <Stat label="Total Content" value={content.length} color="text-[#001A72]" />
                   <Stat label="Student Rating" value={teacher.rating || '4.9'} color="text-[#FFB81C]" />
                   <Stat label="Subscribers" value={teacher.subscribersCount || '150+'} color="text-green-600" />
                 </div>
@@ -264,7 +266,7 @@ export default function TeacherPremiumMarketplacePage(): ReactElement {
 
 interface StatProps {
   label: string;
-  value: string;
+  value: string | number;
   color: string;
 }
 

@@ -1,18 +1,19 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, ChangeEvent, FormEvent } from 'react';
 import Link from 'next/link';
 import api from '../../services/api';
+import { User, VaultItem } from '@/types';
 
 export default function DigitalVaultPage() {
-  const [items, setItems] = useState([]);
+  const [items, setItems] = useState<VaultItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
     subject: '',
     minPrice: '',
     maxPrice: ''
   });
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
     const userData = localStorage.getItem('user');
@@ -63,23 +64,23 @@ export default function DigitalVaultPage() {
     }
   };
 
-  const handleFilterChange = (e) => {
+  const handleFilterChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFilters(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleFilterSubmit = (e) => {
+  const handleFilterSubmit = (e: FormEvent) => {
     e.preventDefault();
     setLoading(true);
     fetchItems();
   };
 
-  const handlePurchase = async (itemId) => {
+  const handlePurchase = async (itemId: string | number) => {
     try {
       await api.post(`/vault/${itemId}/purchase`);
       alert('Purchase successful! Check your purchases for download link.');
       fetchItems();
-    } catch (err) {
+    } catch (err: any) {
       alert(err.response?.data?.error || 'Purchase failed');
     }
   };
@@ -105,7 +106,7 @@ export default function DigitalVaultPage() {
               <h1 className="text-3xl font-bold text-[#001A72]">Digital Vault</h1>
               <p className="text-gray-600 mt-1">Buy and sell lesson notes, videos, and study materials</p>
             </div>
-            {user?.role === 'tutor' || user?.role === 'teacher' && (
+            {user?.role === 'teacher' && (
               <Link
                 href="/vault/create"
                 className="bg-[#FFB81C] text-[#001A72] px-6 py-2 rounded-lg font-semibold hover:bg-[#FFB81C]/90 transition"

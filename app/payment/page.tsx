@@ -1,15 +1,16 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import api from '../../services/api';
+import { Booking } from '@/types';
 
-export default function PaymentPage() {
+function PaymentContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const bookingId = searchParams.get('bookingId');
 
-  const [booking, setBooking] = useState(null);
+  const [booking, setBooking] = useState<Booking | null>(null);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState('');
@@ -53,7 +54,7 @@ export default function PaymentPage() {
 
       // Redirect to Paystack payment page
       window.location.href = authorizationUrl;
-    } catch (err) {
+    } catch (err: any) {
       setError(err.response?.data?.message || 'Payment initialization failed');
     } finally {
       setProcessing(false);
@@ -239,5 +240,17 @@ export default function PaymentPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function PaymentPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-[#001A72] animate-pulse font-bold text-xl">Loading payment...</div>
+      </div>
+    }>
+      <PaymentContent />
+    </Suspense>
   );
 }

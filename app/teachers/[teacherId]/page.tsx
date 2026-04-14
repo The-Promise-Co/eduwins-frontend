@@ -3,11 +3,12 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import api from '../../../services/api';
+import { TeacherProfile } from '@/types';
 
-export default function TeacherProfilePage({ params }) {
+export default function TeacherProfilePage({ params }: { params: { teacherId: string } }) {
   const { teacherId } = params;
   const router = useRouter();
-  const [teacher, setTeacher] = useState(null);
+  const [teacher, setTeacher] = useState<TeacherProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [bookingLoading, setBookingLoading] = useState(false);
   const [sessions, setSessions] = useState(4);
@@ -34,6 +35,8 @@ export default function TeacherProfilePage({ params }) {
       return;
     }
 
+    if (!teacher) return;
+
     setBookingLoading(true);
     try {
       const totalCost = (teacher.baseHourlyRate || 0) * sessions;
@@ -46,7 +49,7 @@ export default function TeacherProfilePage({ params }) {
 
       // Redirect to payment with query param
       router.push(`/payment?bookingId=${response.data.id}`);
-    } catch (err) {
+    } catch (err: any) {
       setError(err.response?.data?.message || 'Booking failed');
     } finally {
       setBookingLoading(false);

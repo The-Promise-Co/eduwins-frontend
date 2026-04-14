@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import api from '../../services/api';
 
 export default function AmbassadorPage() {
-  const [data, setData] = useState(null);
+  const [data, setData] = useState<any>(null); // Keep as any for now as ambassador data structure is dynamic
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -13,7 +13,7 @@ export default function AmbassadorPage() {
       try {
         const res = await api.get('/api/ambassadors/me');
         setData(res.data);
-      } catch (err) {
+      } catch (err: any) {
         setError(err.response?.data?.error || 'Unable to load ambassador data');
       } finally {
         setLoading(false);
@@ -28,7 +28,7 @@ export default function AmbassadorPage() {
       await api.post('/api/ambassadors/apply');
       alert('Ambassador application sent!');
       window.location.reload();
-    } catch (err) {
+    } catch (err: any) {
       alert(err.response?.data?.error || 'Unable to apply');
     }
   };

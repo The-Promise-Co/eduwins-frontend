@@ -3,9 +3,10 @@
 import { useState, useEffect } from 'react';
 import api from '../../services/api';
 import TeacherCard from '../../components/TeacherCard';
+import { TeacherProfile } from '@/types';
 
 export default function TeacherSearch() {
-  const [teachers, setTeachers] = useState([]);
+  const [teachers, setTeachers] = useState<TeacherProfile[]>([]);
   const [filters, setFilters] = useState({ subject: '', lga: '', maxRate: '' });
   const [loading, setLoading] = useState(false);
 
@@ -26,35 +27,35 @@ export default function TeacherSearch() {
       // Mock data for demo
       setTeachers([
         {
-          id: 1,
+          id: '1',
           full_name: 'Mr. Okonkwo',
-          hourly_rate: 500,
-          avatar: '👨‍🏫',
+          baseHourlyRate: 500,
+          photo_url: '👨‍🏫',
           subject: 'Mathematics',
-          lga: 'Lagos Island',
+          location: 'Lagos Island',
           rating: 4.8,
           students: 45,
-        },
+        } as any,
         {
-          id: 2,
+          id: '2',
           full_name: 'Mrs. Adeyemi',
-          hourly_rate: 400,
-          avatar: '👩‍🏫',
+          baseHourlyRate: 400,
+          photo_url: '👩‍🏫',
           subject: 'English',
-          lga: 'Lekki',
+          location: 'Lekki',
           rating: 4.9,
           students: 32,
-        },
+        } as any,
         {
-          id: 3,
+          id: '3',
           full_name: 'Dr. Chukwu',
-          hourly_rate: 800,
-          avatar: '👨‍🏫',
+          baseHourlyRate: 800,
+          photo_url: '👨‍🏫',
           subject: 'Physics',
-          lga: 'VI',
+          location: 'VI',
           rating: 4.7,
           students: 28,
-        },
+        } as any,
       ]);
     } finally {
       setLoading(false);

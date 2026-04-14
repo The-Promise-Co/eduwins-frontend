@@ -1,13 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, ChangeEvent, FormEvent, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import api from '../../services/api';
 import { User, Mail, Phone, Lock, Eye, EyeOff, CheckCircle2, UserCheck, Hash } from 'lucide-react';
 import AuthSlider from '../../components/AuthSlider';
 
-export default function RegisterPage() {
+function RegisterContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [referralCode, setReferralCode] = useState('');
@@ -40,12 +40,12 @@ export default function RegisterPage() {
     }
   }, [searchParams]);
 
-  const handleChange = (e) => {
+  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleRegisterSubmit = async (e) => {
+  const handleRegisterSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
     setSuccess('');
@@ -73,7 +73,7 @@ export default function RegisterPage() {
 
       setSuccess('Registration successful! Check your backend console for the OTP.');
       setShowOtpInput(true);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Registration error', err);
       const serverError = err.response?.data?.error || err.response?.data?.message || err.message;
       setError(`Registration failed: ${serverError}`);
@@ -82,7 +82,7 @@ export default function RegisterPage() {
     }
   };
 
-  const handleOtpSubmit = async (e) => {
+  const handleOtpSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
     setSuccess('');
@@ -109,7 +109,7 @@ export default function RegisterPage() {
       setTimeout(() => {
         router.push('/dashboard');
       }, 1200);
-    } catch (err) {
+    } catch (err: any) {
       setError(err.response?.data?.error || 'OTP verification failed. Please try again.');
     } finally {
       setLoading(false);
@@ -387,5 +387,20 @@ export default function RegisterPage() {
         <AuthSlider />
       </div>
     </div>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#001A72] mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading registration...</p>
+        </div>
+      </div>
+    }>
+      <RegisterContent />
+    </Suspense>
   );
 }

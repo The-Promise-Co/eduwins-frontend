@@ -3,15 +3,16 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import api from '../../services/api';
+import { TeacherProfile } from '@/types';
 
 export default function AdminDashboard() {
   const router = useRouter();
-  const [stats, setStats] = useState(null);
-  const [applications, setApplications] = useState([]);
-  const [ambassadors, setAmbassadors] = useState([]);
-  const [vettingQueue, setVettingQueue] = useState([]);
-  const [disputes, setDisputes] = useState([]);
-  const [welfareAnalytics, setWelfareAnalytics] = useState(null);
+  const [stats, setStats] = useState<any>(null);
+  const [applications, setApplications] = useState<any[]>([]);
+  const [ambassadors, setAmbassadors] = useState<any[]>([]);
+  const [vettingQueue, setVettingQueue] = useState<TeacherProfile[]>([]);
+  const [disputes, setDisputes] = useState<any[]>([]);
+  const [welfareAnalytics, setWelfareAnalytics] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [isAuthorized, setIsAuthorized] = useState(false);
@@ -43,37 +44,37 @@ export default function AdminDashboard() {
       setVettingQueue(vetRes.data);
       setDisputes(discRes.data);
       setWelfareAnalytics(welfareRes.data);
-    } catch (err) {
+    } catch (err: any) {
       setError(err.response?.data?.error || 'Could not load admin dashboard');
     } finally {
       setLoading(false);
     }
   };
 
-  const updateApplicationStatus = async (id, status) => {
+  const updateApplicationStatus = async (id: string | number, status: string) => {
     try {
       await api.post(`/api/admin/rent-applications/${id}`, { status });
       setApplications((prev) => prev.map((app) => (app.id === id ? { ...app, status } : app)));
-    } catch (err) {
+    } catch (err: any) {
       alert(err.response?.data?.error || 'Could not update status');
     }
   };
 
-  const processVettingAction = async (teacherId, action) => {
+  const processVettingAction = async (teacherId: string | number, action: string) => {
     try {
       const response = await api.post(`/api/admin/vetting/${teacherId}`, { action });
-      setVettingQueue((prev) => prev.filter((t) => t.id !== teacherId));
+      setVettingQueue((prev) => prev.filter((t) => (t.id as any) !== teacherId));
       alert(response.data.message);
-    } catch (err) {
+    } catch (err: any) {
       alert(err.response?.data?.error || 'Could not process vetting action');
     }
   };
 
-  const resolveDispute = async (disputeId, status) => {
+  const resolveDispute = async (disputeId: string | number, status: string) => {
     try {
       await api.patch(`/api/admin/disputes/${disputeId}`, { status });
       setDisputes((prev) => prev.map((d) => (d.id === disputeId ? { ...d, status } : d)));
-    } catch (err) {
+    } catch (err: any) {
       alert(err.response?.data?.error || 'Could not update dispute');
     }
   };
@@ -187,7 +188,7 @@ export default function AdminDashboard() {
   );
 }
 
-function StatBox({ label, value }) {
+function StatBox({ label, value }: any) {
   return (
     <div className="bg-gray-50 border border-gray-100 rounded-xl p-4 shadow-sm">
       <p className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">{label}</p>
@@ -196,7 +197,7 @@ function StatBox({ label, value }) {
   );
 }
 
-function AnalyticsBox({ label, value, color }) {
+function AnalyticsBox({ label, value, color }: any) {
   return (
     <div className="bg-white border-2 border-gray-100 rounded-xl p-6 shadow-sm">
       <p className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">{label}</p>

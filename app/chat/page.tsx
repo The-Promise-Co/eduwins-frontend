@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import api from '../../services/api';
 
 export default function ChatPage() {
-  const [messages, setMessages] = useState([]);
+  const [messages, setMessages] = useState<any[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [warning, setWarning] = useState('');
   const [conversationTitle, setConversationTitle] = useState('Chat with Tutor');
@@ -25,7 +25,7 @@ export default function ChatPage() {
     return () => clearInterval(interval);
   }, []);
 
-  const sendMessage = async (e) => {
+  const sendMessage = async (e: any) => {
     e.preventDefault();
     if (!newMessage.trim()) return;
 
