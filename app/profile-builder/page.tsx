@@ -2,9 +2,9 @@
 
 import { useState, useEffect, ReactElement, ChangeEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import api from '../../src/services/api';
+import api from '../../services/api';
 import DashboardNavigation from '../../components/DashboardNavigation';
-import { User } from '@/src/types';
+import { User } from '@/types';
 
 interface ProfileCompletion {
   completionPercentage: number;
@@ -138,11 +138,10 @@ export default function ProfileBuilderPage(): ReactElement {
           </div>
 
           {message.text && (
-            <div className={`mb-8 p-4 rounded-xl border-2 animate-in fade-in duration-500 ${
-              message.type === 'success'
+            <div className={`mb-8 p-4 rounded-xl border-2 animate-in fade-in duration-500 ${message.type === 'success'
                 ? 'bg-green-50 text-green-700 border-green-100'
                 : 'bg-red-50 text-red-700 border-red-100'
-            }`}>
+              }`}>
               <p className="font-bold flex items-center gap-2">
                 {message.type === 'success' ? '✅' : '❌'} {message.text}
               </p>
@@ -173,32 +172,32 @@ export default function ProfileBuilderPage(): ReactElement {
 
           {/* Upload Grid */}
           <div className="grid md:grid-cols-3 gap-6 mb-12">
-            <UploadCard 
-              title="Identity & Face" 
-              desc="Professional headshot. Max 5MB." 
-              type="headshot" 
-              icon="📸" 
-              color="border-blue-500" 
+            <UploadCard
+              title="Identity & Face"
+              desc="Professional headshot. Max 5MB."
+              type="headshot"
+              icon="📸"
+              color="border-blue-500"
               isDone={completion?.completion?.headshot}
               onUpload={handleFileUpload}
               isUploading={uploading.headshot}
             />
-            <UploadCard 
-              title="Introduction" 
-              desc="1-min video intro. Max 50MB." 
-              type="videoIntro" 
-              icon="🎬" 
-              color="border-purple-500" 
+            <UploadCard
+              title="Introduction"
+              desc="1-min video intro. Max 50MB."
+              type="videoIntro"
+              icon="🎬"
+              color="border-purple-500"
               isDone={completion?.completion?.videoIntro}
               onUpload={handleFileUpload}
               isUploading={uploading.videoIntro}
             />
-            <UploadCard 
-              title="Credentials" 
-              desc="TRCN/NIN PDF. Max 10MB." 
-              type="credentials" 
-              icon="📄" 
-              color="border-green-500" 
+            <UploadCard
+              title="Credentials"
+              desc="TRCN/NIN PDF. Max 10MB."
+              type="credentials"
+              icon="📄"
+              color="border-green-500"
               isDone={completion?.completion?.credentials}
               onUpload={handleFileUpload}
               isUploading={uploading.credentials}
@@ -251,11 +250,10 @@ function UploadCard({ title, desc, icon, color, isDone, onUpload, isUploading, v
       <div className="text-4xl mb-4">{icon}</div>
       <h3 className="text-lg font-black text-[#001A72] mb-1">{title}</h3>
       <p className="text-xs font-medium text-gray-500 mb-6 leading-relaxed">{desc}</p>
-      
+
       {isDone ? (
-        <div className={`p-4 rounded-xl text-center text-xs font-black uppercase tracking-widest ${
-          verified === false ? 'bg-orange-50 text-orange-600 border border-orange-100' : 'bg-green-50 text-green-600 border border-green-100'
-        }`}>
+        <div className={`p-4 rounded-xl text-center text-xs font-black uppercase tracking-widest ${verified === false ? 'bg-orange-50 text-orange-600 border border-orange-100' : 'bg-green-50 text-green-600 border border-green-100'
+          }`}>
           {verified === false ? '⏳ Verification Pending' : '✅ Completed'}
         </div>
       ) : (

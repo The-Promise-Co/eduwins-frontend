@@ -2,9 +2,9 @@
 
 import { useState, useEffect, ReactElement } from 'react';
 import { useRouter } from 'next/navigation';
-import api from '../../src/services/api';
+import api from '../../services/api';
 import DashboardNavigation from '../../components/DashboardNavigation';
-import { User } from '@/src/types';
+import { User } from '@/types';
 
 interface WelfareFund {
   teacherId: string;
@@ -147,11 +147,10 @@ export default function WelfareFundPage(): ReactElement {
           </div>
 
           {message.text && (
-            <div className={`mb-6 p-4 rounded-xl border-2 ${
-              message.type === 'success'
+            <div className={`mb-6 p-4 rounded-xl border-2 ${message.type === 'success'
                 ? 'bg-green-50 text-green-700 border-green-100'
                 : 'bg-red-50 text-red-700 border-red-100'
-            }`}>
+              }`}>
               <p className="font-bold flex items-center gap-2">
                 {message.type === 'success' ? '✅' : '❌'} {message.text}
               </p>
@@ -160,21 +159,21 @@ export default function WelfareFundPage(): ReactElement {
 
           {/* Main Stats */}
           <div className="grid md:grid-cols-3 gap-6 mb-8">
-            <StatBox 
-              label="TOTAL ACCUMULATED" 
-              value={(welfareFund?.total_accumulated || 0).toLocaleString()} 
+            <StatBox
+              label="TOTAL ACCUMULATED"
+              value={(welfareFund?.total_accumulated || 0).toLocaleString()}
               color="border-purple-500 text-purple-600"
               sub="Lifetime savings"
             />
-            <StatBox 
-              label="AVAILABLE TO WITHDRAW" 
-              value={(welfareFund?.available_balance || 0).toLocaleString()} 
+            <StatBox
+              label="AVAILABLE TO WITHDRAW"
+              value={(welfareFund?.available_balance || 0).toLocaleString()}
               color="border-indigo-500 text-indigo-600"
               sub="Ready for use"
             />
-            <StatBox 
-              label="LOCKED (CURRENT MONTH)" 
-              value={(welfareFund?.locked_balance || 0).toLocaleString()} 
+            <StatBox
+              label="LOCKED (CURRENT MONTH)"
+              value={(welfareFund?.locked_balance || 0).toLocaleString()}
               color="border-pink-500 text-pink-600"
               sub="Unlocks on the 5th"
             />
@@ -189,11 +188,10 @@ export default function WelfareFundPage(): ReactElement {
               </div>
               <button
                 onClick={() => setShowWithdrawForm(!showWithdrawForm)}
-                className={`px-6 py-3 rounded-xl font-bold transition shadow-sm ${
-                  showWithdrawForm 
-                    ? 'bg-gray-100 text-gray-600' 
+                className={`px-6 py-3 rounded-xl font-bold transition shadow-sm ${showWithdrawForm
+                    ? 'bg-gray-100 text-gray-600'
                     : 'bg-[#001A72] text-white hover:bg-[#001A72]/90'
-                }`}
+                  }`}
               >
                 {showWithdrawForm ? 'Close Form' : 'Start Withdrawal'}
               </button>
@@ -241,24 +239,24 @@ export default function WelfareFundPage(): ReactElement {
           <div className="grid md:grid-cols-2 gap-8 mb-12">
             {/* Benefits */}
             <div className="bg-[#001A72] rounded-2xl p-8 text-white relative overflow-hidden">
-               <h2 className="text-xl font-black mb-6 relative z-10">🛡️ Fund Benefits</h2>
-               <ul className="space-y-4 relative z-10">
-                 <BenefitItem text="Emergency Financial Cushion" />
-                 <BenefitItem text="Teacher Health Coverage Assistance" />
-                 <BenefitItem text="Refund Guarantee Protection" />
-                 <BenefitItem text="Housing Program Downpayment Pool" />
-               </ul>
-               <div className="absolute -right-16 -bottom-16 w-48 h-48 bg-white/5 rounded-full blur-3xl"></div>
+              <h2 className="text-xl font-black mb-6 relative z-10">🛡️ Fund Benefits</h2>
+              <ul className="space-y-4 relative z-10">
+                <BenefitItem text="Emergency Financial Cushion" />
+                <BenefitItem text="Teacher Health Coverage Assistance" />
+                <BenefitItem text="Refund Guarantee Protection" />
+                <BenefitItem text="Housing Program Downpayment Pool" />
+              </ul>
+              <div className="absolute -right-16 -bottom-16 w-48 h-48 bg-white/5 rounded-full blur-3xl"></div>
             </div>
 
             {/* Rules */}
             <div className="bg-white rounded-2xl p-8 border border-gray-200">
-               <h2 className="text-xl font-black text-[#001A72] mb-6">📝 Fund Rules</h2>
-               <div className="space-y-4">
-                 <RuleItem number="1" text="10% contribution is mandatory for all sessions." />
-                 <RuleItem number="2" text="Funds unlock on the 5th of every new month." />
-                 <RuleItem number="3" text="Withdrawals require manual verification." />
-               </div>
+              <h2 className="text-xl font-black text-[#001A72] mb-6">📝 Fund Rules</h2>
+              <div className="space-y-4">
+                <RuleItem number="1" text="10% contribution is mandatory for all sessions." />
+                <RuleItem number="2" text="Funds unlock on the 5th of every new month." />
+                <RuleItem number="3" text="Withdrawals require manual verification." />
+              </div>
             </div>
           </div>
 
@@ -286,11 +284,10 @@ export default function WelfareFundPage(): ReactElement {
                         ₦{(contrib.total * 0.10).toLocaleString()}
                       </td>
                       <td className="py-4 px-6 text-center">
-                        <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase ${
-                          contrib.status === 'Available'
+                        <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase ${contrib.status === 'Available'
                             ? 'bg-green-100 text-green-800'
                             : 'bg-orange-100 text-orange-800'
-                        }`}>
+                          }`}>
                           {contrib.status}
                         </span>
                       </td>

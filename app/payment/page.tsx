@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import api from '../../src/services/api';
+import api from '../../services/api';
 
 export default function PaymentPage() {
   const router = useRouter();

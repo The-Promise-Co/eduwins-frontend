@@ -2,9 +2,9 @@
 
 import { useState, useEffect, ReactElement } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import api from '../../../../src/services/api';
+import api from '../../../../services/api';
 import NavBar from '../../../../components/NavBar';
-import { TeacherProfile, User } from '@/src/types';
+import { TeacherProfile, User } from '@/types';
 
 interface PremiumMarketplaceItem {
   id: string;
@@ -29,7 +29,7 @@ export default function TeacherPremiumMarketplacePage(): ReactElement {
   const router = useRouter();
   const params = useParams();
   const teacherId = params?.teacherId as string;
-  
+
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [teacher, setTeacher] = useState<TeacherProfile | null>(null);
@@ -78,7 +78,7 @@ export default function TeacherPremiumMarketplacePage(): ReactElement {
     try {
       await api.post(`/premium/video/${videoId}/subscribe`, {});
       setMessage({ type: 'success', text: 'Video access granted! Enjoy learning!' });
-      
+
       // Refresh content
       const contentResponse = await api.get(`/premium/teacher/${teacherId}/content`);
       setContent(contentResponse.data.content || []);
@@ -100,7 +100,7 @@ export default function TeacherPremiumMarketplacePage(): ReactElement {
     try {
       await api.post(`/premium/material/${materialId}/purchase`, {});
       setMessage({ type: 'success', text: 'Material purchased successfully! Check your downloads.' });
-      
+
       // Refresh content
       const contentResponse = await api.get(`/premium/teacher/${teacherId}/content`);
       setContent(contentResponse.data.content || []);
@@ -135,7 +135,7 @@ export default function TeacherPremiumMarketplacePage(): ReactElement {
           <div className="bg-white rounded-[3rem] shadow-2xl p-10 mb-12 border border-blue-50 relative overflow-hidden">
             <div className="relative z-10 flex flex-col md:flex-row items-center md:items-start gap-10">
               <div className="w-32 h-32 bg-gradient-to-br from-[#001A72] via-[#001A72] to-[#FFB81C] rounded-[2rem] flex items-center justify-center text-white text-5xl shadow-xl">
-                 {teacher.headshot ? <img src={teacher.headshot} alt="" className="w-full h-full object-cover rounded-[2rem]" /> : '👨‍🏫'}
+                {teacher.headshot ? <img src={teacher.headshot} alt="" className="w-full h-full object-cover rounded-[2rem]" /> : '👨‍🏫'}
               </div>
               <div className="flex-1 text-center md:text-left">
                 <div className="flex flex-col md:flex-row md:items-center gap-3 mb-4">
@@ -164,11 +164,10 @@ export default function TeacherPremiumMarketplacePage(): ReactElement {
         )}
 
         {message.text && (
-          <div className={`mb-10 p-5 rounded-2xl border-2 animate-in fade-in duration-500 ${
-            message.type === 'success'
+          <div className={`mb-10 p-5 rounded-2xl border-2 animate-in fade-in duration-500 ${message.type === 'success'
               ? 'bg-green-50 text-green-700 border-green-100'
               : 'bg-red-50 text-red-700 border-red-100'
-          }`}>
+            }`}>
             <p className="font-black flex items-center justify-center gap-3">
               {message.type === 'success' ? '🎟️' : '❌'} {message.text}
             </p>
@@ -179,17 +178,15 @@ export default function TeacherPremiumMarketplacePage(): ReactElement {
         <div className="bg-white p-2 rounded-3xl shadow-xl border border-gray-100 flex gap-2 mb-12">
           <button
             onClick={() => setActiveTab('videos')}
-            className={`flex-1 py-5 rounded-2xl font-black text-sm uppercase tracking-widest transition duration-300 ${
-              activeTab === 'videos' ? 'bg-[#001A72] text-white shadow-lg' : 'text-[#001A72]/40 hover:bg-gray-50'
-            }`}
+            className={`flex-1 py-5 rounded-2xl font-black text-sm uppercase tracking-widest transition duration-300 ${activeTab === 'videos' ? 'bg-[#001A72] text-white shadow-lg' : 'text-[#001A72]/40 hover:bg-gray-50'
+              }`}
           >
             📽️ Video Library ({videos.length})
           </button>
           <button
             onClick={() => setActiveTab('materials')}
-            className={`flex-1 py-5 rounded-2xl font-black text-sm uppercase tracking-widest transition duration-300 ${
-              activeTab === 'materials' ? 'bg-[#001A72] text-white shadow-lg' : 'text-[#001A72]/40 hover:bg-gray-50'
-            }`}
+            className={`flex-1 py-5 rounded-2xl font-black text-sm uppercase tracking-widest transition duration-300 ${activeTab === 'materials' ? 'bg-[#001A72] text-white shadow-lg' : 'text-[#001A72]/40 hover:bg-gray-50'
+              }`}
           >
             📄 PDF Marketplace ({materials.length})
           </button>
@@ -205,20 +202,20 @@ export default function TeacherPremiumMarketplacePage(): ReactElement {
                   {item.subject}
                 </div>
               </div>
-              
+
               <div className="p-8 flex-1 flex flex-col">
                 <h3 className="text-xl font-black text-[#001A72] mb-2 leading-tight">{item.title}</h3>
                 <p className="text-gray-400 font-medium text-sm line-clamp-2 mb-6 leading-relaxed">
                   {item.description || 'Exclusive premium learning content designed for student mastery.'}
                 </p>
-                
+
                 <div className="mt-auto">
                   <div className="flex items-center justify-between mb-6">
                     <div className="text-3xl font-black text-[#001A72]">
                       ₦{item.price?.toLocaleString()}
                     </div>
                     <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                       {activeTab === 'videos' ? `${item.views || 0} Streams` : `${item.downloads || 0} Copies`}
+                      {activeTab === 'videos' ? `${item.views || 0} Streams` : `${item.downloads || 0} Copies`}
                     </div>
                   </div>
 
@@ -244,21 +241,21 @@ export default function TeacherPremiumMarketplacePage(): ReactElement {
           ))}
 
           {(activeTab === 'videos' ? videos : materials).length === 0 && (
-             <div className="col-span-full py-24 text-center">
-                <div className="text-7xl mb-6 opacity-20">🛒</div>
-                <h3 className="text-2xl font-black text-[#001A72] opacity-40">No {activeTab} available yet.</h3>
-             </div>
+            <div className="col-span-full py-24 text-center">
+              <div className="text-7xl mb-6 opacity-20">🛒</div>
+              <h3 className="text-2xl font-black text-[#001A72] opacity-40">No {activeTab} available yet.</h3>
+            </div>
           )}
         </div>
 
         {/* Brand Footer */}
         <div className="mt-24 p-12 bg-[#FFB81C] rounded-[4rem] text-[#001A72] text-center relative overflow-hidden shadow-2xl">
-           <h3 className="text-3xl font-black mb-4 relative z-10">Quality Education, Verified Expertise.</h3>
-           <p className="font-bold text-lg opacity-80 mb-8 relative z-10">Every piece of premium content is vetted for accuracy and educational value.</p>
-           <button onClick={() => router.push('/teacher-search')} className="px-10 py-4 bg-[#001A72] text-white rounded-2xl font-black text-sm uppercase tracking-widest hover:shadow-2xl transition relative z-10">
-             Discover More Teachers
-           </button>
-           <div className="absolute -left-20 -bottom-20 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
+          <h3 className="text-3xl font-black mb-4 relative z-10">Quality Education, Verified Expertise.</h3>
+          <p className="font-bold text-lg opacity-80 mb-8 relative z-10">Every piece of premium content is vetted for accuracy and educational value.</p>
+          <button onClick={() => router.push('/teacher-search')} className="px-10 py-4 bg-[#001A72] text-white rounded-2xl font-black text-sm uppercase tracking-widest hover:shadow-2xl transition relative z-10">
+            Discover More Teachers
+          </button>
+          <div className="absolute -left-20 -bottom-20 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
         </div>
       </div>
     </div>

@@ -2,9 +2,9 @@
 
 import { useState, useEffect, ReactElement, ChangeEvent, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import api from '../../src/services/api';
+import api from '../../services/api';
 import DashboardNavigation from '../../components/DashboardNavigation';
-import { User } from '@/src/types';
+import { User } from '@/types';
 
 interface PremiumContent {
   id: string;
@@ -182,9 +182,9 @@ export default function PremiumContentPage(): ReactElement {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 p-6">
         <div className="bg-white p-8 rounded-2xl shadow-xl border border-gray-100 text-center max-w-md">
-           <div className="text-6xl mb-4">💎</div>
-           <h2 className="text-2xl font-black text-[#001A72] mb-3">Premium Access Required</h2>
-           <p className="text-gray-500 font-medium mb-6">{message.text || 'You need an active subscription to access this workshop.'}</p>
+          <div className="text-6xl mb-4">💎</div>
+          <h2 className="text-2xl font-black text-[#001A72] mb-3">Premium Access Required</h2>
+          <p className="text-gray-500 font-medium mb-6">{message.text || 'You need an active subscription to access this workshop.'}</p>
         </div>
       </div>
     );
@@ -207,13 +207,12 @@ export default function PremiumContentPage(): ReactElement {
         </div>
 
         {message.text && (
-          <div className={`mb-10 p-5 rounded-2xl border-2 animate-in fade-in duration-500 ${
-            message.type === 'success'
+          <div className={`mb-10 p-5 rounded-2xl border-2 animate-in fade-in duration-500 ${message.type === 'success'
               ? 'bg-green-50 text-green-700 border-green-100'
               : message.type === 'warning'
-              ? 'bg-yellow-50 text-yellow-700 border-yellow-100'
-              : 'bg-red-50 text-red-700 border-red-100'
-          }`}>
+                ? 'bg-yellow-50 text-yellow-700 border-yellow-100'
+                : 'bg-red-50 text-red-700 border-red-100'
+            }`}>
             <p className="font-bold flex items-center gap-3">
               {message.type === 'success' ? '🚀' : message.type === 'warning' ? '⚠️' : '❌'} {message.text}
             </p>
@@ -224,17 +223,15 @@ export default function PremiumContentPage(): ReactElement {
         <div className="bg-white p-2 rounded-2xl shadow-lg border border-gray-100 flex gap-2 mb-10">
           <button
             onClick={() => setActiveTab('videos')}
-            className={`flex-1 py-4 px-6 rounded-xl font-black text-sm uppercase tracking-widest transition duration-300 ${
-              activeTab === 'videos' ? 'bg-[#001A72] text-white shadow-lg' : 'text-[#001A72]/50 hover:bg-gray-50'
-            }`}
+            className={`flex-1 py-4 px-6 rounded-xl font-black text-sm uppercase tracking-widest transition duration-300 ${activeTab === 'videos' ? 'bg-[#001A72] text-white shadow-lg' : 'text-[#001A72]/50 hover:bg-gray-50'
+              }`}
           >
             📽️ Video Lectures ({videos.length})
           </button>
           <button
             onClick={() => setActiveTab('materials')}
-            className={`flex-1 py-4 px-6 rounded-xl font-black text-sm uppercase tracking-widest transition duration-300 ${
-              activeTab === 'materials' ? 'bg-[#001A72] text-white shadow-lg' : 'text-[#001A72]/50 hover:bg-gray-50'
-            }`}
+            className={`flex-1 py-4 px-6 rounded-xl font-black text-sm uppercase tracking-widest transition duration-300 ${activeTab === 'materials' ? 'bg-[#001A72] text-white shadow-lg' : 'text-[#001A72]/50 hover:bg-gray-50'
+              }`}
           >
             📚 Study Materials ({materials.length})
           </button>
@@ -248,14 +245,14 @@ export default function PremiumContentPage(): ReactElement {
               <h3 className="text-2xl font-black text-[#001A72] mb-6">
                 {activeTab === 'videos' ? 'Upload Video' : 'Upload Material'}
               </h3>
-              
+
               <form onSubmit={activeTab === 'videos' ? handleVideoUpload : handleMaterialUpload} className="space-y-5">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="col-span-1">
                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 block">Subject</label>
                     <select
                       value={activeTab === 'videos' ? videoForm.subject : materialForm.subject}
-                      onChange={(e) => activeTab === 'videos' 
+                      onChange={(e) => activeTab === 'videos'
                         ? setVideoForm({ ...videoForm, subject: e.target.value })
                         : setMaterialForm({ ...materialForm, subject: e.target.value })
                       }
@@ -312,7 +309,7 @@ export default function PremiumContentPage(): ReactElement {
                   <label className="cursor-pointer block">
                     <div className="text-3xl mb-1">📤</div>
                     <span className="text-xs font-black text-[#001A72] uppercase tracking-widest">
-                       {activeTab === 'videos' ? (videoForm.file ? 'Replace Video' : 'Choose Video File') : (materialForm.file ? 'Replace File' : 'Choose Material PDF')}
+                      {activeTab === 'videos' ? (videoForm.file ? 'Replace Video' : 'Choose Video File') : (materialForm.file ? 'Replace File' : 'Choose Material PDF')}
                     </span>
                     <input
                       type="file"
@@ -347,11 +344,11 @@ export default function PremiumContentPage(): ReactElement {
           {/* List Side */}
           <div className="lg:col-span-2 space-y-6">
             <h3 className="text-xl font-black text-[#001A72] mb-4">Your Published {activeTab === 'videos' ? 'Videos' : 'Materials'}</h3>
-            
+
             {(activeTab === 'videos' ? videos : materials).length === 0 ? (
               <div className="bg-white rounded-3xl p-20 text-center border border-gray-100 shadow-xl">
-                 <div className="text-6xl mb-4 opacity-20">📭</div>
-                 <p className="text-gray-400 font-bold">No content found in this category.</p>
+                <div className="text-6xl mb-4 opacity-20">📭</div>
+                <p className="text-gray-400 font-bold">No content found in this category.</p>
               </div>
             ) : (
               <div className="grid gap-6">
@@ -367,7 +364,7 @@ export default function PremiumContentPage(): ReactElement {
                           <h4 className="text-xl font-black text-[#001A72] mt-1">{content.title}</h4>
                         </div>
                         <div className="bg-green-50 text-green-600 px-3 py-1 rounded-lg font-black text-sm">
-                           ₦{content.price?.toLocaleString()}
+                          ₦{content.price?.toLocaleString()}
                         </div>
                       </div>
                       <p className="text-sm font-medium text-gray-500 mb-4 leading-relaxed">{content.description}</p>

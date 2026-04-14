@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import api from '../../src/services/api';
+import api from '../../services/api';
 import DashboardNavigation from '../../components/DashboardNavigation';
 
 export default function EditProfilePage() {
@@ -63,7 +63,7 @@ export default function EditProfilePage() {
 
     try {
       setSaving(true);
-      
+
       const response = await api.put('/auth/profile', formData);
 
       // Update localStorage with new user data
@@ -103,124 +103,124 @@ export default function EditProfilePage() {
             <h1 className="text-3xl font-bold text-[#001A72] mb-2">Edit Profile</h1>
             <p className="text-gray-600 mb-6">Update your personal information</p>
 
-          {error && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-              {error}
-            </div>
-          )}
+            {error && (
+              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+                {error}
+              </div>
+            )}
 
-          {success && (
-            <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
-              {success}
-            </div>
-          )}
+            {success && (
+              <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
+                {success}
+              </div>
+            )}
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Full Name */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
-              <input
-                type="text"
-                name="fullName"
-                value={formData.fullName}
-                onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#001A72]"
-                placeholder="Enter your full name"
-              />
-            </div>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Full Name */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+                <input
+                  type="text"
+                  name="fullName"
+                  value={formData.fullName}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#001A72]"
+                  placeholder="Enter your full name"
+                />
+              </div>
 
-            {/* Email */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                disabled
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed"
-                placeholder="Your email (cannot be changed)"
-              />
-              <p className="text-xs text-gray-500 mt-1">Email cannot be changed for security reasons</p>
-            </div>
+              {/* Email */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  disabled
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed"
+                  placeholder="Your email (cannot be changed)"
+                />
+                <p className="text-xs text-gray-500 mt-1">Email cannot be changed for security reasons</p>
+              </div>
 
-            {/* Phone */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
-              <input
-                type="tel"
-                name="phone"
-                value={formData.phone}
-                onChange={handleChange}
-                disabled
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed"
-                placeholder="Your phone number (cannot be changed)"
-              />
-              <p className="text-xs text-gray-500 mt-1">Phone cannot be changed for security reasons</p>
-            </div>
+              {/* Phone */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
+                <input
+                  type="tel"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  disabled
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed"
+                  placeholder="Your phone number (cannot be changed)"
+                />
+                <p className="text-xs text-gray-500 mt-1">Phone cannot be changed for security reasons</p>
+              </div>
 
-            {/* Bio */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Bio / About</label>
-              <textarea
-                name="bio"
-                value={formData.bio}
-                onChange={handleChange}
-                rows="4"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#001A72]"
-                placeholder="Tell us about yourself..."
-              />
-            </div>
+              {/* Bio */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Bio / About</label>
+                <textarea
+                  name="bio"
+                  value={formData.bio}
+                  onChange={handleChange}
+                  rows="4"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#001A72]"
+                  placeholder="Tell us about yourself..."
+                />
+              </div>
 
-            {/* Photo URL */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Profile Photo URL</label>
-              <input
-                type="url"
-                name="photo_url"
-                value={formData.photo_url}
-                onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#001A72]"
-                placeholder="https://example.com/photo.jpg"
-              />
-              {formData.photo_url && (
-                <div className="mt-3">
-                  <img
-                    src={formData.photo_url}
-                    alt="Profile preview"
-                    className="h-24 w-24 rounded-lg object-cover border border-gray-300"
-                  />
-                </div>
-              )}
-            </div>
-
-            {/* Submit Button */}
-            <div className="flex gap-4 pt-6">
-              <button
-                type="submit"
-                disabled={saving}
-                className="flex-1 bg-[#001A72] text-white py-2 rounded-lg font-semibold hover:bg-[#001A72]/90 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-              >
-                {saving ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                    Saving...
-                  </>
-                ) : (
-                  'Save Changes'
+              {/* Photo URL */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Profile Photo URL</label>
+                <input
+                  type="url"
+                  name="photo_url"
+                  value={formData.photo_url}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#001A72]"
+                  placeholder="https://example.com/photo.jpg"
+                />
+                {formData.photo_url && (
+                  <div className="mt-3">
+                    <img
+                      src={formData.photo_url}
+                      alt="Profile preview"
+                      className="h-24 w-24 rounded-lg object-cover border border-gray-300"
+                    />
+                  </div>
                 )}
-              </button>
-              <button
-                type="button"
-                onClick={() => router.push('/dashboard')}
-                className="flex-1 border-2 border-gray-300 text-gray-700 py-2 rounded-lg font-semibold hover:bg-gray-50 transition"
-              >
-                Cancel
-              </button>
-            </div>
-          </form>
+              </div>
+
+              {/* Submit Button */}
+              <div className="flex gap-4 pt-6">
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="flex-1 bg-[#001A72] text-white py-2 rounded-lg font-semibold hover:bg-[#001A72]/90 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {saving ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      Saving...
+                    </>
+                  ) : (
+                    'Save Changes'
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => router.push('/dashboard')}
+                  className="flex-1 border-2 border-gray-300 text-gray-700 py-2 rounded-lg font-semibold hover:bg-gray-50 transition"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
-      </div>
       </div>
     </div>
   );

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import api from '../../src/services/api';
+import api from '../../services/api';
 
 export default function AmbassadorPage() {
   const [data, setData] = useState(null);
@@ -75,7 +75,7 @@ export default function AmbassadorPage() {
                   <p className="text-xl font-black">{data.indirect_referrals}</p>
                 </div>
               </div>
-              
+
               <div className="mt-6 bg-[#001A72] text-white p-4 rounded-lg flex items-center justify-between">
                 <div>
                   <p className="text-xs font-bold uppercase tracking-wider text-blue-300">Total Earned Credits</p>

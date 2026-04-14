@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import api from '../../src/services/api';
+import api from '../../services/api';
 
 export default function DigitalVaultPage() {
   const [items, setItems] = useState([]);
@@ -178,7 +178,7 @@ export default function DigitalVaultPage() {
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {items.map((item) => (
             <div key={item.id} className="bg-white rounded-lg shadow hover:shadow-lg transition flex flex-col h-full border border-gray-100 overflow-hidden">
-               <div className="p-6 flex-1">
+              <div className="p-6 flex-1">
                 <div className="flex items-start justify-between mb-2">
                   <h3 className="text-lg font-bold text-[#001A72] line-clamp-2">{item.title}</h3>
                   <span className="bg-[#FFB81C]/20 text-[#001A72] px-2 py-1 rounded text-xs font-bold border border-[#FFB81C]/50">
@@ -205,7 +205,7 @@ export default function DigitalVaultPage() {
                   </div>
                 </div>
               </div>
-              
+
               <div className="px-6 pb-6 mt-auto">
                 <button
                   onClick={() => handlePurchase(item.id)}

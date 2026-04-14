@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect, ReactElement } from 'react';
-import api from '../../src/services/api';
+import api from '../../services/api';
 import NavBar from '../../components/NavBar';
-import { ProgressReport } from '@/src/types';
+import { ProgressReport } from '@/types';
 
 export default function ProgressReportsPage(): ReactElement {
   const [reports, setReports] = useState<ProgressReport[]>([]);
@@ -53,15 +53,15 @@ export default function ProgressReportsPage(): ReactElement {
 
           {error && (
             <div className="mb-8 p-4 bg-red-50 border-2 border-red-100 rounded-2xl text-red-700 font-bold flex items-center gap-3">
-               <span>⚠️</span> {error}
+              <span>⚠️</span> {error}
             </div>
           )}
 
           {reports.length === 0 ? (
             <div className="bg-white rounded-3xl p-20 text-center border border-gray-100 shadow-xl">
-               <div className="text-6xl mb-6 opacity-20">📁</div>
-               <p className="text-gray-400 font-black text-xl">No reports available yet.</p>
-               <p className="text-gray-400 text-sm mt-2">Reports are generated weekly by your assigned teachers.</p>
+              <div className="text-6xl mb-6 opacity-20">📁</div>
+              <p className="text-gray-400 font-black text-xl">No reports available yet.</p>
+              <p className="text-gray-400 text-sm mt-2">Reports are generated weekly by your assigned teachers.</p>
             </div>
           ) : (
             <div className="grid gap-8">
@@ -75,7 +75,7 @@ export default function ProgressReportsPage(): ReactElement {
                           Week of {new Date(report.week_start).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}
                         </h3>
                         <p className="text-gray-400 font-bold text-sm mt-1 flex items-center gap-2">
-                           <span>👨‍🏫</span> Specialist: {report.teacher_name}
+                          <span>👨‍🏫</span> Specialist: {report.teacher_name}
                         </p>
                       </div>
                       <div className="bg-[#001A72] text-white px-6 py-2 rounded-xl text-xs font-black uppercase tracking-widest shadow-lg shadow-blue-100">
@@ -84,25 +84,25 @@ export default function ProgressReportsPage(): ReactElement {
                     </div>
 
                     <div className="grid md:grid-cols-3 gap-6 mb-8">
-                       <MetricBox label="Skill Improvement" value={`${report.skill_improvement_score}/100`} sub="Knowledge Growth" />
-                       <MetricBox label="Homework Mastery" value={`${report.homework_completion}%`} sub="Task Completion" />
-                       <MetricBox label="Participation" value="92/100" sub="Class Engagement" />
+                      <MetricBox label="Skill Improvement" value={`${report.skill_improvement_score}/100`} sub="Knowledge Growth" />
+                      <MetricBox label="Homework Mastery" value={`${report.homework_completion}%`} sub="Task Completion" />
+                      <MetricBox label="Participation" value="92/100" sub="Class Engagement" />
                     </div>
 
                     <div className="bg-gray-50 rounded-2xl p-6 border border-gray-100">
-                       <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">Teacher's Summary</p>
-                       <p className="text-gray-700 font-medium leading-relaxed italic">
-                         "{report.performance_summary || 'No summary provided for this week.'}"
-                       </p>
+                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">Teacher's Summary</p>
+                      <p className="text-gray-700 font-medium leading-relaxed italic">
+                        "{report.performance_summary || 'No summary provided for this week.'}"
+                      </p>
                     </div>
 
                     {report.notes && (
                       <div className="mt-6 flex items-start gap-3 p-4 bg-blue-50/50 rounded-xl border border-blue-50">
-                         <span className="text-xl">💡</span>
-                         <div>
-                            <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest">Growth Recommendation</p>
-                            <p className="text-sm font-bold text-blue-800 mt-0.5">{report.notes}</p>
-                         </div>
+                        <span className="text-xl">💡</span>
+                        <div>
+                          <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest">Growth Recommendation</p>
+                          <p className="text-sm font-bold text-blue-800 mt-0.5">{report.notes}</p>
+                        </div>
                       </div>
                     )}
                   </div>

@@ -3,9 +3,9 @@
 import { useState, useEffect, ReactElement } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import api from '../../src/services/api';
+import api from '../../services/api';
 import DashboardNavigation from '../../components/DashboardNavigation';
-import { User } from '@/src/types';
+import { User } from '@/types';
 
 interface HistoryEntry {
   date: string;
@@ -91,7 +91,7 @@ export default function EarningsPage(): ReactElement {
                 <div className="bg-[#001A72] rounded-2xl p-8 text-white relative overflow-hidden">
                   <div className="relative z-10">
                     <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-                       <span>🛡️</span> Secure Split & Welfare Savings
+                      <span>🛡️</span> Secure Split & Welfare Savings
                     </h3>
                     <p className="text-blue-100 mb-6 max-w-2xl leading-relaxed">
                       Payments are automatically split at the source when a session is confirmed. This ensures transparency and builds your long-term welfare security.
@@ -157,9 +157,8 @@ export default function EarningsPage(): ReactElement {
                             <td className="py-4 px-6 text-right font-bold text-blue-600">₦{(Number(entry.amount) * 0.15).toLocaleString()}</td>
                             <td className="py-4 px-6 text-right font-bold text-purple-600">₦{(Number(entry.amount) * 0.10).toLocaleString()}</td>
                             <td className="py-4 px-6 text-center">
-                              <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase ${
-                                entry.status === 'Completed' ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800'
-                              }`}>
+                              <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase ${entry.status === 'Completed' ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800'
+                                }`}>
                                 {entry.status}
                               </span>
                             </td>
@@ -205,9 +204,8 @@ export default function EarningsPage(): ReactElement {
                             </td>
                             <td className="py-4 px-6 text-right font-black text-[#001A72]">{entry.amount}</td>
                             <td className="py-4 px-6 text-center">
-                              <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase ${
-                                entry.status === 'Completed' ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800'
-                              }`}>
+                              <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase ${entry.status === 'Completed' ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800'
+                                }`}>
                                 {entry.status}
                               </span>
                             </td>

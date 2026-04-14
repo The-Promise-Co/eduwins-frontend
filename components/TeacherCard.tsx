@@ -1,11 +1,11 @@
 import Link from 'next/link';
-import { TeacherProfile } from '@/src/types';
+import { TeacherProfile } from '@/types';
 
 interface TeacherCardProps {
-  teacher: Partial<TeacherProfile> & { 
-    photo_url?: string; 
-    full_name?: string; 
-    hourly_rate?: number; 
+  teacher: Partial<TeacherProfile> & {
+    photo_url?: string;
+    full_name?: string;
+    hourly_rate?: number;
     baseHourlyRate?: number;
     lga?: string;
     students?: number;
@@ -16,21 +16,21 @@ interface TeacherCardProps {
 
 export default function TeacherCard({ teacher }: TeacherCardProps) {
   const teacherId = teacher.id;
-  
+
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition border-2 border-[#001A72] hover:border-[#FFB81C]">
       <div className="bg-gradient-to-r from-[#001A72] to-[#FFB81C] p-6 text-center">
         <div className="flex justify-center mb-3">
-          <img 
-            src={teacher.photo_url || `https://via.placeholder.com/100/001A72/FFFFFF?text=${encodeURIComponent(teacher.full_name || teacher.fullName || 'Teacher')}`} 
-            alt={teacher.full_name || teacher.fullName || 'Teacher'} 
+          <img
+            src={teacher.photo_url || `https://via.placeholder.com/100/001A72/FFFFFF?text=${encodeURIComponent(teacher.full_name || teacher.fullName || 'Teacher')}`}
+            alt={teacher.full_name || teacher.fullName || 'Teacher'}
             className="w-24 h-24 rounded-full border-4 border-white object-cover"
           />
         </div>
         <h3 className="text-xl font-bold text-white">{teacher.full_name || teacher.fullName}</h3>
         <p className="text-white/80">{teacher.subject || (teacher.subjects && teacher.subjects[0])}</p>
       </div>
-      
+
       <div className="p-6">
         {/* Rating */}
         <div className="flex items-center justify-between mb-4 pb-4 border-b border-gray-200">
@@ -55,7 +55,7 @@ export default function TeacherCard({ teacher }: TeacherCardProps) {
 
         {/* Actions */}
         <div className="space-y-2">
-          <Link 
+          <Link
             href={`/teachers/${teacherId}`}
             className="block w-full bg-[#001A72] text-white py-2 rounded-lg hover:bg-[#001A72]/90 font-semibold transition text-center"
           >

@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect, ReactElement } from 'react';
 import { AlertCircle, CheckCircle, Clock, XCircle, Plus, Eye, EyeOff, LucideIcon } from 'lucide-react';
-import api from '../../src/services/api';
+import api from '../../services/api';
 import DashboardNavigation from '../../components/DashboardNavigation';
-import { User } from '@/src/types';
+import { User } from '@/types';
 
 interface BalanceData {
   availableBalance: number;
@@ -288,32 +288,29 @@ export default function WithdrawalPage(): ReactElement {
         <div className="flex gap-2 mb-8 bg-white rounded-lg shadow-sm p-2 border border-gray-100">
           <button
             onClick={() => setActiveTab('balance')}
-            className={`px-6 py-3 rounded-lg font-bold transition flex-1 ${
-              activeTab === 'balance'
+            className={`px-6 py-3 rounded-lg font-bold transition flex-1 ${activeTab === 'balance'
                 ? 'bg-[#001A72] text-white'
                 : 'bg-transparent text-[#001A72] hover:bg-gray-50'
-            }`}
+              }`}
           >
             Available Balance
           </button>
           <button
             onClick={() => setActiveTab('withdraw')}
-            className={`px-6 py-3 rounded-lg font-bold transition flex-1 ${
-              activeTab === 'withdraw'
+            className={`px-6 py-3 rounded-lg font-bold transition flex-1 ${activeTab === 'withdraw'
                 ? 'bg-[#001A72] text-white'
                 : 'bg-transparent text-[#001A72] hover:bg-gray-50'
-            }`}
+              }`}
           >
             <Plus size={18} className="inline mr-2" />
             Withdraw
           </button>
           <button
             onClick={() => setActiveTab('history')}
-            className={`px-6 py-3 rounded-lg font-bold transition flex-1 ${
-              activeTab === 'history'
+            className={`px-6 py-3 rounded-lg font-bold transition flex-1 ${activeTab === 'history'
                 ? 'bg-[#001A72] text-white'
                 : 'bg-transparent text-[#001A72] hover:bg-gray-50'
-            }`}
+              }`}
           >
             Withdrawal History
           </button>
@@ -331,8 +328,8 @@ export default function WithdrawalPage(): ReactElement {
                       {balanceData && showBalance
                         ? `₦${balanceData.availableBalance.toLocaleString()}`
                         : balanceData
-                        ? '₦••••••••'
-                        : 'Loading...'}
+                          ? '₦••••••••'
+                          : 'Loading...'}
                     </h2>
                     <button
                       onClick={() => setShowBalance(!showBalance)}
@@ -358,24 +355,24 @@ export default function WithdrawalPage(): ReactElement {
                 <BreakdownItem label="Total Earnings" value={balanceData?.totalAcquired} icon="💰" color="text-gray-900" />
                 <div className="border-t pt-4">
                   <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">Deductions & Reserves</p>
-                  <BreakdownItem 
-                    label="Welfare Fund (10%)" 
-                    value={balanceData?.deductions.welfareFund} 
-                    icon="🏥" 
-                    color="text-red-500" 
+                  <BreakdownItem
+                    label="Welfare Fund (10%)"
+                    value={balanceData?.deductions.welfareFund}
+                    icon="🏥"
+                    color="text-red-500"
                     subtitle="Saved for housing program"
                   />
-                  <BreakdownItem 
-                    label="Mortgage Payment" 
-                    value={balanceData?.deductions.mortgagePayment} 
-                    icon="🏠" 
-                    color="text-red-500" 
+                  <BreakdownItem
+                    label="Mortgage Payment"
+                    value={balanceData?.deductions.mortgagePayment}
+                    icon="🏠"
+                    color="text-red-500"
                   />
-                  <BreakdownItem 
-                    label="Reserved (Pending)" 
-                    value={balanceData?.deductions.reserved} 
-                    icon="⏳" 
-                    color="text-orange-500" 
+                  <BreakdownItem
+                    label="Reserved (Pending)"
+                    value={balanceData?.deductions.reserved}
+                    icon="⏳"
+                    color="text-orange-500"
                   />
                 </div>
               </div>
@@ -487,7 +484,7 @@ export default function WithdrawalPage(): ReactElement {
             <div className="space-y-6">
               <div className="bg-[#FFB81C]/10 border-2 border-[#FFB81C]/20 rounded-2xl p-6">
                 <h4 className="font-black text-[#001A72] mb-4 flex items-center gap-2">
-                   <span>🛡️</span> Security Tips
+                  <span>🛡️</span> Security Tips
                 </h4>
                 <ul className="space-y-3 text-sm text-[#001A72]/80">
                   <li className="flex gap-2"><span>•</span> Always verify account name matches your registered name.</li>
@@ -512,32 +509,31 @@ export default function WithdrawalPage(): ReactElement {
             )}
 
             <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
-               <div className="p-6 bg-gray-50 border-b flex justify-between items-center">
-                  <h3 className="font-black text-[#001A72]">Recent Transactions</h3>
-                  <div className="flex gap-2">
-                    {['', 'pending', 'completed', 'failed'].map(status => (
-                      <button
-                        key={status}
-                        onClick={() => {
-                          setFilterStatus(status);
-                          fetchWithdrawalHistory(status);
-                        }}
-                        className={`px-3 py-1 rounded-lg text-xs font-bold transition ${
-                          filterStatus === status ? 'bg-[#001A72] text-white' : 'bg-white text-gray-500 border border-gray-200 hover:bg-gray-100'
+              <div className="p-6 bg-gray-50 border-b flex justify-between items-center">
+                <h3 className="font-black text-[#001A72]">Recent Transactions</h3>
+                <div className="flex gap-2">
+                  {['', 'pending', 'completed', 'failed'].map(status => (
+                    <button
+                      key={status}
+                      onClick={() => {
+                        setFilterStatus(status);
+                        fetchWithdrawalHistory(status);
+                      }}
+                      className={`px-3 py-1 rounded-lg text-xs font-bold transition ${filterStatus === status ? 'bg-[#001A72] text-white' : 'bg-white text-gray-500 border border-gray-200 hover:bg-gray-100'
                         }`}
-                      >
-                        {status ? status.toUpperCase() : 'ALL'}
-                      </button>
-                    ))}
-                  </div>
-               </div>
-              
+                    >
+                      {status ? status.toUpperCase() : 'ALL'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               {loading ? (
                 <div className="p-20 text-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#001A72] mx-auto"></div></div>
               ) : withdrawalHistory.length === 0 ? (
                 <div className="p-20 text-center">
-                   <p className="text-gray-500 font-bold mb-4">No withdrawal history found.</p>
-                   <button onClick={() => setActiveTab('withdraw')} className="bg-[#001A72] text-white px-6 py-2 rounded-lg font-bold">Start a withdrawal</button>
+                  <p className="text-gray-500 font-bold mb-4">No withdrawal history found.</p>
+                  <button onClick={() => setActiveTab('withdraw')} className="bg-[#001A72] text-white px-6 py-2 rounded-lg font-bold">Start a withdrawal</button>
                 </div>
               ) : (
                 <div className="overflow-x-auto">

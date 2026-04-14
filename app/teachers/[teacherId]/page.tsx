@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import api from '../../../src/services/api';
+import api from '../../../services/api';
 
 export default function TeacherProfilePage({ params }) {
   const { teacherId } = params;
@@ -78,16 +78,16 @@ export default function TeacherProfilePage({ params }) {
             <div className="bg-white rounded-xl shadow-lg overflow-hidden sticky top-4">
               {/* Profile Image */}
               <div className="aspect-square bg-gradient-to-br from-[#001A72] to-[#FFB81C] flex items-center justify-center">
-                <img 
-                  src={teacher.photo_url || teacher.profilePhoto || `https://via.placeholder.com/400/001A72/FFFFFF?text=${encodeURIComponent(teacher.full_name || teacher.fullName || 'Teacher')}`} 
-                  alt={teacher.full_name || teacher.fullName} 
+                <img
+                  src={teacher.photo_url || teacher.profilePhoto || `https://via.placeholder.com/400/001A72/FFFFFF?text=${encodeURIComponent(teacher.full_name || teacher.fullName || 'Teacher')}`}
+                  alt={teacher.full_name || teacher.fullName}
                   className="w-full h-full object-cover"
                 />
               </div>
 
               <div className="p-6">
                 <h1 className="text-3xl font-bold text-[#001A72] mb-2">{teacher.full_name || teacher.fullName}</h1>
-                
+
                 {/* Rating */}
                 <div className="flex items-center gap-2 mb-4">
                   <div className="flex">

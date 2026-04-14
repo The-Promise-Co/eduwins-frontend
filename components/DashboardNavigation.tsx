@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { User } from '@/src/types';
+import { User } from '@/types';
 
 interface NavItem {
   label: string;
@@ -45,11 +45,10 @@ export default function DashboardNavigation({ user }: DashboardNavigationProps) 
               <Link
                 key={item.href}
                 href={item.href}
-                className={`px-6 py-4 font-semibold whitespace-nowrap transition border-b-2 ${
-                  isActive
+                className={`px-6 py-4 font-semibold whitespace-nowrap transition border-b-2 ${isActive
                     ? 'border-[#001A72] text-[#001A72]'
                     : 'border-transparent text-gray-600 hover:text-[#001A72]'
-                }`}
+                  }`}
               >
                 {item.label}
               </Link>

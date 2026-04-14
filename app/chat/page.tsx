@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import api from '../../src/services/api';
+import api from '../../services/api';
 
 export default function ChatPage() {
   const [messages, setMessages] = useState([]);
@@ -38,9 +38,9 @@ export default function ChatPage() {
         is_flagged: false,
         created_at: new Date(),
       };
-      
+
       setMessages([...messages, newMsg]);
-      
+
       // Check for flagged content (simple demo)
       if (/whatsapp|call me|phone|email|@gmail/.test(newMessage.toLowerCase())) {
         setWarning('⚠️ Your message was flagged. Avoid sharing contact details for security.');
@@ -81,13 +81,12 @@ export default function ChatPage() {
           <div className="space-y-4">
             {messages.map((msg) => (
               <div key={msg.id} className={`flex ${msg.sender_id === 1 ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-sm px-4 py-2 rounded-lg ${
-                  msg.sender_id === 1
+                <div className={`max-w-sm px-4 py-2 rounded-lg ${msg.sender_id === 1
                     ? 'bg-[#001A72] text-white'
-                    : msg.is_flagged 
-                    ? 'bg-[#FFB81C]/20 text-gray-900 border-2 border-[#FFB81C]/70'
-                    : 'bg-gray-200 text-gray-900'
-                }`}>
+                    : msg.is_flagged
+                      ? 'bg-[#FFB81C]/20 text-gray-900 border-2 border-[#FFB81C]/70'
+                      : 'bg-gray-200 text-gray-900'
+                  }`}>
                   <p>{msg.content}</p>
                   {msg.is_flagged && (
                     <p className="text-xs mt-1 font-semibold">⚠️ Flagged content</p>

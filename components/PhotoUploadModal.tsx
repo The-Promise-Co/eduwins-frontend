@@ -1,5 +1,5 @@
 import { useState, ChangeEvent, ReactElement } from 'react';
-import api from '../src/services/api';
+import api from '../services/api';
 
 interface PhotoUploadModalProps {
   isOpen: boolean;

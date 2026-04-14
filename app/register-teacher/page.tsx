@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import api from '../../src/services/api';
+import api from '../../services/api';
 
 export default function TeacherRegisterPage() {
   const router = useRouter();
@@ -32,18 +32,18 @@ export default function TeacherRegisterPage() {
   const [otpSent, setOtpSent] = useState(false);
 
   const subjects = [
-    'Mathematics', 'Physics', 'Chemistry', 'Biology', 'English', 'French', 
-    'Spanish', 'History', 'Geography', 'Economics', 'Music', 'Guitar', 
+    'Mathematics', 'Physics', 'Chemistry', 'Biology', 'English', 'French',
+    'Spanish', 'History', 'Geography', 'Economics', 'Music', 'Guitar',
     'Piano', 'Saxophone', 'Violin'
   ];
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
-    
+
     if (name === 'subjects') {
       setFormData(prev => ({
         ...prev,
-        subjects: checked 
+        subjects: checked
           ? [...prev.subjects, value]
           : prev.subjects.filter(s => s !== value)
       }));
@@ -70,13 +70,13 @@ export default function TeacherRegisterPage() {
       setError('Passwords do not match');
       return;
     }
-    
+
     setLoading(true);
     setError('');
     try {
-      await api.post('/auth/send-otp', { 
+      await api.post('/auth/send-otp', {
         email: formData.email,
-        phone: formData.phone 
+        phone: formData.phone
       });
       setOtpSent(true);
       setStep(2);
@@ -120,7 +120,7 @@ export default function TeacherRegisterPage() {
     formDataToSend.append('subjects', JSON.stringify(formData.subjects));
     formDataToSend.append('baseHourlyRate', formData.baseHourlyRate);
     formDataToSend.append('location', formData.location);
-    
+
     if (formData.profilePhoto) formDataToSend.append('profilePhoto', formData.profilePhoto);
     if (formData.videoIntro) formDataToSend.append('videoIntro', formData.videoIntro);
     if (formData.credentials) formDataToSend.append('credentials', formData.credentials);
@@ -156,9 +156,8 @@ export default function TeacherRegisterPage() {
           <div className="flex justify-between mb-8">
             {[1, 2, 3].map(stepNum => (
               <div key={stepNum} className="flex items-center flex-1">
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${
-                  step >= stepNum ? 'bg-[#001A72] text-white' : 'bg-gray-200 text-gray-600'
-                }`}>
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${step >= stepNum ? 'bg-[#001A72] text-white' : 'bg-gray-200 text-gray-600'
+                  }`}>
                   {stepNum}
                 </div>
                 {stepNum < 3 && <div className={`flex-1 h-1 mx-2 ${step > stepNum ? 'bg-[#001A72]' : 'bg-gray-200'}`}></div>}

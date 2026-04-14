@@ -2,9 +2,9 @@
 
 import { useState, useEffect, ReactElement } from 'react';
 import { useRouter } from 'next/navigation';
-import api from '../../src/services/api';
+import api from '../../services/api';
 import DashboardNavigation from '../../components/DashboardNavigation';
-import { User } from '@/src/types';
+import { User } from '@/types';
 
 interface SubscriptionStatus {
   subscriptionActive: boolean;
@@ -184,11 +184,10 @@ export default function PremiumSubscriptionPage(): ReactElement {
           </div>
 
           {message.text && (
-            <div className={`mb-10 p-5 rounded-2xl border-2 animate-in fade-in slide-in-from-top-4 duration-500 ${
-              message.type === 'success'
+            <div className={`mb-10 p-5 rounded-2xl border-2 animate-in fade-in slide-in-from-top-4 duration-500 ${message.type === 'success'
                 ? 'bg-green-50 text-green-700 border-green-100'
                 : 'bg-red-50 text-red-700 border-red-100'
-            }`}>
+              }`}>
               <p className="font-black flex items-center justify-center gap-3">
                 {message.type === 'success' ? '🚀' : '❌'} {message.text}
               </p>
@@ -198,16 +197,16 @@ export default function PremiumSubscriptionPage(): ReactElement {
           {/* Current Status */}
           {isSubscribed && (
             <div className="bg-[#001A72] text-white rounded-3xl p-8 mb-16 shadow-2xl relative overflow-hidden">
-               <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
-                 <div>
-                   <h2 className="text-2xl font-black mb-1">Your Premium Status is Active! ✨</h2>
-                   <p className="text-blue-200 font-bold capitalize">Plan: {currentPlan} • {daysRemaining} days remaining</p>
-                 </div>
-                 <button onClick={() => router.push('/premium-content')} className="px-8 py-3 bg-[#FFB81C] text-[#001A72] font-black rounded-xl hover:scale-105 transition shadow-lg">
-                   Go to Workspace
-                 </button>
-               </div>
-               <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -translate-x-12 -translate-y-12"></div>
+              <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
+                <div>
+                  <h2 className="text-2xl font-black mb-1">Your Premium Status is Active! ✨</h2>
+                  <p className="text-blue-200 font-bold capitalize">Plan: {currentPlan} • {daysRemaining} days remaining</p>
+                </div>
+                <button onClick={() => router.push('/premium-content')} className="px-8 py-3 bg-[#FFB81C] text-[#001A72] font-black rounded-xl hover:scale-105 transition shadow-lg">
+                  Go to Workspace
+                </button>
+              </div>
+              <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -translate-x-12 -translate-y-12"></div>
             </div>
           )}
 
@@ -216,21 +215,20 @@ export default function PremiumSubscriptionPage(): ReactElement {
             {plans.map((plan) => (
               <div
                 key={plan.name}
-                className={`flex flex-col bg-white rounded-3xl shadow-xl overflow-hidden border-t-8 ${plan.color} relative transform transition duration-300 hover:-translate-y-2 ${
-                  plan.popular ? 'md:scale-105 z-20 shadow-2xl ring-2 ring-[#FFB81C]' : 'z-10'
-                }`}
+                className={`flex flex-col bg-white rounded-3xl shadow-xl overflow-hidden border-t-8 ${plan.color} relative transform transition duration-300 hover:-translate-y-2 ${plan.popular ? 'md:scale-105 z-20 shadow-2xl ring-2 ring-[#FFB81C]' : 'z-10'
+                  }`}
               >
                 {plan.popular && (
                   <div className="bg-[#FFB81C] text-[#001A72] py-2 text-center text-[10px] font-black uppercase tracking-widest">
                     Best Value Option
                   </div>
                 )}
-                
+
                 <div className="p-8 flex-1 flex flex-col">
                   <div className="text-5xl mb-4">{plan.icon}</div>
                   <h3 className="text-2xl font-black text-[#001A72] mb-1">{plan.displayName}</h3>
                   <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-6">{plan.duration}</p>
-                  
+
                   <div className="mb-8">
                     <span className="text-5xl font-black text-[#001A72]">₦{plan.price.toLocaleString()}</span>
                   </div>
@@ -238,13 +236,12 @@ export default function PremiumSubscriptionPage(): ReactElement {
                   <button
                     onClick={() => subscribeToPlan(plan.name)}
                     disabled={subscribing === plan.name || (isSubscribed && currentPlan === plan.name)}
-                    className={`w-full py-4 rounded-2xl font-black text-sm uppercase tracking-widest mb-8 transition shadow-lg ${
-                      isSubscribed && currentPlan === plan.name
+                    className={`w-full py-4 rounded-2xl font-black text-sm uppercase tracking-widest mb-8 transition shadow-lg ${isSubscribed && currentPlan === plan.name
                         ? 'bg-gray-100 text-gray-400 cursor-default'
                         : plan.popular
-                        ? 'bg-[#FFB81C] text-[#001A72] hover:bg-[#FFB81C]/90'
-                        : 'bg-[#001A72] text-white hover:bg-[#001A72]/90'
-                    }`}
+                          ? 'bg-[#FFB81C] text-[#001A72] hover:bg-[#FFB81C]/90'
+                          : 'bg-[#001A72] text-white hover:bg-[#001A72]/90'
+                      }`}
                   >
                     {subscribing === plan.name ? 'Processing...' : contributesStatus(!!isSubscribed, currentPlan ?? null, plan.name)}
                   </button>
@@ -267,21 +264,21 @@ export default function PremiumSubscriptionPage(): ReactElement {
           <div className="bg-white rounded-[3rem] shadow-xl p-12 border border-gray-100">
             <h2 className="text-3xl font-black text-[#001A72] mb-12 text-center">Plan Intelligence & FAQ</h2>
             <div className="grid md:grid-cols-2 gap-10">
-              <FaqItem 
-                q="What happens to my uploads if I cancel?" 
-                a="Your existing premium content stays live for current purchasers, but you cannot upload new materials until you resubscribe." 
+              <FaqItem
+                q="What happens to my uploads if I cancel?"
+                a="Your existing premium content stays live for current purchasers, but you cannot upload new materials until you resubscribe."
               />
-              <FaqItem 
-                q="Can I switch between plans?" 
-                a="Absolutely. Upgrading takes effect immediately. Downgrading occurs at the end of your current cycle." 
+              <FaqItem
+                q="Can I switch between plans?"
+                a="Absolutely. Upgrading takes effect immediately. Downgrading occurs at the end of your current cycle."
               />
-              <FaqItem 
-                q="How are my earnings calculated?" 
-                a="Premium users keep a higher percentage of content sales. Quarterly and Annual plans reduce platform fees by up to 20%." 
+              <FaqItem
+                q="How are my earnings calculated?"
+                a="Premium users keep a higher percentage of content sales. Quarterly and Annual plans reduce platform fees by up to 20%."
               />
-              <FaqItem 
-                q="Are there any hidden costs?" 
-                a="No hidden fees. The price you see includes all taxes and transaction processing costs." 
+              <FaqItem
+                q="Are there any hidden costs?"
+                a="No hidden fees. The price you see includes all taxes and transaction processing costs."
               />
             </div>
           </div>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import api from '../../src/services/api';
+import api from '../../services/api';
 import TeacherCard from '../../components/TeacherCard';
 
 export default function TeacherSearch() {
