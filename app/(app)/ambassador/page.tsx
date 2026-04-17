@@ -2,6 +2,14 @@
 
 import { useState, useEffect } from 'react';
 import api from '@/services/api';
+import { 
+  Wallet, 
+  BookOpen, 
+  ChevronRight, 
+  Award, 
+  CheckCircle2, 
+  Users 
+} from 'lucide-react';
 
 export default function AmbassadorPage() {
   const [data, setData] = useState<any>(null); // Keep as any for now as ambassador data structure is dynamic
@@ -76,18 +84,19 @@ export default function AmbassadorPage() {
                 </div>
               </div>
 
-              <div className="mt-6 bg-[#001A72] text-white p-4 rounded-lg flex items-center justify-between">
                 <div>
                   <p className="text-xs font-bold uppercase tracking-wider text-blue-300">Total Earned Credits</p>
                   <p className="text-3xl font-black">₦{data.earned_credits.toLocaleString()}</p>
                 </div>
-                <div className="text-4xl">💰</div>
+                <div className="text-4xl">
+                  <Wallet size={40} className="text-white opacity-80" />
+                </div>
               </div>
             </div>
 
             <div className="bg-white rounded-xl shadow p-6 border border-gray-100">
               <h2 className="font-bold text-xl text-[#001A72] mb-4 flex items-center gap-2">
-                <span>📘</span> How it works
+                <BookOpen size={24} /> How it works
               </h2>
               <div className="space-y-4">
                 <div className="flex gap-4">

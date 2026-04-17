@@ -4,6 +4,13 @@ import { useState, useEffect, ReactElement } from 'react';
 import { useRouter } from 'next/navigation';
 import DashboardNavigation from '@/components/DashboardNavigation';
 import { User } from '@/types';
+import { 
+  Calendar, 
+  Clock, 
+  Settings, 
+  Sparkles, 
+  CalendarDays 
+} from 'lucide-react';
 
 interface UpcomingSession {
   id: number;
@@ -70,7 +77,7 @@ export default function ViewSchedulePage(): ReactElement {
           {/* Header */}
           <div className="mb-12">
             <h1 className="text-4xl font-black text-[#001A72] mb-1 flex items-center gap-3">
-              <span>📅</span> Lesson Schedule
+              <Calendar size={32} /> Lesson Schedule
             </h1>
             <p className="text-gray-500 font-medium">Manage your teaching block and upcoming sessions</p>
           </div>
@@ -94,14 +101,16 @@ export default function ViewSchedulePage(): ReactElement {
                     <p className="text-[10px] font-black text-[#FFB81C] uppercase tracking-widest">{session.subject}</p>
                     <h3 className="text-xl font-black text-[#001A72] mt-0.5">{session.title}</h3>
                     <p className="text-sm font-bold text-gray-400 mt-1 flex items-center justify-center md:justify-start gap-2">
-                      <span>🕒</span> {session.time} • {session.duration}
+                      <Clock size={14} /> {session.time} • {session.duration}
                     </p>
                     <p className="text-xs font-black text-blue-600 mt-2">Student: {session.student}</p>
                   </div>
 
                   <div className="flex gap-2">
                     <button className="px-6 py-3 bg-[#001A72] text-white rounded-xl font-black text-xs uppercase tracking-widest hover:shadow-lg transition">Join Class</button>
-                    <button className="p-3 bg-gray-50 text-gray-400 rounded-xl hover:text-[#001A72] transition">⚙️</button>
+                    <button className="p-3 bg-gray-50 text-gray-400 rounded-xl hover:text-[#001A72] transition">
+                      <Settings size={18} />
+                    </button>
                   </div>
                 </div>
               ))}
@@ -111,10 +120,12 @@ export default function ViewSchedulePage(): ReactElement {
             <div className="lg:col-span-1">
               <div className="bg-white rounded-[2.5rem] shadow-2xl p-8 border border-gray-100">
                 <h3 className="text-xl font-black text-[#001A72] mb-6 flex items-center gap-2">
-                  <span>✨</span> Smart Calendar
+                  <Sparkles size={20} className="text-[#FFB81C]" /> Smart Calendar
                 </h3>
                 <div className="bg-gray-50 rounded-2xl p-10 flex flex-col items-center justify-center border-2 border-dashed border-gray-100 italic text-gray-400 text-center">
-                  <div className="text-5xl mb-4 opacity-20">🗓️</div>
+                  <div className="mb-4 opacity-20 text-[#001A72]">
+                    <CalendarDays size={64} />
+                  </div>
                   <p className="text-sm font-bold">Interactive calendar integration is currently under development.</p>
                   <p className="text-[10px] mt-2 font-medium opacity-50">Syncing with Google & Outlook Calendar coming soon.</p>
                 </div>

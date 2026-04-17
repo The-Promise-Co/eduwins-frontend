@@ -2,6 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import api from '@/services/api';
+import { 
+  GraduationCap, 
+  MessageSquare, 
+  AlertTriangle, 
+  Send 
+} from 'lucide-react';
 
 export default function ChatPage() {
   const [messages, setMessages] = useState<any[]>([]);
@@ -59,7 +65,9 @@ export default function ChatPage() {
       <div className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-4xl mx-auto px-4 py-4">
           <div className="flex items-center gap-3">
-            <div className="text-3xl">👨‍🏫</div>
+            <div className="text-[#001A72]">
+              <GraduationCap size={40} />
+            </div>
             <div>
               <h1 className="text-2xl font-bold text-gray-900">{conversationTitle}</h1>
               <p className="text-gray-600 text-sm">Online</p>
@@ -72,8 +80,10 @@ export default function ChatPage() {
       <div className="flex-1 max-w-4xl mx-auto w-full px-4 py-6 overflow-y-auto">
         {messages.length === 0 ? (
           <div className="flex items-center justify-center h-full text-center">
-            <div>
-              <div className="text-6xl mb-4 text-[#001A72]">💬</div>
+            <div className="text-[#001A72] opacity-20">
+              <div className="flex justify-center mb-4">
+                <MessageSquare size={80} />
+              </div>
               <p className="text-gray-600 text-lg">No messages yet. Start a conversation!</p>
             </div>
           </div>
@@ -89,7 +99,9 @@ export default function ChatPage() {
                   }`}>
                   <p>{msg.content}</p>
                   {msg.is_flagged && (
-                    <p className="text-xs mt-1 font-semibold">⚠️ Flagged content</p>
+                    <p className="text-xs mt-1 font-semibold flex items-center gap-1">
+                      <AlertTriangle size={12} /> Flagged content
+                    </p>
                   )}
                   <p className="text-xs mt-1 opacity-75">
                     {new Date(msg.created_at).toLocaleTimeString()}
@@ -104,7 +116,8 @@ export default function ChatPage() {
       {/* Warning Zone */}
       {warning && (
         <div className="max-w-4xl mx-auto w-full px-4">
-          <div className="bg-yellow-100 border-l-4 border-yellow-400 p-4 mb-4 rounded">
+          <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4 rounded flex items-center gap-3">
+            <AlertTriangle className="text-yellow-600" size={20} />
             <p className="text-yellow-800 font-medium">{warning}</p>
           </div>
         </div>
@@ -122,9 +135,10 @@ export default function ChatPage() {
           />
           <button
             type="submit"
-            className="bg-[#001A72] text-white px-6 py-3 rounded-lg hover:bg-[#001A72]/90 font-semibold transition"
+            className="bg-[#001A72] text-white px-6 py-3 rounded-lg hover:bg-[#001A72]/90 font-semibold transition flex items-center gap-2"
           >
-            Send
+            <span>Send</span>
+            <Send size={18} />
           </button>
         </form>
       </div>

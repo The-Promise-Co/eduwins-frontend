@@ -5,6 +5,22 @@ import { useRouter, useParams } from 'next/navigation';
 import api from '../../../../services/api';
 import NavBar from '../../../../components/NavBar';
 import { TeacherProfile, User } from '@/types';
+import { 
+  UserCircle, 
+  Ticket, 
+  CheckCircle2, 
+  AlertCircle, 
+  Video, 
+  FileText, 
+  PlayCircle, 
+  BookOpen, 
+  Play, 
+  Download, 
+  ShoppingCart,
+  Star,
+  Award,
+  ChevronRight
+} from 'lucide-react';
 
 interface PremiumMarketplaceItem {
   id: string;
@@ -134,10 +150,10 @@ export default function TeacherPremiumMarketplacePage(): ReactElement {
         {teacher && (
           <div className="bg-white rounded-[3rem] shadow-2xl p-10 mb-12 border border-blue-50 relative overflow-hidden">
             <div className="relative z-10 flex flex-col md:flex-row items-center md:items-start gap-10">
-              <div className="w-32 h-32 bg-gradient-to-br from-[#001A72] via-[#001A72] to-[#FFB81C] rounded-[2rem] flex items-center justify-center text-white text-5xl shadow-xl">
+              <div className="w-32 h-32 bg-gradient-to-br from-[#001A72] to-[#FFB81C] rounded-[2rem] mx-auto lg:mx-0 shrink-0 flex items-center justify-center text-white overflow-hidden shadow-xl">
                 {teacher.headshot || teacher.profilePhoto || teacher.photo_url ? (
-                  <img src={teacher.headshot || teacher.profilePhoto || teacher.photo_url} alt="" className="w-full h-full object-cover rounded-[2rem]" />
-                ) : '👨‍🏫'}
+                  <img src={teacher.headshot || teacher.profilePhoto || teacher.photo_url} alt="" className="w-full h-full object-cover" />
+                ) : <UserCircle size={64} />}
               </div>
               <div className="flex-1 text-center md:text-left">
                 <div className="flex flex-col md:flex-row md:items-center gap-3 mb-4">
@@ -145,9 +161,13 @@ export default function TeacherPremiumMarketplacePage(): ReactElement {
                     {teacher.fullName || teacher.name || teacher.full_name}
                   </h1>
                   <div className="flex justify-center md:justify-start gap-2">
-                    <span className="bg-[#FFB81C] text-[#001A72] px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-sm">⭐ Premium Elite</span>
+                    <span className="bg-[#FFB81C] text-[#001A72] px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-sm flex items-center gap-1">
+                      <Star size={10} fill="currentColor" /> Premium Elite
+                    </span>
                     {teacher.credentialsVerified && (
-                      <span className="bg-green-100 text-green-700 px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-sm">✓ Verified Expert</span>
+                      <span className="bg-green-100 text-green-700 px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-sm flex items-center gap-1">
+                        <CheckCircle2 size={10} /> Verified Expert
+                      </span>
                     )}
                   </div>
                 </div>
@@ -171,7 +191,7 @@ export default function TeacherPremiumMarketplacePage(): ReactElement {
               : 'bg-red-50 text-red-700 border-red-100'
             }`}>
             <p className="font-black flex items-center justify-center gap-3">
-              {message.type === 'success' ? '🎟️' : '❌'} {message.text}
+              {message.type === 'success' ? <Ticket size={24} /> : <AlertCircle size={24} />} {message.text}
             </p>
           </div>
         )}
@@ -180,17 +200,17 @@ export default function TeacherPremiumMarketplacePage(): ReactElement {
         <div className="bg-white p-2 rounded-3xl shadow-xl border border-gray-100 flex gap-2 mb-12">
           <button
             onClick={() => setActiveTab('videos')}
-            className={`flex-1 py-5 rounded-2xl font-black text-sm uppercase tracking-widest transition duration-300 ${activeTab === 'videos' ? 'bg-[#001A72] text-white shadow-lg' : 'text-[#001A72]/40 hover:bg-gray-50'
+            className={`flex-1 py-5 rounded-2xl font-black text-sm uppercase tracking-widest transition duration-300 flex items-center justify-center gap-2 ${activeTab === 'videos' ? 'bg-[#001A72] text-white shadow-lg' : 'text-[#001A72]/40 hover:bg-gray-50'
               }`}
           >
-            📽️ Video Library ({videos.length})
+            <Video size={18} /> Video Library ({videos.length})
           </button>
           <button
             onClick={() => setActiveTab('materials')}
-            className={`flex-1 py-5 rounded-2xl font-black text-sm uppercase tracking-widest transition duration-300 ${activeTab === 'materials' ? 'bg-[#001A72] text-white shadow-lg' : 'text-[#001A72]/40 hover:bg-gray-50'
+            className={`flex-1 py-5 rounded-2xl font-black text-sm uppercase tracking-widest transition duration-300 flex items-center justify-center gap-2 ${activeTab === 'materials' ? 'bg-[#001A72] text-white shadow-lg' : 'text-[#001A72]/40 hover:bg-gray-50'
               }`}
           >
-            📄 PDF Marketplace ({materials.length})
+            <FileText size={18} /> PDF Marketplace ({materials.length})
           </button>
         </div>
 
@@ -198,8 +218,8 @@ export default function TeacherPremiumMarketplacePage(): ReactElement {
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           {(activeTab === 'videos' ? videos : materials).map((item) => (
             <div key={item.id} className="group bg-white rounded-[2.5rem] shadow-xl overflow-hidden border border-gray-50 hover:shadow-2xl transition duration-500 flex flex-col">
-              <div className="relative h-56 bg-[#001A72]/5 flex items-center justify-center text-6xl group-hover:bg-[#001A72]/10 transition duration-500">
-                {activeTab === 'videos' ? '🎬' : '📚'}
+              <div className="relative h-56 bg-[#001A72]/5 flex items-center justify-center text-6xl group-hover:bg-[#001A72]/10 transition duration-500 text-[#001A72]">
+                {activeTab === 'videos' ? <PlayCircle size={64} /> : <BookOpen size={64} />}
                 <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur-md px-3 py-1 rounded-xl text-[10px] font-black text-[#001A72] uppercase tracking-[0.2em]">
                   {item.subject}
                 </div>
@@ -224,9 +244,9 @@ export default function TeacherPremiumMarketplacePage(): ReactElement {
                   {item.userHasAccess ? (
                     <button
                       onClick={() => activeTab === 'videos' ? router.push(`/watch-video/${item.id}`) : window.open(item.downloadUrl)}
-                      className="w-full py-4 bg-green-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-green-600 transition shadow-lg shadow-green-100"
+                      className="w-full py-4 bg-green-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-green-600 transition shadow-lg shadow-green-100 flex items-center justify-center gap-2"
                     >
-                      {activeTab === 'videos' ? '▶️ Resume Watching' : '📥 Download Files'}
+                      {activeTab === 'videos' ? <><Play size={14} /> Resume Watching</> : <><Download size={14} /> Download Files</>}
                     </button>
                   ) : (
                     <button
@@ -244,7 +264,9 @@ export default function TeacherPremiumMarketplacePage(): ReactElement {
 
           {(activeTab === 'videos' ? videos : materials).length === 0 && (
             <div className="col-span-full py-24 text-center">
-              <div className="text-7xl mb-6 opacity-20">🛒</div>
+              <div className="flex justify-center mb-6 opacity-20 text-[#001A72]">
+                <ShoppingCart size={80} />
+              </div>
               <h3 className="text-2xl font-black text-[#001A72] opacity-40">No {activeTab} available yet.</h3>
             </div>
           )}

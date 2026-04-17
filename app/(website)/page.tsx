@@ -2,6 +2,17 @@
 
 import { useState, useEffect, ReactElement } from 'react';
 import Link from 'next/link';
+import { 
+  ShieldCheck, 
+  Star, 
+  Banknote, 
+  Smartphone, 
+  ChevronLeft, 
+  ChevronRight,
+  Search,
+  CheckCircle2,
+  LucideIcon
+} from 'lucide-react';
 
 interface Slide {
   id: number;
@@ -104,7 +115,7 @@ export default function HomePage(): ReactElement {
           className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white/40 hover:bg-white/70 text-white p-3 rounded-full transition z-20 w-12 h-12 flex items-center justify-center"
           aria-label="Previous slide"
         >
-          ❮
+          <ChevronLeft size={24} />
         </button>
 
         {/* Next Button */}
@@ -113,7 +124,7 @@ export default function HomePage(): ReactElement {
           className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white/40 hover:bg-white/70 text-white p-3 rounded-full transition z-20 w-12 h-12 flex items-center justify-center"
           aria-label="Next slide"
         >
-          ❯
+          <ChevronRight size={24} />
         </button>
 
         {/* Indicators */}
@@ -192,10 +203,10 @@ export default function HomePage(): ReactElement {
       <div className="mb-16 max-w-7xl mx-auto">
         <h2 className="text-4xl font-bold mb-12 text-center">Why Choose EDU-WINS?</h2>
         <div className="grid md:grid-cols-4 gap-6 justify-center">
-          <FeatureCard icon="🔒" title="Secure & Safe" desc="OTP verification & filtered chat ensure safety" />
-          <FeatureCard icon="⭐" title="Trusted Tutors" desc="Dynamic trust scores based on student reviews" />
-          <FeatureCard icon="💰" title="Fair Payments" desc="Transparent split: 80% tutor, 15% platform, 5% welfare" />
-          <FeatureCard icon="📱" title="Works Offline" desc="Progressive web app - install and access anywhere" />
+          <FeatureCard icon={ShieldCheck} title="Secure & Safe" desc="OTP verification & filtered chat ensure safety" />
+          <FeatureCard icon={Star} title="Trusted Tutors" desc="Dynamic trust scores based on student reviews" />
+          <FeatureCard icon={Banknote} title="Fair Payments" desc="Transparent split: 80% tutor, 15% platform, 5% welfare" />
+          <FeatureCard icon={Smartphone} title="Works Offline" desc="Progressive web app - install and access anywhere" />
         </div>
       </div>
 
@@ -265,7 +276,7 @@ function TeacherInfoCard({ name, subject, rating, reviews, rate, location, imgTe
         <div className="flex items-center justify-between mb-4 pb-4 border-b border-gray-200">
           <div>
             <span className="text-2xl font-bold text-[#001A72]">{rating}</span>
-            <span className="text-yellow-500 ml-1">★</span>
+            <Star size={18} className="text-yellow-500 ml-1 inline-block -mt-1 fill-yellow-500" />
           </div>
           <p className="text-sm text-gray-600">{reviews} reviews</p>
         </div>
@@ -288,8 +299,8 @@ function TeacherInfoCard({ name, subject, rating, reviews, rate, location, imgTe
           </button>
         </div>
         <div className="mt-4 text-center">
-          <span className="inline-block bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
-            Verified Teacher
+          <span className="inline-flex items-center gap-1.5 bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
+            <CheckCircle2 size={14} /> Verified Teacher
           </span>
         </div>
       </div>
@@ -298,15 +309,17 @@ function TeacherInfoCard({ name, subject, rating, reviews, rate, location, imgTe
 }
 
 interface FeatureCardProps {
-  icon: string;
+  icon: LucideIcon;
   title: string;
   desc: string;
 }
 
-function FeatureCard({ icon, title, desc }: FeatureCardProps): ReactElement {
+function FeatureCard({ icon: Icon, title, desc }: FeatureCardProps): ReactElement {
   return (
     <div className="bg-white p-8 rounded-lg shadow text-center">
-      <div className="text-4xl mb-4">{icon}</div>
+      <div className="flex justify-center mb-4 text-[#FFB81C]">
+        <Icon size={40} />
+      </div>
       <h3 className="text-xl font-bold mb-2">{title}</h3>
       <p className="text-gray-600">{desc}</p>
     </div>

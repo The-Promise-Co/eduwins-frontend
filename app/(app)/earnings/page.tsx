@@ -6,6 +6,16 @@ import Link from 'next/link';
 import api from '@/services/api';
 import DashboardNavigation from '@/components/DashboardNavigation';
 import { User } from '@/types';
+import { 
+  Wallet, 
+  Building2, 
+  HeartPulse, 
+  Calendar, 
+  ShieldCheck, 
+  TrendingUp, 
+  Brain, 
+  Undo2 
+} from 'lucide-react';
 
 interface HistoryEntry {
   date: string;
@@ -81,17 +91,17 @@ export default function EarningsPage(): ReactElement {
               <div className="space-y-10">
                 {/* Teacher Stats Grid */}
                 <div className="grid md:grid-cols-4 gap-6">
-                  <StatCard label="Personal Take (75%)" value="₦45,000" color="bg-green-500" icon="💰" />
-                  <StatCard label="Platform Fee (15%)" value="₦9,000" color="bg-blue-500" icon="🏢" />
-                  <StatCard label="Welfare Fund (10%)" value="₦6,000" color="bg-purple-500" icon="🏥" />
-                  <StatCard label="Total Booked" value="₦60,000" color="bg-[#FFB81C]" icon="📅" />
+                  <StatCard label="Personal Take (75%)" value="₦45,000" color="bg-green-500" icon={Wallet} />
+                  <StatCard label="Platform Fee (15%)" value="₦9,000" color="bg-blue-500" icon={Building2} />
+                  <StatCard label="Welfare Fund (10%)" value="₦6,000" color="bg-purple-500" icon={HeartPulse} />
+                  <StatCard label="Total Booked" value="₦60,000" color="bg-[#FFB81C]" icon={Calendar} />
                 </div>
 
                 {/* Educational Split Explanation */}
                 <div className="bg-[#001A72] rounded-2xl p-8 text-white relative overflow-hidden">
                   <div className="relative z-10">
                     <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-                      <span>🛡️</span> Secure Split & Welfare Savings
+                      <ShieldCheck size={24} /> Secure Split & Welfare Savings
                     </h3>
                     <p className="text-blue-100 mb-6 max-w-2xl leading-relaxed">
                       Payments are automatically split at the source when a session is confirmed. This ensures transparency and builds your long-term welfare security.
@@ -109,7 +119,9 @@ export default function EarningsPage(): ReactElement {
                 <div className="bg-white border-2 border-purple-100 rounded-2xl p-8 shadow-sm">
                   <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-8">
                     <div>
-                      <h2 className="text-2xl font-black text-[#001A72] mb-1">🏥 Your Welfare Savings</h2>
+                      <h2 className="text-2xl font-black text-[#001A72] mb-1 flex items-center gap-2">
+                        <HeartPulse className="text-purple-600" /> Your Welfare Savings
+                      </h2>
                       <p className="text-gray-500 text-sm">Funds accumulated from your teaching sessions</p>
                     </div>
                     <div className="flex gap-3">
@@ -173,10 +185,10 @@ export default function EarningsPage(): ReactElement {
               <div className="space-y-10">
                 {/* Parent Summary */}
                 <div className="grid md:grid-cols-4 gap-6">
-                  <StatCard label="Total Spent" value="₦45,000" color="bg-green-500" icon="📈" />
-                  <StatCard label="This Month" value="₦12,500" color="bg-blue-500" icon="📅" />
-                  <StatCard label="Active Sessions" value="5" color="bg-[#FFB81C]" icon="🧠" />
-                  <StatCard label="Refund Balance" value="₦0" color="bg-purple-500" icon="↩️" />
+                  <StatCard label="Total Spent" value="₦45,000" color="bg-green-500" icon={TrendingUp} />
+                  <StatCard label="This Month" value="₦12,500" color="bg-blue-500" icon={Calendar} />
+                  <StatCard label="Active Sessions" value="5" color="bg-[#FFB81C]" icon={Brain} />
+                  <StatCard label="Refund Balance" value="₦0" color="bg-purple-500" icon={Undo2} />
                 </div>
 
                 {/* Parent Table */}
@@ -228,14 +240,14 @@ interface StatCardProps {
   label: string;
   value: string;
   color: string;
-  icon: string;
+  icon: any;
 }
 
-function StatCard({ label, value, color, icon }: StatCardProps): ReactElement {
+function StatCard({ label, value, color, icon: Icon }: StatCardProps): ReactElement {
   return (
     <div className="p-6 bg-gray-50 rounded-2xl border border-gray-100 flex items-center gap-4">
-      <div className={`w-12 h-12 rounded-xl ${color} flex items-center justify-center text-2xl shadow-lg shadow-${color}/20`}>
-        {icon}
+      <div className={`w-12 h-12 rounded-xl ${color} flex items-center justify-center text-white text-2xl shadow-lg`}>
+        <Icon size={24} />
       </div>
       <div>
         <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-0.5">{label}</p>

@@ -10,10 +10,10 @@ import { TeacherProfile } from '@/types';
 const PAGE_TITLES: Record<string, string> = {
   '/dashboard': 'Home',
   '/profile-edit': 'Edit Profile',
-  '/profile-builder': '🎯 Profile Builder',
-  '/premium-subscription': '💎 Premium',
-  '/premium-content': '📺 My Content',
-  '/welfare-fund': '🤝 Welfare Fund',
+  '/profile-builder': 'Profile Builder',
+  '/premium-subscription': 'Premium',
+  '/premium-content': 'My Content',
+  '/welfare-fund': 'Welfare Fund',
   '/schedule': 'View Schedule',
   '/earnings': 'Earnings',
   '/progress': 'Progress Report',
@@ -33,8 +33,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState<TeacherProfile | null>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const pageTitle = PAGE_TITLES[pathname] ?? 'Dashboard';
+
+  // Close mobile menu on path change for responsive view
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [pathname]);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -82,10 +88,16 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         user={user}
         collapsed={sidebarCollapsed}
         onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
+        isMobileOpen={isMobileMenuOpen}
+        onCloseMobile={() => setIsMobileMenuOpen(false)}
       />
-      <div className="flex flex-col flex-1 min-w-0 overflow-hidden m-2 rounded-2xl bg-[#F4F5F7] md:rounded-[1.4rem]">
-        <AppHeader user={user} title={pageTitle} />
-        <main className="flex-1 overflow-y-auto p-6">
+      <div className="flex flex-col flex-1 min-w-0 overflow-hidden m-0 md:m-2 rounded-none md:rounded-[1.4rem] bg-[#F4F5F7]">
+        <AppHeader 
+          user={user} 
+          title={pageTitle} 
+          onToggleMobileMenu={() => setIsMobileMenuOpen(true)}
+        />
+        <main className="flex-1 overflow-y-auto p-4 md:p-6">
           {children}
         </main>
       </div>

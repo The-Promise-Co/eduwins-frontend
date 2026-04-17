@@ -5,6 +5,18 @@ import { useRouter } from 'next/navigation';
 import api from '@/services/api';
 import DashboardNavigation from '@/components/DashboardNavigation';
 import { User } from '@/types';
+import { 
+  Gem, 
+  Tv, 
+  Rocket, 
+  AlertTriangle, 
+  AlertCircle, 
+  Video, 
+  BookOpen, 
+  UploadCloud, 
+  PackageOpen, 
+  PlayCircle 
+} from 'lucide-react';
 
 interface PremiumContent {
   id: string;
@@ -182,7 +194,9 @@ export default function PremiumContentPage(): ReactElement {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 p-6">
         <div className="bg-white p-8 rounded-2xl shadow-xl border border-gray-100 text-center max-w-md">
-          <div className="text-6xl mb-4">💎</div>
+          <div className="flex justify-center mb-4 text-[#FFB81C]">
+            <Gem size={64} />
+          </div>
           <h2 className="text-2xl font-black text-[#001A72] mb-3">Premium Access Required</h2>
           <p className="text-gray-500 font-medium mb-6">{message.text || 'You need an active subscription to access this workshop.'}</p>
         </div>
@@ -201,7 +215,7 @@ export default function PremiumContentPage(): ReactElement {
         {/* Header */}
         <div className="mb-10">
           <h1 className="text-4xl font-black text-[#001A72] mb-2 flex items-center gap-3">
-            <span>📺</span> Content Workshop
+            <Tv size={32} /> Content Workshop
           </h1>
           <p className="text-gray-500 font-medium text-lg">Upload and monetize your teaching expertise</p>
         </div>
@@ -214,26 +228,24 @@ export default function PremiumContentPage(): ReactElement {
                 : 'bg-red-50 text-red-700 border-red-100'
             }`}>
             <p className="font-bold flex items-center gap-3">
-              {message.type === 'success' ? '🚀' : message.type === 'warning' ? '⚠️' : '❌'} {message.text}
+              {message.type === 'success' ? <Rocket size={20} /> : message.type === 'warning' ? <AlertTriangle size={20} /> : <AlertCircle size={20} />} {message.text}
             </p>
           </div>
         )}
 
         {/* Action Toggle */}
         <div className="bg-white p-2 rounded-2xl shadow-lg border border-gray-100 flex gap-2 mb-10">
-          <button
-            onClick={() => setActiveTab('videos')}
-            className={`flex-1 py-4 px-6 rounded-xl font-black text-sm uppercase tracking-widest transition duration-300 ${activeTab === 'videos' ? 'bg-[#001A72] text-white shadow-lg' : 'text-[#001A72]/50 hover:bg-gray-50'
+            className={`flex-1 py-4 px-6 rounded-xl font-black text-sm uppercase tracking-widest transition duration-300 flex items-center justify-center gap-2 ${activeTab === 'videos' ? 'bg-[#001A72] text-white shadow-lg' : 'text-[#001A72]/50 hover:bg-gray-50'
               }`}
           >
-            📽️ Video Lectures ({videos.length})
+            <Video size={18} /> Video Lectures ({videos.length})
           </button>
           <button
             onClick={() => setActiveTab('materials')}
-            className={`flex-1 py-4 px-6 rounded-xl font-black text-sm uppercase tracking-widest transition duration-300 ${activeTab === 'materials' ? 'bg-[#001A72] text-white shadow-lg' : 'text-[#001A72]/50 hover:bg-gray-50'
+            className={`flex-1 py-4 px-6 rounded-xl font-black text-sm uppercase tracking-widest transition duration-300 flex items-center justify-center gap-2 ${activeTab === 'materials' ? 'bg-[#001A72] text-white shadow-lg' : 'text-[#001A72]/50 hover:bg-gray-50'
               }`}
           >
-            📚 Study Materials ({materials.length})
+            <BookOpen size={18} /> Study Materials ({materials.length})
           </button>
         </div>
 
@@ -307,7 +319,9 @@ export default function PremiumContentPage(): ReactElement {
 
                 <div className="p-4 bg-blue-50/50 border-2 border-dashed border-blue-100 rounded-2xl text-center">
                   <label className="cursor-pointer block">
-                    <div className="text-3xl mb-1">📤</div>
+                    <div className="flex justify-center mb-1 text-[#001A72] opacity-50">
+                      <UploadCloud size={32} />
+                    </div>
                     <span className="text-xs font-black text-[#001A72] uppercase tracking-widest">
                       {activeTab === 'videos' ? (videoForm.file ? 'Replace Video' : 'Choose Video File') : (materialForm.file ? 'Replace File' : 'Choose Material PDF')}
                     </span>
@@ -347,15 +361,17 @@ export default function PremiumContentPage(): ReactElement {
 
             {(activeTab === 'videos' ? videos : materials).length === 0 ? (
               <div className="bg-white rounded-3xl p-20 text-center border border-gray-100 shadow-xl">
-                <div className="text-6xl mb-4 opacity-20">📭</div>
+                <div className="flex justify-center mb-4 opacity-20 text-[#001A72]">
+                  <PackageOpen size={64} />
+                </div>
                 <p className="text-gray-400 font-bold">No content found in this category.</p>
               </div>
             ) : (
               <div className="grid gap-6">
                 {(activeTab === 'videos' ? videos : materials).map((content) => (
                   <div key={content.id} className="bg-white rounded-3xl p-6 shadow-xl border border-gray-100 flex flex-col md:flex-row gap-6 hover:border-[#FFB81C] transition duration-300">
-                    <div className="w-full md:w-32 h-32 bg-[#001A72]/5 rounded-2xl flex items-center justify-center text-4xl">
-                      {activeTab === 'videos' ? '🎞️' : '📚'}
+                    <div className="w-full md:w-32 h-32 bg-[#001A72]/5 rounded-2xl flex items-center justify-center text-[#001A72]">
+                      {activeTab === 'videos' ? <PlayCircle size={48} /> : <BookOpen size={48} />}
                     </div>
                     <div className="flex-1">
                       <div className="flex justify-between items-start mb-2">

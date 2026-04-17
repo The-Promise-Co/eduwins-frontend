@@ -1,7 +1,23 @@
 'use client';
 
 import React, { useState, useEffect, ReactElement } from 'react';
-import { AlertCircle, CheckCircle, Clock, XCircle, Plus, Eye, EyeOff, LucideIcon } from 'lucide-react';
+import { 
+  AlertCircle, 
+  CheckCircle, 
+  Clock, 
+  XCircle, 
+  Plus, 
+  Eye, 
+  EyeOff, 
+  LucideIcon,
+  Wallet,
+  Building2,
+  HeartPulse,
+  Home,
+  Hourglass,
+  Zap,
+  ShieldCheck
+} from 'lucide-react';
 import api from '@/services/api';
 import DashboardNavigation from '@/components/DashboardNavigation';
 import { User } from '@/types';
@@ -259,7 +275,9 @@ export default function WithdrawalPage(): ReactElement {
       <div className="max-w-6xl mx-auto p-6">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-[#001A72] mb-2">💰 Withdraw Funds</h1>
+          <h1 className="text-4xl font-bold text-[#001A72] mb-2 flex items-center gap-3">
+            <Wallet size={36} /> Withdraw Funds
+          </h1>
           <p className="text-gray-600">Manage your accessible funds and cash out your earnings</p>
         </div>
 
@@ -339,7 +357,9 @@ export default function WithdrawalPage(): ReactElement {
                     </button>
                   </div>
                 </div>
-                <div className="text-[#FFB81C] text-5xl">🏦</div>
+                <div className="text-[#FFB81C] opacity-50">
+                  <Building2 size={64} />
+                </div>
               </div>
               <button
                 onClick={() => setActiveTab('withdraw')}
@@ -352,26 +372,26 @@ export default function WithdrawalPage(): ReactElement {
             <div className="bg-white rounded-xl shadow-lg p-8 border border-gray-100">
               <h3 className="text-xl font-black text-[#001A72] mb-6">Balance Breakdown</h3>
               <div className="space-y-4">
-                <BreakdownItem label="Total Earnings" value={balanceData?.totalAcquired} icon="💰" color="text-gray-900" />
+                <BreakdownItem label="Total Earnings" value={balanceData?.totalAcquired} icon={Wallet} color="text-gray-900" />
                 <div className="border-t pt-4">
                   <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">Deductions & Reserves</p>
                   <BreakdownItem
                     label="Welfare Fund (10%)"
                     value={balanceData?.deductions.welfareFund}
-                    icon="🏥"
+                    icon={HeartPulse}
                     color="text-red-500"
                     subtitle="Saved for housing program"
                   />
                   <BreakdownItem
                     label="Mortgage Payment"
                     value={balanceData?.deductions.mortgagePayment}
-                    icon="🏠"
+                    icon={Home}
                     color="text-red-500"
                   />
                   <BreakdownItem
                     label="Reserved (Pending)"
                     value={balanceData?.deductions.reserved}
-                    icon="⏳"
+                    icon={Hourglass}
                     color="text-orange-500"
                   />
                 </div>
@@ -380,7 +400,7 @@ export default function WithdrawalPage(): ReactElement {
 
             <div className="bg-gradient-to-br from-[#001A72] to-[#001A72]/90 rounded-2xl shadow-xl p-8 col-span-1 md:col-span-2 text-white">
               <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
-                <span>⚡</span> Withdrawal Limits & Information
+                <Zap size={20} className="text-[#FFB81C]" /> Withdrawal Limits & Information
               </h3>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                 <LimitItem label="Min. Request" value={balanceData ? `₦${balanceData.minWithdrawal.toLocaleString()}` : ''} />
@@ -484,7 +504,7 @@ export default function WithdrawalPage(): ReactElement {
             <div className="space-y-6">
               <div className="bg-[#FFB81C]/10 border-2 border-[#FFB81C]/20 rounded-2xl p-6">
                 <h4 className="font-black text-[#001A72] mb-4 flex items-center gap-2">
-                  <span>🛡️</span> Security Tips
+                  <ShieldCheck size={20} /> Security Tips
                 </h4>
                 <ul className="space-y-3 text-sm text-[#001A72]/80">
                   <li className="flex gap-2"><span>•</span> Always verify account name matches your registered name.</li>
@@ -583,16 +603,18 @@ export default function WithdrawalPage(): ReactElement {
 interface BreakdownItemProps {
   label: string;
   value?: number;
-  icon: string;
+  icon: any;
   color: string;
   subtitle?: string;
 }
 
-function BreakdownItem({ label, value, icon, color, subtitle }: BreakdownItemProps): ReactElement {
+function BreakdownItem({ label, value, icon: Icon, color, subtitle }: BreakdownItemProps): ReactElement {
   return (
     <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100 mb-2">
       <div className="flex items-center gap-3">
-        <span className="text-xl">{icon}</span>
+        <span className={color}>
+          {typeof Icon === 'string' ? Icon : <Icon size={20} />}
+        </span>
         <div>
           <p className="text-sm font-bold text-gray-800 leading-none mb-1">{label}</p>
           {subtitle && <p className="text-[10px] text-gray-500 font-medium leading-none">{subtitle}</p>}

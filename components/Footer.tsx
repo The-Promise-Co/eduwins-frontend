@@ -6,7 +6,9 @@ export default function Footer(): React.ReactElement {
     <footer className="bg-[#001A72] text-[#FFB81C] py-12">
       <div className="max-w-7xl mx-auto px-4">
         <div className="mb-8 pb-8 border-b border-gray-800">
-          <img src="/footer-logo.png" alt="EduWins footer logo" className="h-12 w-auto" />
+          <Link href="/">
+            <img src="/logo-white.png" alt="EduWins logo" className="h-10 w-auto" />
+          </Link>
         </div>
         <div className="grid md:grid-cols-4 gap-8 mb-8">
           <div>

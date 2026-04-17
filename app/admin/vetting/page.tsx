@@ -4,6 +4,20 @@ import { useState, useEffect, ReactElement } from 'react';
 import api from '@/services/api';
 import NavBar from '../../../components/NavBar';
 import { TeacherProfile } from '@/types';
+import { 
+  ShieldCheck, 
+  GraduationCap, 
+  CreditCard, 
+  BarChart3, 
+  Home, 
+  TrendingUp, 
+  CheckCircle2, 
+  FileText,
+  AlertCircle,
+  XCircle,
+  Clock,
+  HeartPulse
+} from 'lucide-react';
 
 interface AdminStats {
   totalTeachers: number;
@@ -92,16 +106,16 @@ export default function AdminVettingDashboard(): ReactElement {
         {/* Header */}
         <div className="mb-12">
           <h1 className="text-5xl font-black text-[#001A72] mb-2 flex items-center gap-4">
-            <span>🛡️</span> Administrative Command
+            <ShieldCheck size={48} /> Administrative Command
           </h1>
           <p className="text-gray-500 font-medium text-xl">Operational oversight, security, and financial management.</p>
         </div>
 
         {/* Console Navigation */}
         <div className="bg-white p-2 rounded-[2rem] shadow-xl border border-gray-100 flex gap-2 mb-12">
-          <NavTab active={activeTab === 'vetting'} onClick={() => setActiveTab('vetting')} label="Teacher Vetting" icon="🧑‍🏫" count={teachers.length} />
-          <NavTab active={activeTab === 'escrow'} onClick={() => setActiveTab('escrow')} label="Escrow Vault" icon="💳" count={bookings.length} />
-          <NavTab active={activeTab === 'stats'} onClick={() => setActiveTab('stats')} label="Global Analytics" icon="📊" />
+          <NavTab active={activeTab === 'vetting'} onClick={() => setActiveTab('vetting')} label="Teacher Vetting" icon={GraduationCap} count={teachers.length} />
+          <NavTab active={activeTab === 'escrow'} onClick={() => setActiveTab('escrow')} label="Escrow Vault" icon={CreditCard} count={bookings.length} />
+          <NavTab active={activeTab === 'stats'} onClick={() => setActiveTab('stats')} label="Global Analytics" icon={BarChart3} />
         </div>
 
         {/* Dashboard Area */}
@@ -149,7 +163,7 @@ export default function AdminVettingDashboard(): ReactElement {
                                 rel="noopener noreferrer"
                                 className="mt-8 inline-flex items-center gap-2 bg-[#001A72]/5 text-[#001A72] px-6 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-[#001A72]/10 transition"
                               >
-                                📄 Open Verified Document
+                                <FileText size={14} /> Open Verified Document
                               </a>
                             )}
                           </div>
@@ -158,18 +172,18 @@ export default function AdminVettingDashboard(): ReactElement {
                           <div className="lg:w-1/3 flex flex-col justify-center gap-4 border-t lg:border-t-0 lg:border-l border-gray-100 lg:pl-12 pt-8 lg:pt-0">
                             <button
                               onClick={() => handleApproveTeacher(teacher.id)}
-                              className="w-full bg-green-500 text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-green-600 transition shadow-lg shadow-green-100"
+                              className="w-full bg-green-500 text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-green-600 transition shadow-lg shadow-green-100 flex items-center justify-center gap-2"
                             >
-                              ✓ Finalize Approval
+                              <CheckCircle2 size={16} /> Finalize Approval
                             </button>
                             <button
                               onClick={() => handleRejectTeacher(teacher.id)}
-                              className="w-full bg-red-50 text-red-500 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-red-100 transition"
+                              className="w-full bg-red-50 text-red-500 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-red-100 transition flex items-center justify-center gap-2"
                             >
-                              ✗ Formal Rejection
+                              <XCircle size={16} /> Formal Rejection
                             </button>
-                            <p className="text-[10px] text-gray-400 font-black uppercase text-center tracking-widest mt-2 underline decoration-[#FFB81C] decoration-2 underline-offset-4">
-                              Status: Operational Review
+                            <p className="text-[10px] text-gray-400 font-black uppercase text-center tracking-widest mt-2 underline decoration-[#FFB81C] decoration-2 underline-offset-4 flex items-center justify-center gap-2">
+                              <Clock size={10} /> Status: Operational Review
                             </p>
                           </div>
                         </div>
@@ -205,10 +219,11 @@ export default function AdminVettingDashboard(): ReactElement {
                               <td className="px-8 py-6 font-black text-[#FFB81C]">₦{booking.totalCost?.toLocaleString()}</td>
                               <td className="px-8 py-6 text-sm text-gray-400 font-bold">{booking.totalSessions} Sessions</td>
                               <td className="px-8 py-6">
-                                <span className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest ${booking.status === 'completed'
+                                <span className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 w-fit ${booking.status === 'completed'
                                     ? 'bg-green-100 text-green-700'
                                     : 'bg-orange-100 text-orange-700'
                                   }`}>
+                                  {booking.status === 'completed' ? <CheckCircle2 size={10} /> : <Clock size={10} />}
                                   {booking.status}
                                 </span>
                               </td>
@@ -235,10 +250,10 @@ export default function AdminVettingDashboard(): ReactElement {
 
               {activeTab === 'stats' && (
                 <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-                  <AnalyticsCard label="Active Specialists" value={stats.totalTeachers.toString()} color="text-[#001A72]" icon="🧑‍🏫" />
-                  <AnalyticsCard label="Verified Clients" value={stats.totalParents.toString()} color="text-[#001A72]" icon="🏡" />
-                  <AnalyticsCard label="Gross Volume" value={`₦${stats.totalEarnings?.toLocaleString()}`} color="text-[#FFB81C]" icon="📈" />
-                  <AnalyticsCard label="Welfare Reserves" value={`₦${stats.welfarePooled?.toLocaleString()}`} color="text-green-600" icon="🏥" />
+                  <AnalyticsCard label="Active Specialists" value={stats.totalTeachers.toString()} color="text-[#001A72]" icon={GraduationCap} />
+                  <AnalyticsCard label="Verified Clients" value={stats.totalParents.toString()} color="text-[#001A72]" icon={Home} />
+                  <AnalyticsCard label="Gross Volume" value={`₦${stats.totalEarnings?.toLocaleString()}`} color="text-[#FFB81C]" icon={TrendingUp} />
+                  <AnalyticsCard label="Welfare Reserves" value={`₦${stats.welfarePooled?.toLocaleString()}`} color="text-green-600" icon={HeartPulse} />
                 </div>
               )}
             </>
@@ -253,18 +268,20 @@ interface NavTabProps {
   active: boolean;
   onClick: () => void;
   label: string;
-  icon: string;
+  icon: any;
   count?: number;
 }
 
-function NavTab({ active, onClick, label, icon, count }: NavTabProps): ReactElement {
+function NavTab({ active, onClick, label, icon: Icon, count }: NavTabProps): ReactElement {
   return (
     <button
       onClick={onClick}
       className={`flex-1 flex flex-col items-center justify-center py-6 rounded-2xl transition duration-500 relative ${active ? 'bg-[#001A72] text-white shadow-2xl scale-[1.02] z-10' : 'text-[#001A72]/40 hover:bg-gray-50'
         }`}
     >
-      <span className="text-2xl mb-1">{icon}</span>
+      <div className="mb-1">
+        <Icon size={24} />
+      </div>
       <span className="text-[10px] font-black uppercase tracking-[0.2em]">{label}</span>
       {count !== undefined && (
         <span className={`absolute top-4 right-4 text-[10px] font-black px-2 py-0.5 rounded-lg ${active ? 'bg-[#FFB81C] text-[#001A72]' : 'bg-gray-100 text-gray-400'
@@ -308,13 +325,15 @@ interface AnalyticsCardProps {
   label: string;
   value: string;
   color: string;
-  icon: string;
+  icon: any;
 }
 
-function AnalyticsCard({ label, value, color, icon }: AnalyticsCardProps): ReactElement {
+function AnalyticsCard({ label, value, color, icon: Icon }: AnalyticsCardProps): ReactElement {
   return (
-    <div className="bg-white rounded-[2.5rem] shadow-xl p-10 border border-gray-50 flex flex-col items-center text-center group hover:-translate-y-2 transition duration-500">
-      <div className="text-5xl mb-6 opacity-80 group-hover:scale-110 transition duration-500">{icon}</div>
+    <div className="bg-white rounded-[2.5rem] shadow-xl p-10 border border-gray-100 flex flex-col items-center text-center group hover:-translate-y-2 transition duration-500">
+      <div className={`mb-6 opacity-80 group-hover:scale-110 transition duration-500 ${color}`}>
+        <Icon size={48} />
+      </div>
       <div className={`text-4xl font-black mb-1 ${color}`}>{value}</div>
       <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{label}</p>
     </div>
@@ -328,7 +347,9 @@ interface EmptyStateProps {
 function EmptyState({ label }: EmptyStateProps): ReactElement {
   return (
     <div className="bg-white rounded-[3rem] p-32 text-center border-2 border-dashed border-gray-100 italic">
-      <div className="text-7xl mb-6 opacity-10 font-serif">EduWins</div>
+      <div className="mb-6 opacity-10 flex justify-center text-[#001A72]">
+        <ShieldCheck size={80} />
+      </div>
       <p className="text-gray-400 font-black text-xl uppercase tracking-widest">No Pending {label}</p>
       <p className="text-gray-300 text-xs mt-2 font-medium">System is currently caught up with all operational items.</p>
     </div>

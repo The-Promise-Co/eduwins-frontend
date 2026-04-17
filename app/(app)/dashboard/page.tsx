@@ -4,9 +4,24 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import api from '@/services/api';
 import { TeacherProfile, User, Booking } from '@/types';
+import { 
+  Search, 
+  Calendar, 
+  Box, 
+  BarChart3, 
+  Wallet, 
+  Handshake, 
+  Gem, 
+  Award, 
+  MessageSquare, 
+  Settings,
+  Lock,
+  ChevronRight,
+  LucideIcon
+} from 'lucide-react';
 
 interface FeatureCard {
-  icon: string;
+  icon: LucideIcon;
   title: string;
   description: string;
   href: string;
@@ -16,35 +31,35 @@ interface FeatureCard {
 
 const FEATURE_CARDS: FeatureCard[] = [
   {
-    icon: '🔍',
+    icon: Search,
     title: 'Find a Teacher',
     description: 'Browse our verified network of expert tutors and book your first session today.',
     href: '/search',
     color: 'bg-blue-50 border-blue-100',
   },
   {
-    icon: '📅',
+    icon: Calendar,
     title: 'My Schedule',
     description: 'View your upcoming lessons, manage bookings, and confirm completed sessions.',
     href: '/schedule',
     color: 'bg-amber-50 border-amber-100',
   },
   {
-    icon: '📦',
+    icon: Box,
     title: 'Digital Vault',
     description: 'Buy and sell lesson notes, videos, and study materials from top educators.',
     href: '/vault',
     color: 'bg-purple-50 border-purple-100',
   },
   {
-    icon: '📊',
+    icon: BarChart3,
     title: 'Progress Reports',
     description: 'Track weekly educational growth, attendance, and skill improvement scores.',
     href: '/progress-reports',
     color: 'bg-green-50 border-green-100',
   },
   {
-    icon: '💰',
+    icon: Wallet,
     title: 'Earnings',
     description: 'Review your income, track payments, and manage your withdrawal requests.',
     href: '/earnings',
@@ -52,7 +67,7 @@ const FEATURE_CARDS: FeatureCard[] = [
     role: 'teacher',
   },
   {
-    icon: '🤝',
+    icon: Handshake,
     title: 'Welfare Fund',
     description: 'Your protected savings account — 10% of every lesson payment secured for you.',
     href: '/welfare-fund',
@@ -60,7 +75,7 @@ const FEATURE_CARDS: FeatureCard[] = [
     role: 'teacher',
   },
   {
-    icon: '💎',
+    icon: Gem,
     title: 'Go Premium',
     description: 'Unlock advanced features, boost your profile visibility, and earn more.',
     href: '/premium-subscription',
@@ -68,21 +83,21 @@ const FEATURE_CARDS: FeatureCard[] = [
     role: 'teacher',
   },
   {
-    icon: '🎖️',
+    icon: Award,
     title: 'Ambassador',
     description: 'Join our ambassador programme, refer users, and earn rewards every month.',
     href: '/ambassador',
     color: 'bg-orange-50 border-orange-100',
   },
   {
-    icon: '💬',
+    icon: MessageSquare,
     title: 'Chat',
     description: 'Communicate directly with your teachers or students in real-time.',
     href: '/chat',
     color: 'bg-teal-50 border-teal-100',
   },
   {
-    icon: '⚙️',
+    icon: Settings,
     title: 'Account Settings',
     description: 'Update your personal details, password, and notification preferences.',
     href: '/dashboard-settings',
@@ -160,7 +175,7 @@ export default function DashboardPage() {
       {/* Welcome */}
       <div>
         <h2 className="text-xl font-bold text-gray-900">
-          Welcome, <span className="text-[#001A72]">{firstName}</span> 👋
+          Welcome, <span className="text-[#001A72]">{firstName}</span>
         </h2>
       </div>
 
@@ -214,7 +229,9 @@ export default function DashboardPage() {
       {/* Parent: Lesson Confirmation */}
       {user?.role === 'parent' && (
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-          <h3 className="text-base font-bold text-[#001A72] mb-1">🔐 Lesson Confirmation</h3>
+          <h3 className="text-base font-bold text-[#001A72] mb-1 flex items-center gap-2">
+            <Lock size={18} /> Lesson Confirmation
+          </h3>
           <p className="text-xs text-gray-500 mb-4">
             After a teacher marks a lesson complete, you receive an OTP via SMS. Enter it below to release payment.
           </p>
@@ -274,7 +291,9 @@ export default function DashboardPage() {
       {user?.role === 'teacher' && (
         <div className="bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-100 rounded-2xl p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-base font-bold text-[#001A72]">💰 Your Welfare Fund</h3>
+            <h3 className="text-base font-bold text-[#001A72] flex items-center gap-2">
+              <Wallet size={18} /> Your Welfare Fund
+            </h3>
             <span className="text-xs bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full font-semibold">10% of earnings</span>
           </div>
           <div className="grid grid-cols-3 gap-4">
@@ -314,18 +333,19 @@ function StatBox({ label, value, sub, accent }: { label: string; value: string; 
 }
 
 function FeatureCardItem({ card }: { card: FeatureCard }) {
+  const Icon = card.icon;
   return (
     <Link
       href={card.href}
       className={`group block rounded-2xl border p-5 hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 ${card.color}`}
     >
-      <div className="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center text-xl mb-3">
-        {card.icon}
+      <div className="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center mb-3">
+        <Icon size={20} className="text-[#001A72]" />
       </div>
       <h4 className="font-bold text-[#001A72] text-sm mb-1">{card.title}</h4>
       <p className="text-xs text-gray-500 leading-relaxed mb-3">{card.description}</p>
       <span className="text-xs font-bold text-[#001A72] flex items-center gap-1 group-hover:gap-2 transition-all">
-        Get started <span>→</span>
+        Get started <ChevronRight size={14} />
       </span>
     </Link>
   );
