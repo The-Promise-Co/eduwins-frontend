@@ -6,9 +6,6 @@ import Link from 'next/link';
 import api from '@/services/api';
 import { useUser } from '@/context/UserContext';
 import {
-  ArrowLeft,
-  BookOpen,
-  Plus,
   BookOpen,
   Image as ImageIcon,
   AlertCircle,
@@ -17,13 +14,16 @@ import {
 import Section from '@/components/Section';
 import AlertError from '@/components/AlertError';
 import { useCloudinary } from '@/hooks/useCloudinary';
+import PageHeader from '@/components/PageHeader';
+import { useSubjects } from '@/app/app/courses/misc/api';
+import { LEVELS } from '@/types/course';
 
 export default function CreateCoursePage() {
   const router = useRouter();
   const { user } = useUser();
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
-  const [expandedModules, setExpandedModules] = useState<Record<number, boolean>>({ 0: true });
+
 
   const [form, setForm] = useState({
     title: '',
@@ -63,11 +63,11 @@ export default function CreateCoursePage() {
   const handleThumbnailUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    
+
     // Quick preview
     const objectUrl = URL.createObjectURL(file);
     setThumbnailPreview(objectUrl);
-    
+
     const url = await uploadFile(file);
     if (url) {
       setField('thumbnail_url', url);
@@ -219,16 +219,16 @@ export default function CreateCoursePage() {
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed z-20"
                   />
                   {thumbnailPreview ? (
-                     <div className="relative w-full aspect-video rounded-lg overflow-hidden flex items-center justify-center">
-                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                       <img src={thumbnailPreview} alt="Thumbnail preview" className={`object-cover w-full h-full ${isUploading ? 'opacity-50' : ''}`} />
-                       {isUploading && (
-                         <div className="absolute inset-0 flex flex-col items-center justify-center text-white bg-black/30">
-                           <Loader2 className="w-8 h-8 animate-spin mb-2" />
-                           <span className="text-sm font-bold">Uploading...</span>
-                         </div>
-                       )}
-                     </div>
+                    <div className="relative w-full aspect-video rounded-lg overflow-hidden flex items-center justify-center">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={thumbnailPreview} alt="Thumbnail preview" className={`object-cover w-full h-full ${isUploading ? 'opacity-50' : ''}`} />
+                      {isUploading && (
+                        <div className="absolute inset-0 flex flex-col items-center justify-center text-white bg-black/30">
+                          <Loader2 className="w-8 h-8 animate-spin mb-2" />
+                          <span className="text-sm font-bold">Uploading...</span>
+                        </div>
+                      )}
+                    </div>
                   ) : (
                     <div className="flex flex-col items-center">
                       <div className="w-12 h-12 rounded-full bg-[#001A72]/5 text-[#001A72] flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
