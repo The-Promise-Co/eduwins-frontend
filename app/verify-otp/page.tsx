@@ -10,7 +10,7 @@ import AuthSlider from '../../components/AuthSlider';
 function VerifyOtpContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const phone = searchParams.get('phone') || '';
+  const email = searchParams.get('email') || '';
   const { login } = useUser();
   const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
@@ -30,7 +30,7 @@ function VerifyOtpContent() {
     try {
       setLoading(true);
       const response = await api.post('/auth/verify-otp', {
-        phone: phone,
+        email: email,
         otp: otp,
       });
 
@@ -66,7 +66,7 @@ function VerifyOtpContent() {
         <div className="flex flex-col flex-grow items-center justify-center w-full max-w-[400px] mx-auto pb-12">
           <h1 className="text-3xl font-extrabold text-gray-900 mb-2">Verify OTP</h1>
           <p className="text-gray-500 text-sm mb-8">
-            {phone ? `We sent an OTP to ${phone}` : 'Please enter your OTP'}
+            {email ? `We sent an OTP to ${email}` : 'Please enter your OTP'}
           </p>
 
           {error && (
