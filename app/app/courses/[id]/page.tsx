@@ -53,7 +53,7 @@ const MOCK_COURSE: Course = {
   title: 'Complete Mathematics for WAEC & JAMB',
   description: 'Master all Mathematics topics needed to ace your WAEC and JAMB examinations, with step-by-step video lessons, practice tests and over 500 past exam questions with worked solutions. This course covers Algebra, Sequences, Trigonometry, Calculus, Statistics and Probability.',
   subject: 'Mathematics',
-  level: 'Intermediate',
+  level: 'intermediate',
   duration_weeks: 12,
   price: 15000,
   is_free: false,
@@ -285,7 +285,7 @@ export default function CourseDetailPage() {
           <div className="md:w-56 lg:w-64 shrink-0">
             <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-5 border border-white/20">
               <p className="text-3xl font-black mb-1">
-                {course.is_free ? <span className="text-emerald-300">Free</span> : `₦${course.price.toLocaleString()}`}
+                {course.is_free ? <span className="text-emerald-300">Free</span> : `₦${course.price?.toLocaleString()}`}
               </p>
               {!course.is_free && <p className="text-xs text-white/50 mb-4">One-time access</p>}
 
@@ -357,11 +357,10 @@ export default function CourseDetailPage() {
           <button
             key={id}
             onClick={() => setActiveTab(id)}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition ${
-              activeTab === id
-                ? 'bg-white text-[#001A72] shadow-sm'
-                : 'text-gray-500 hover:text-gray-700'
-            }`}
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition ${activeTab === id
+              ? 'bg-white text-[#001A72] shadow-sm'
+              : 'text-gray-500 hover:text-gray-700'
+              }`}
           >
             <Icon size={14} />
             {label}
@@ -393,11 +392,11 @@ export default function CourseDetailPage() {
           <div className="space-y-4">
             <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-5 space-y-3">
               <h3 className="font-bold text-gray-700 text-sm border-b border-gray-100 pb-3">Course Details</h3>
-              <DetailRow icon={Tag} label="Subject" value={course.subject} />
+              <DetailRow icon={Tag} label="Subject" value={course.subject?.toString() || 'N/A'} />
               <DetailRow icon={BookOpen} label="Level" value={course.level} />
               <DetailRow icon={Clock} label="Duration" value={`${course.duration_weeks} weeks`} />
               <DetailRow icon={Layers} label="Lessons" value={`${course.lesson_count} lessons`} />
-              <DetailRow icon={DollarSign} label="Price" value={course.is_free ? 'Free' : `₦${course.price.toLocaleString()}`} />
+              <DetailRow icon={DollarSign} label="Price" value={course.is_free ? 'Free' : `₦${course.price?.toLocaleString()}`} />
               {course.created_at && (
                 <DetailRow
                   icon={Calendar}

@@ -45,7 +45,7 @@ export interface Course {
   price?: number | string | null;
   is_free: boolean;
   status: CourseStatus;
-  tags?: string | string[] | null; // Can be a comma-separated string from DB or array in forms
+  tags?: string[] | null; // Can be a comma-separated string from DB or array in forms
   thumbnail_url?: string | null;
   created_at?: string;
   updated_at?: string;
