@@ -4,11 +4,13 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import api from '@/services/api';
+import { useUser } from '@/context/UserContext';
 import { Mail, CheckCircle2, Lock, Eye, EyeOff } from 'lucide-react';
 import AuthSlider from '@/components/AuthSlider';
 
 export default function LoginPage() {
   const router = useRouter();
+  const { login } = useUser();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -40,13 +42,15 @@ export default function LoginPage() {
         password: formData.password,
       });
 
-      // Store token in localStorage
-      localStorage.setItem('token', response.data.token);
-      localStorage.setItem('user', JSON.stringify(response.data.user));
+      console.log(response, "RESPONSE")
+
+      // Use the login function from context
+      login(response.data.user, response.data.token);
 
       // Redirect to dashboard immediately
-      router.push('/dashboard');
+      router.push('/app/dashboard');
     } catch (err: any) {
+      console.log(err, "ERROR")
       setError(err.response?.data?.error || 'Login failed. Please try again.');
     } finally {
       setLoading(false);

@@ -7,6 +7,9 @@ import '@fontsource/dm-sans/700.css';
 import { Metadata } from 'next';
 import React from 'react';
 
+import { UserProvider } from '@/context/UserContext';
+import QueryProvider from '@/context/QueryProvider';
+
 export const metadata: Metadata = {
   title: 'EduWins - Connect with Quality Tutors',
   description: 'Connecting students with quality tutors for better learning outcomes.',
@@ -20,9 +23,13 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="min-h-screen flex flex-col bg-gray-50">
-        <main className="flex-1 w-full h-full">
-          {children}
-        </main>
+        <QueryProvider>
+          <UserProvider>
+            <main className="flex-1 w-full h-full">
+              {children}
+            </main>
+          </UserProvider>
+        </QueryProvider>
       </body>
     </html>
   );

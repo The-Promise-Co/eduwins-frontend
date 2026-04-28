@@ -1,41 +1,51 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import api from '@/services/api';
+import { useUser } from '@/context/UserContext';
 import AppSidebar from '@/components/AppSidebar';
 import AppHeader from '@/components/AppHeader';
-import { TeacherProfile } from '@/types';
 
 const PAGE_TITLES: Record<string, string> = {
-  '/dashboard': 'Home',
-  '/profile-edit': 'Edit Profile',
-  '/profile-builder': 'Profile Builder',
-  '/premium-subscription': 'Premium',
-  '/premium-content': 'My Content',
-  '/welfare-fund': 'Welfare Fund',
-  '/schedule': 'View Schedule',
-  '/earnings': 'Earnings',
-  '/progress': 'Progress Report',
-  '/dashboard-settings': 'Settings',
-  '/search': 'Search Teachers',
-  '/vault': 'Digital Vault',
-  '/vault/create': 'Create Vault Item',
-  '/chat': 'Chat',
-  '/ambassador': 'Ambassador Programme',
-  '/withdrawals': 'Withdrawals',
-  '/progress-reports': 'Progress Reports',
+  '/app/dashboard': 'Home',
+  '/app/profile-edit': 'Edit Profile',
+  '/app/profile-builder': 'Profile Builder',
+  '/app/premium-subscription': 'Premium',
+  '/app/premium-content': 'My Content',
+  '/app/welfare-fund': 'Welfare Fund',
+  '/app/schedule': 'View Schedule',
+  '/app/earnings': 'Earnings',
+  '/app/progress': 'Progress Report',
+  '/app/dashboard-settings': 'Settings',
+  '/app/search': 'Search Teachers',
+  '/app/vault': 'Digital Vault',
+  '/app/vault/create': 'Create Vault Item',
+  '/app/chat': 'Chat',
+  '/app/ambassador': 'Ambassador Programme',
+  '/app/withdrawals': 'Withdrawals',
+  '/app/progress-reports': 'Progress Reports',
+  '/app/courses': 'Courses',
+  '/app/courses/create': 'Create Course',
 };
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [user, setUser] = useState<TeacherProfile | null>(null);
+  const { user, isAuthenticated, loading } = useUser();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  const pageTitle = PAGE_TITLES[pathname] ?? 'Dashboard';
+  const getPageTitle = (path: string): string => {
+    if (PAGE_TITLES[path]) return PAGE_TITLES[path];
+    if (path.startsWith('/app/courses/create')) return 'Create Course';
+    if (path.match(/^\/app\/courses\/[^/]+\/edit/)) return 'Edit Course';
+    if (path.match(/^\/app\/courses\/[^/]+/)) return 'Course Details';
+    if (path.match(/^\/app\/vault\/[^/]+/)) return 'Vault Item';
+    return 'Dashboard';
+  };
+
+  const pageTitle = getPageTitle(pathname);
+
 
   // Close mobile menu on path change for responsive view
   useEffect(() => {
@@ -43,33 +53,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   }, [pathname]);
 
   useEffect(() => {
-    const checkAuth = async () => {
-      const token = localStorage.getItem('token');
-      const userJson = localStorage.getItem('user');
+    if (!loading && !isAuthenticated) {
+      router.replace('/login');
+    }
+  }, [loading, isAuthenticated, router]);
 
-      if (!token || !userJson) {
-        router.replace('/login');
-        return;
-      }
-
-      // Render immediately from cache
-      setUser(JSON.parse(userJson));
-      setIsAuthenticated(true);
-
-      try {
-        const meRes = await api.get('/auth/me');
-        const freshUser = meRes.data;
-        localStorage.setItem('user', JSON.stringify(freshUser));
-        setUser(freshUser);
-      } catch (err) {
-        console.error('Auth refresh failed:', err);
-      }
-    };
-
-    checkAuth();
-  }, [router]);
-
-  if (!isAuthenticated) {
+  if (loading || !isAuthenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#001A72]">
         <div className="text-center">
@@ -85,7 +74,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex h-screen overflow-hidden bg-primary md:py-2 md:pr-2">
       <AppSidebar
-        user={user}
         collapsed={sidebarCollapsed}
         onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
         isMobileOpen={isMobileMenuOpen}
@@ -93,7 +81,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       />
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden m-0 md:m-2 rounded-none md:rounded-[1.4rem] bg-[#F4F5F7]">
         <AppHeader 
-          user={user} 
           title={pageTitle} 
           onToggleMobileMenu={() => setIsMobileMenuOpen(true)}
         />

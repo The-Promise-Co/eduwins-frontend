@@ -140,7 +140,7 @@ export default function NavBar() {
             </div>
             {isLoggedIn ? (
               <>
-                <Link href="/dashboard" className="bg-[#001A72] text-white px-6 py-2 rounded-lg hover:bg-[#FFB81C] hover:text-[#001A72] font-semibold transition">
+                <Link href="/app/dashboard" className="bg-[#001A72] text-white px-6 py-2 rounded-lg hover:bg-[#FFB81C] hover:text-[#001A72] font-semibold transition">
                   Dashboard
                 </Link>
                 <button onClick={handleLogout} className="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 font-semibold transition">
@@ -228,7 +228,7 @@ export default function NavBar() {
             </Link>
             {isLoggedIn ? (
               <>
-                <Link href="/dashboard" onClick={closeMenu} className="block w-full bg-[#001A72] text-white px-6 py-2 rounded-lg hover:bg-[#FFB81C] hover:text-[#001A72] font-semibold transition text-center">
+                <Link href="/app/dashboard" onClick={closeMenu} className="block w-full bg-[#001A72] text-white px-6 py-2 rounded-lg hover:bg-[#FFB81C] hover:text-[#001A72] font-semibold transition text-center">
                   Dashboard
                 </Link>
                 <button onClick={handleLogout} className="block w-full bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 font-semibold transition text-center">

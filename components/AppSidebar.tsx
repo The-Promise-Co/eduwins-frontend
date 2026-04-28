@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { TeacherProfile } from '@/types';
+import { useUser } from '@/context/UserContext';
 import {
   Home,
   UserCog,
@@ -21,43 +21,45 @@ import {
   ChevronLeft,
   ChevronRight,
   ChevronRightCircle,
+  BookOpen,
   LucideIcon,
   X
 } from 'lucide-react';
 
 interface AppSidebarProps {
-  user: TeacherProfile | null;
   collapsed: boolean;
   onToggle: () => void;
   isMobileOpen?: boolean;
   onCloseMobile?: () => void;
 }
 
-export default function AppSidebar({ user, collapsed, onToggle, isMobileOpen, onCloseMobile }: AppSidebarProps) {
+export default function AppSidebar({ collapsed, onToggle, isMobileOpen, onCloseMobile }: AppSidebarProps) {
+  const { user } = useUser();
   const pathname = usePathname();
 
   const navItems = [
-    { label: 'Dashboard', href: '/dashboard', icon: Home },
-    { label: 'Edit Profile', href: '/profile-edit', icon: UserCog },
+    { label: 'Dashboard', href: '/app/dashboard', icon: Home },
+    { label: 'Edit Profile', href: '/app/profile-edit', icon: UserCog },
     ...(user?.role === 'teacher'
       ? [
-          { label: '🎯 Profile Builder', href: '/profile-builder', icon: Target },
-          { label: '💎 Premium', href: '/premium-subscription', icon: Gem },
-          ...(user?.is_premium ? [{ label: '📺 My Content', href: '/premium-content', icon: Tv }] : []),
-          { label: '🤝 Welfare Fund', href: '/welfare-fund', icon: Handshake },
+          { label: '📚 Courses', href: '/app/courses', icon: BookOpen },
+          { label: '🎯 Profile Builder', href: '/app/profile-builder', icon: Target },
+          { label: '💎 Premium', href: '/app/premium-subscription', icon: Gem },
+          ...(user?.is_premium ? [{ label: '📺 My Content', href: '/app/premium-content', icon: Tv }] : []),
+          { label: '🤝 Welfare Fund', href: '/app/welfare-fund', icon: Handshake },
         ]
-      : []),
-    { label: 'View Schedule', href: '/schedule', icon: Calendar },
-    { label: 'Earnings', href: '/earnings', icon: Wallet },
-    { label: 'Report', href: '/progress', icon: BarChart3 },
-    { label: 'Settings', href: '/dashboard-settings', icon: Settings },
+      : [{ label: '📚 Courses', href: '/app/courses', icon: BookOpen }]),
+    { label: 'View Schedule', href: '/app/schedule', icon: Calendar },
+    { label: 'Earnings', href: '/app/earnings', icon: Wallet },
+    { label: 'Report', href: '/app/progress', icon: BarChart3 },
+    { label: 'Settings', href: '/app/dashboard-settings', icon: Settings },
   ];
 
   const otherItems = [
-    { label: 'Search Teachers', href: '/search', icon: Search },
-    { label: 'Digital Vault', href: '/vault', icon: Box },
-    { label: 'Chat', href: '/chat', icon: MessageSquare },
-    { label: 'Ambassador', href: '/ambassador', icon: Award },
+    { label: 'Search Teachers', href: '/app/search', icon: Search },
+    { label: 'Digital Vault', href: '/app/vault', icon: Box },
+    { label: 'Chat', href: '/app/chat', icon: MessageSquare },
+    { label: 'Ambassador', href: '/app/ambassador', icon: Award },
   ];
 
   const SidebarContent = ({ isMobile = false }) => (

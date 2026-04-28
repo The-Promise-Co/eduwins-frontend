@@ -4,11 +4,13 @@ import { useState, useEffect, ChangeEvent, FormEvent, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import api from '../../services/api';
+import { useUser } from '../../context/UserContext';
 import { User, Mail, Phone, Lock, Eye, EyeOff, CheckCircle2, UserCheck, Hash } from 'lucide-react';
 import AuthSlider from '../../components/AuthSlider';
 
 function RegisterContent() {
   const router = useRouter();
+  const { login } = useUser();
   const searchParams = useSearchParams();
   const [referralCode, setReferralCode] = useState('');
   const [formData, setFormData] = useState({
@@ -102,12 +104,12 @@ function RegisterContent() {
       const token = response.data.token;
       const user = response.data.user;
 
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify(user));
+      // Use the login function from context
+      login(user, token);
 
       setSuccess('OTP verified! Redirecting to dashboard...');
       setTimeout(() => {
-        router.push('/dashboard');
+        router.push('/app/dashboard');
       }, 1200);
     } catch (err: any) {
       setError(err.response?.data?.error || 'OTP verification failed. Please try again.');

@@ -108,7 +108,7 @@ export default function DigitalVaultPage() {
             </div>
             {user?.role === 'teacher' && (
               <Link
-                href="/vault/create"
+                href="/app/vault/create"
                 className="bg-[#FFB81C] text-[#001A72] px-6 py-2 rounded-lg font-semibold hover:bg-[#FFB81C]/90 transition"
               >
                 Sell Your Content

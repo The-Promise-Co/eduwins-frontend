@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import api from '@/services/api';
-import { TeacherProfile, User, Booking } from '@/types';
+import { useUser } from '@/context/UserContext';
+import { User, Booking } from '@/types';
 import { 
   Search, 
   Calendar, 
@@ -16,6 +17,7 @@ import {
   MessageSquare, 
   Settings,
   Lock,
+  BookOpen,
   ChevronRight,
   LucideIcon
 } from 'lucide-react';
@@ -31,38 +33,45 @@ interface FeatureCard {
 
 const FEATURE_CARDS: FeatureCard[] = [
   {
+    icon: BookOpen,
+    title: 'Courses',
+    description: 'Browse structured courses from top educators or create and manage your own.',
+    href: '/app/courses',
+    color: 'bg-indigo-50 border-indigo-100',
+  },
+  {
     icon: Search,
     title: 'Find a Teacher',
     description: 'Browse our verified network of expert tutors and book your first session today.',
-    href: '/search',
+    href: '/app/search',
     color: 'bg-blue-50 border-blue-100',
   },
   {
     icon: Calendar,
     title: 'My Schedule',
     description: 'View your upcoming lessons, manage bookings, and confirm completed sessions.',
-    href: '/schedule',
+    href: '/app/schedule',
     color: 'bg-amber-50 border-amber-100',
   },
   {
     icon: Box,
     title: 'Digital Vault',
     description: 'Buy and sell lesson notes, videos, and study materials from top educators.',
-    href: '/vault',
+    href: '/app/vault',
     color: 'bg-purple-50 border-purple-100',
   },
   {
     icon: BarChart3,
     title: 'Progress Reports',
     description: 'Track weekly educational growth, attendance, and skill improvement scores.',
-    href: '/progress-reports',
+    href: '/app/progress-reports',
     color: 'bg-green-50 border-green-100',
   },
   {
     icon: Wallet,
     title: 'Earnings',
     description: 'Review your income, track payments, and manage your withdrawal requests.',
-    href: '/earnings',
+    href: '/app/earnings',
     color: 'bg-emerald-50 border-emerald-100',
     role: 'teacher',
   },
@@ -70,7 +79,7 @@ const FEATURE_CARDS: FeatureCard[] = [
     icon: Handshake,
     title: 'Welfare Fund',
     description: 'Your protected savings account — 10% of every lesson payment secured for you.',
-    href: '/welfare-fund',
+    href: '/app/welfare-fund',
     color: 'bg-indigo-50 border-indigo-100',
     role: 'teacher',
   },
@@ -78,7 +87,7 @@ const FEATURE_CARDS: FeatureCard[] = [
     icon: Gem,
     title: 'Go Premium',
     description: 'Unlock advanced features, boost your profile visibility, and earn more.',
-    href: '/premium-subscription',
+    href: '/app/premium-subscription',
     color: 'bg-rose-50 border-rose-100',
     role: 'teacher',
   },
@@ -86,41 +95,32 @@ const FEATURE_CARDS: FeatureCard[] = [
     icon: Award,
     title: 'Ambassador',
     description: 'Join our ambassador programme, refer users, and earn rewards every month.',
-    href: '/ambassador',
+    href: '/app/ambassador',
     color: 'bg-orange-50 border-orange-100',
   },
   {
     icon: MessageSquare,
     title: 'Chat',
     description: 'Communicate directly with your teachers or students in real-time.',
-    href: '/chat',
+    href: '/app/chat',
     color: 'bg-teal-50 border-teal-100',
   },
   {
     icon: Settings,
     title: 'Account Settings',
     description: 'Update your personal details, password, and notification preferences.',
-    href: '/dashboard-settings',
+    href: '/app/dashboard-settings',
     color: 'bg-gray-50 border-gray-100',
   },
 ];
 
 export default function DashboardPage() {
-  const [user, setUser] = useState<TeacherProfile | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { user, loading } = useUser();
   const [children, setChildren] = useState<User[]>([]);
   const [pendingLessons, setPendingLessons] = useState<Booking[]>([]);
   const [otpInput, setOtpInput] = useState<Record<string, string>>({});
   const [confirmMessage, setConfirmMessage] = useState('');
   const [confirmError, setConfirmError] = useState('');
-
-  useEffect(() => {
-    const userJson = localStorage.getItem('user');
-    if (userJson) {
-      setUser(JSON.parse(userJson));
-    }
-    setLoading(false);
-  }, []);
 
   useEffect(() => {
     if (!loading && user?.role === 'parent') {
@@ -168,6 +168,7 @@ export default function DashboardPage() {
 
   const visibleCards = FEATURE_CARDS.filter(c => !c.role || c.role === user?.role);
   const firstName = (user?.fullName || user?.full_name || 'there').split(' ')[0];
+
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
@@ -313,7 +314,7 @@ export default function DashboardPage() {
           <p className="text-xs text-gray-600 mt-4 p-3 bg-white rounded-lg border-l-4 border-indigo-400 leading-relaxed">
             ℹ️ <strong>Welfare Fund:</strong> 10% of every lesson payment goes into your protected savings. Funds are released on the 5th of each month.
           </p>
-          <Link href="/welfare-fund" className="mt-4 inline-flex items-center gap-1 text-xs font-bold text-indigo-600 hover:underline">
+          <Link href="/app/welfare-fund" className="mt-4 inline-flex items-center gap-1 text-xs font-bold text-indigo-600 hover:underline">
             View full details →
           </Link>
         </div>

@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { TeacherProfile } from '@/types';
+import { useUser } from '@/context/UserContext';
 import { 
   Bell, 
   ChevronDown, 
@@ -15,19 +15,17 @@ import {
 } from 'lucide-react';
 
 interface AppHeaderProps {
-  user: TeacherProfile | null;
   title: string;
   onToggleMobileMenu: () => void;
 }
 
-export default function AppHeader({ user, title, onToggleMobileMenu }: AppHeaderProps) {
+export default function AppHeader({ title, onToggleMobileMenu }: AppHeaderProps) {
+  const { user, logout } = useUser();
   const router = useRouter();
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    router.push('/login');
+    logout();
   };
 
   const initials = (user?.fullName || user?.full_name || 'U')
@@ -92,16 +90,16 @@ export default function AppHeader({ user, title, onToggleMobileMenu }: AppHeader
                     <p className="text-[10px] text-gray-400 mt-0.5 capitalize">{user?.role} Account</p>
                   </div>
                   <div className="py-1">
-                    <Link href="/profile-edit" onClick={() => setDropdownOpen(false)} className="flex items-center gap-3 px-4 py-2.5 text-xs text-gray-700 hover:bg-gray-50 transition">
+                    <Link href="/app/profile-edit" onClick={() => setDropdownOpen(false)} className="flex items-center gap-3 px-4 py-2.5 text-xs text-gray-700 hover:bg-gray-50 transition">
                       <UserCog size={14} className="text-gray-400" /> Edit Profile
                     </Link>
-                    <Link href="/schedule" onClick={() => setDropdownOpen(false)} className="flex items-center gap-3 px-4 py-2.5 text-xs text-gray-700 hover:bg-gray-50 transition">
+                    <Link href="/app/schedule" onClick={() => setDropdownOpen(false)} className="flex items-center gap-3 px-4 py-2.5 text-xs text-gray-700 hover:bg-gray-50 transition">
                       <Calendar size={14} className="text-gray-400" /> My Schedule
                     </Link>
-                    <Link href="/earnings" onClick={() => setDropdownOpen(false)} className="flex items-center gap-3 px-4 py-2.5 text-xs text-gray-700 hover:bg-gray-50 transition">
+                    <Link href="/app/earnings" onClick={() => setDropdownOpen(false)} className="flex items-center gap-3 px-4 py-2.5 text-xs text-gray-700 hover:bg-gray-50 transition">
                       <Wallet size={14} className="text-gray-400" /> Earnings
                     </Link>
-                    <Link href="/dashboard-settings" onClick={() => setDropdownOpen(false)} className="flex items-center gap-3 px-4 py-2.5 text-xs text-gray-700 hover:bg-gray-50 transition">
+                    <Link href="/app/dashboard-settings" onClick={() => setDropdownOpen(false)} className="flex items-center gap-3 px-4 py-2.5 text-xs text-gray-700 hover:bg-gray-50 transition">
                       <Settings size={14} className="text-gray-400" /> Settings
                     </Link>
                   </div>
