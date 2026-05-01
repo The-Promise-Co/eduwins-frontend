@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import {
   Search,
@@ -139,8 +139,8 @@ function EmptyState({ query }: { query: string }) {
   );
 }
 
-/* ─── Page ─── */
-export default function SearchPage() {
+/* ─── Page Content ─── */
+function SearchContent() {
   const searchParams = useSearchParams();
   const [filters, setFilters] = useState({
     subject: searchParams.get('subject') ?? '',
@@ -369,5 +369,17 @@ export default function SearchPage() {
         </section>
       )}
     </div>
+  );
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <Loader2 size={36} className="text-[#001A72] animate-spin" />
+      </div>
+    }>
+      <SearchContent />
+    </Suspense>
   );
 }

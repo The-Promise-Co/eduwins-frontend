@@ -5,7 +5,7 @@ import '@fontsource/dm-sans/500.css';
 import '@fontsource/dm-sans/600.css';
 import '@fontsource/dm-sans/700.css';
 import { Metadata } from 'next';
-import React from 'react';
+import React, { Suspense } from 'react';
 
 import { UserProvider } from '@/context/UserContext';
 import QueryProvider from '@/context/QueryProvider';
@@ -26,7 +26,9 @@ export default function RootLayout({
         <QueryProvider>
           <UserProvider>
             <main className="flex-1 w-full h-full">
-              {children}
+              <Suspense fallback={<div className="flex items-center justify-center min-h-screen text-[#001A72] font-semibold">Loading EduWins...</div>}>
+                {children}
+              </Suspense>
             </main>
           </UserProvider>
         </QueryProvider>
