@@ -9,8 +9,6 @@ import AuthSlider from '../../components/AuthSlider';
 
 function VerifyOtpContent() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const email = searchParams.get('email') || '';
   const { login } = useUser();
   const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
@@ -29,8 +27,16 @@ function VerifyOtpContent() {
 
     try {
       setLoading(true);
-      const response = await api.post('/auth/verify-otp', {
-        email: email,
+      const tokenFromStorage = sessionStorage.getItem('verificationToken');
+      
+      if (!tokenFromStorage) {
+        setError('Verification session expired or invalid. Please try registering again.');
+        setLoading(false);
+        return;
+      }
+
+      const response = await api.post('/auth/verify-email', {
+        token: tokenFromStorage,
         otp: otp,
       });
 
@@ -38,6 +44,9 @@ function VerifyOtpContent() {
       const user = response.data.user;
 
       login(user, token);
+      
+      // Clean up session storage
+      sessionStorage.removeItem('verificationToken');
 
       setSuccess('OTP verified! Redirecting to dashboard...');
       setTimeout(() => {
@@ -66,7 +75,7 @@ function VerifyOtpContent() {
         <div className="flex flex-col flex-grow items-center justify-center w-full max-w-[400px] mx-auto pb-12">
           <h1 className="text-3xl font-extrabold text-gray-900 mb-2">Verify OTP</h1>
           <p className="text-gray-500 text-sm mb-8">
-            {email ? `We sent an OTP to ${email}` : 'Please enter your OTP'}
+            Please enter the OTP sent to your email
           </p>
 
           {error && (

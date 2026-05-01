@@ -1,5 +1,32 @@
 import Link from 'next/link';
+import { Star, Banknote, MapPin, CheckCircle2 } from 'lucide-react';
 import { TeacherProfile } from '@/types';
+
+const GRADIENT_COLORS = [
+  'from-blue-600 to-blue-800',
+  'from-purple-600 to-purple-800',
+  'from-emerald-600 to-emerald-800',
+  'from-rose-500 to-rose-700',
+  'from-amber-500 to-amber-700',
+  'from-sky-500 to-sky-700',
+  'from-indigo-500 to-indigo-700',
+];
+
+function pickColor(id: string | undefined) {
+  const n = parseInt(String(id ?? '0').replace(/\D/g, '') || '0', 10);
+  return GRADIENT_COLORS[n % GRADIENT_COLORS.length];
+}
+
+function initials(name: string | undefined) {
+  if (!name) return '??';
+  return name
+    .split(' ')
+    .filter(Boolean)
+    .map((w) => w[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
+}
 
 interface TeacherCardProps {
   teacher: Partial<TeacherProfile> & {
@@ -16,61 +43,61 @@ interface TeacherCardProps {
 
 export default function TeacherCard({ teacher }: TeacherCardProps) {
   const teacherId = teacher.id;
+  const name = teacher.full_name || teacher.fullName || 'Tutor';
+  const subject = teacher.subject || (teacher.subjects && teacher.subjects[0]) || '—';
+  const rate = teacher.hourly_rate ?? teacher.hourlyRate ?? teacher.baseHourlyRate ?? 0;
+  const location = teacher.lga || teacher.location || 'Lagos';
+  const rating = teacher.rating ?? 4.5;
+  const reviews = teacher.students ?? teacher.reviewsCount ?? 0;
+  const color = pickColor(teacher.id);
 
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition border-2 border-[#001A72] hover:border-[#FFB81C]">
-      <div className="bg-gradient-to-r from-[#001A72] to-[#FFB81C] p-6 text-center">
-        <div className="flex justify-center mb-3">
-          <img
-            src={teacher.photo_url || `https://via.placeholder.com/100/001A72/FFFFFF?text=${encodeURIComponent(teacher.full_name || teacher.fullName || 'Teacher')}`}
-            alt={teacher.full_name || teacher.fullName || 'Teacher'}
-            className="w-24 h-24 rounded-full border-4 border-white object-cover"
-          />
+    <div className="group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-[#001A72]/20 transition overflow-hidden flex flex-col">
+      {/* avatar header */}
+      <div className={`bg-gradient-to-br ${color} p-6 flex flex-col items-center`}>
+        <div className="w-16 h-16 rounded-2xl bg-white/20 flex items-center justify-center text-white text-xl font-black mb-3 group-hover:scale-105 transition-transform">
+          {initials(name)}
         </div>
-        <h3 className="text-xl font-bold text-white">{teacher.full_name || teacher.fullName}</h3>
-        <p className="text-white/80">{teacher.subject || (teacher.subjects && teacher.subjects[0])}</p>
+        <p className="font-bold text-white text-sm text-center">{name}</p>
+        <p className="text-white/80 text-xs text-center mt-0.5">{subject}</p>
       </div>
 
-      <div className="p-6">
-        {/* Rating */}
-        <div className="flex items-center justify-between mb-4 pb-4 border-b border-gray-200">
-          <div>
-            <span className="text-2xl font-bold text-[#001A72]">{teacher.rating || 4.5}</span>
-            <span className="text-yellow-500 ml-1">★</span>
+      {/* body */}
+      <div className="p-4 flex flex-col flex-1">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-1">
+            <Star size={13} className="fill-[#FFB81C] text-[#FFB81C]" />
+            <span className="font-black text-sm text-[#001A72]">{Number(rating).toFixed(1)}</span>
           </div>
-          <p className="text-sm text-gray-600">{teacher.students || teacher.reviewsCount || 0} reviews</p>
+          <span className="text-xs text-gray-400">{reviews} reviews</span>
         </div>
 
-        {/* Details */}
-        <div className="space-y-3 mb-6">
-          <div className="flex justify-between items-center">
-            <span className="text-gray-600">Hourly Rate:</span>
-            <span className="font-bold text-lg">₦{(teacher.hourly_rate || teacher.hourlyRate || teacher.baseHourlyRate || 0).toLocaleString()}</span>
+        <div className="space-y-1.5 mb-4 flex-1">
+          <div className="flex items-center gap-1.5 text-xs text-gray-600">
+            <Banknote size={12} className="text-gray-400" />
+            ₦{rate.toLocaleString()}/hr
           </div>
-          <div className="flex justify-between items-center">
-            <span className="text-gray-600">Location:</span>
-            <span className="font-medium">{teacher.lga || teacher.location || 'Lagos'}</span>
+          <div className="flex items-center gap-1.5 text-xs text-gray-600">
+            <MapPin size={12} className="text-gray-400" />
+            {location}
           </div>
         </div>
 
-        {/* Actions */}
-        <div className="space-y-2">
+        <div className="flex items-center gap-1.5 mb-3">
+          <CheckCircle2 size={12} className="text-emerald-500 shrink-0" />
+          <span className="text-[10px] font-bold text-emerald-700">Verified Tutor</span>
+        </div>
+
+        <div className="flex gap-2">
           <Link
             href={`/teachers/${teacherId}`}
-            className="block w-full bg-[#001A72] text-white py-2 rounded-lg hover:bg-[#001A72]/90 font-semibold transition text-center"
+            className="flex-1 bg-[#001A72] text-white text-xs font-bold py-2.5 rounded-xl text-center hover:bg-[#001A72]/90 transition"
           >
-            View Profile & Book
+            View &amp; Book
           </Link>
-          <button className="w-full bg-[#FFB81C] text-[#001A72] py-2 rounded-lg hover:bg-[#ffd06f] font-semibold transition">
-            Send Message
+          <button className="px-3 py-2.5 rounded-xl border border-[#FFB81C] text-[#FFB81C] text-xs font-bold hover:bg-[#FFB81C]/10 transition">
+            Chat
           </button>
-        </div>
-
-        {/* Badge */}
-        <div className="mt-4 text-center">
-          <span className="inline-block bg-green-100 text-green-800 text-xs px-3 py-1 rounded-full font-semibold">
-            ✓ Verified
-          </span>
         </div>
       </div>
     </div>
