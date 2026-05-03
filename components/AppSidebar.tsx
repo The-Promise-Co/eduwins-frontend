@@ -23,7 +23,9 @@ import {
   ChevronRightCircle,
   BookOpen,
   LucideIcon,
-  X
+  X,
+  Users,
+  ClipboardList
 } from 'lucide-react';
 
 interface AppSidebarProps {
@@ -39,27 +41,23 @@ export default function AppSidebar({ collapsed, onToggle, isMobileOpen, onCloseM
 
   const navItems = [
     { label: 'Dashboard', href: '/app/dashboard', icon: Home },
-    { label: 'Edit Profile', href: '/app/profile-edit', icon: UserCog },
-    ...(user?.role === 'teacher'
-      ? [
-          { label: '📚 Courses', href: '/app/courses', icon: BookOpen },
-          { label: '🎯 Profile Builder', href: '/app/profile-builder', icon: Target },
-          { label: '💎 Premium', href: '/app/premium-subscription', icon: Gem },
-          ...(user?.is_premium ? [{ label: '📺 My Content', href: '/app/premium-content', icon: Tv }] : []),
-          { label: '🤝 Welfare Fund', href: '/app/welfare-fund', icon: Handshake },
-        ]
-      : [{ label: '📚 Courses', href: '/app/courses', icon: BookOpen }]),
-    { label: 'View Schedule', href: '/app/schedule', icon: Calendar },
-    { label: 'Earnings', href: '/app/earnings', icon: Wallet },
-    { label: 'Report', href: '/app/progress', icon: BarChart3 },
-    { label: 'Settings', href: '/app/dashboard-settings', icon: Settings },
+    // { label: 'Edit Profile', href: '/app/profile-edit', icon: UserCog },
+    { label: 'Courses', href: '/app/courses', icon: BookOpen },
+    ...(user?.role === 'teacher' ? [
+      { label: 'Earnings', href: '/app/earnings', icon: Wallet },
+      { label: 'Welfare Fund', href: '/app/welfare-fund', icon: Handshake },
+    ] : []),
+    { label: 'Schedule', href: '/app/schedule', icon: Calendar },
+    { label: 'Assessments', href: '/app/assessments', icon: ClipboardList },
+
+    { label: 'Chat', href: '/app/chat', icon: MessageSquare },
+    // { label: 'Settings', href: '/app/dashboard-settings', icon: Settings },
   ];
 
   const otherItems = [
-    { label: 'Search Teachers', href: '/app/search', icon: Search },
-    { label: 'Digital Vault', href: '/app/vault', icon: Box },
-    { label: 'Chat', href: '/app/chat', icon: MessageSquare },
-    { label: 'Ambassador', href: '/app/ambassador', icon: Award },
+    { label: 'Referrals', href: '/app/referrals', icon: Users },
+    ...(user?.role == 'teacher' ? [{ label: 'Subscription', href: '/app/premium-subscription', icon: Gem }] : []),
+    { label: 'Settings', href: '/app/settings', icon: Settings },
   ];
 
   const SidebarContent = ({ isMobile = false }) => (
@@ -68,7 +66,7 @@ export default function AppSidebar({ collapsed, onToggle, isMobileOpen, onCloseM
       {isMobile ? (
         <div className="flex items-center justify-between px-6 py-6 border-b border-white/5">
           <h2 className="text-2xl font-bold">Menu</h2>
-          <button 
+          <button
             onClick={onCloseMobile}
             className="px-4 py-2 bg-white/10 text-white rounded-xl font-bold text-xs hover:bg-white/20 transition"
           >
@@ -103,11 +101,10 @@ export default function AppSidebar({ collapsed, onToggle, isMobileOpen, onCloseM
               key={item.href}
               href={item.href}
               title={(!isMobile && collapsed) ? item.label : undefined}
-              className={`flex items-center justify-between gap-3 px-4 py-3 rounded-2xl transition-all ${
-                active
-                  ? (isMobile ? 'bg-white/10 text-white shadow-xl' : 'bg-white/15 text-white border-r-2 border-[#FFB81C]')
-                  : 'text-white/70 hover:bg-white/5 hover:text-white'
-              }`}
+              className={`flex items-center justify-between gap-3 px-4 py-3 rounded-2xl transition-all ${active
+                ? (isMobile ? 'bg-white/10 text-white shadow-xl' : 'bg-white/15 text-white border-r-2 border-[#FFB81C]')
+                : 'text-white/70 hover:bg-white/5 hover:text-white'
+                }`}
             >
               <div className="flex items-center gap-3">
                 <span className="shrink-0 w-6 flex justify-center">
@@ -134,11 +131,10 @@ export default function AppSidebar({ collapsed, onToggle, isMobileOpen, onCloseM
               key={item.href}
               href={item.href}
               title={(!isMobile && collapsed) ? item.label : undefined}
-              className={`flex items-center justify-between gap-3 px-4 py-3 rounded-2xl transition-all ${
-                active
-                  ? (isMobile ? 'bg-white/10 text-white shadow-xl' : 'bg-white/15 text-white border-r-2 border-[#FFB81C]')
-                  : 'text-white/70 hover:bg-white/5 hover:text-white'
-              }`}
+              className={`flex items-center justify-between gap-3 px-4 py-3 rounded-2xl transition-all ${active
+                ? (isMobile ? 'bg-white/10 text-white shadow-xl' : 'bg-white/15 text-white border-r-2 border-[#FFB81C]')
+                : 'text-white/70 hover:bg-white/5 hover:text-white'
+                }`}
             >
               <div className="flex items-center gap-3">
                 <span className="shrink-0 w-6 flex justify-center">
@@ -157,24 +153,21 @@ export default function AppSidebar({ collapsed, onToggle, isMobileOpen, onCloseM
   return (
     <>
       {/* Mobile Overlay Sidebar */}
-      <div 
-        className={`fixed inset-0 z-[100] md:hidden transition-all duration-300 ${
-          isMobileOpen ? 'visible' : 'invisible'
-        }`}
+      <div
+        className={`fixed inset-0 z-[100] md:hidden transition-all duration-300 ${isMobileOpen ? 'visible' : 'invisible'
+          }`}
       >
         {/* Backdrop */}
-        <div 
-          className={`absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-300 ${
-            isMobileOpen ? 'opacity-100' : 'opacity-0'
-          }`}
+        <div
+          className={`absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-300 ${isMobileOpen ? 'opacity-100' : 'opacity-0'
+            }`}
           onClick={onCloseMobile}
         />
-        
+
         {/* Menu Panel */}
-        <div 
-          className={`absolute inset-x-0 bottom-0 top-12 bg-[#000820] rounded-t-[2.5rem] shadow-2xl transition-transform duration-500 transform ${
-            isMobileOpen ? 'translate-y-0' : 'translate-y-full'
-          } overflow-hidden`}
+        <div
+          className={`absolute inset-x-0 bottom-0 top-12 bg-[#000820] rounded-t-[2.5rem] shadow-2xl transition-transform duration-500 transform ${isMobileOpen ? 'translate-y-0' : 'translate-y-full'
+            } overflow-hidden`}
         >
           <SidebarContent isMobile={true} />
         </div>

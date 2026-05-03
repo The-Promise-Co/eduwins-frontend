@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import api from '../../services/api';
 import { useUser } from '../../context/UserContext';
-import { User, Mail, Phone, Lock, Eye, EyeOff, CheckCircle2, UserCheck, Hash } from 'lucide-react';
+import { User, Mail, Phone, Lock, Eye, EyeOff, CheckCircle2, UserCheck, Hash, Users, BookOpen } from 'lucide-react';
 import AuthSlider from '../../components/AuthSlider';
 
 function RegisterContent() {
@@ -14,7 +14,8 @@ function RegisterContent() {
   const searchParams = useSearchParams();
   const [referralCode, setReferralCode] = useState('');
   const [formData, setFormData] = useState({
-    fullName: '',
+    firstName: '',
+    lastName: '',
     email: '',
     phone: '',
     password: '',
@@ -63,9 +64,10 @@ function RegisterContent() {
     try {
       setLoading(true);
       const response = await api.post('/auth/register', {
-        fullName: formData.fullName,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
         email: formData.email,
-        phone: formData.phone,
+        phone: formData.phone || undefined,
         password: formData.password,
         role: formData.role,
         referralCode: referralCode || undefined,
@@ -88,7 +90,7 @@ function RegisterContent() {
     } catch (err: any) {
       console.error('Registration error', err);
       const serverError = err.response?.data?.error || err.response?.data?.message || err.message;
-      setError(`Registration failed: ${serverError}`);
+      setError(`${serverError}`);
     } finally {
       setLoading(false);
     }
@@ -139,20 +141,36 @@ function RegisterContent() {
           )}
 
           <form onSubmit={handleRegisterSubmit} className="w-full space-y-3">
-            {/* Full Name */}
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                <User className="h-5 w-5 text-gray-400" />
+            {/* Name Fields */}
+            <div className="flex gap-3">
+              <div className="relative w-1/2">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <User className="h-5 w-5 text-gray-400" />
+                </div>
+                <input
+                  type="text"
+                  name="firstName"
+                  value={formData.firstName}
+                  onChange={handleChange}
+                  required
+                  placeholder="First Name"
+                  className="w-full pl-12 pr-4 py-3.5 border border-gray-200 rounded-xl focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary text-sm text-gray-800 placeholder-gray-400 transition"
+                />
               </div>
-              <input
-                type="text"
-                name="fullName"
-                value={formData.fullName}
-                onChange={handleChange}
-                required
-                placeholder="Full Name"
-                className="w-full pl-12 pr-4 py-3.5 border border-gray-200 rounded-xl focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary text-sm text-gray-800 placeholder-gray-400 transition"
-              />
+              <div className="relative w-1/2">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <User className="h-5 w-5 text-gray-400" />
+                </div>
+                <input
+                  type="text"
+                  name="lastName"
+                  value={formData.lastName}
+                  onChange={handleChange}
+                  required
+                  placeholder="Last Name"
+                  className="w-full pl-12 pr-4 py-3.5 border border-gray-200 rounded-xl focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary text-sm text-gray-800 placeholder-gray-400 transition"
+                />
+              </div>
             </div>
 
             {/* Email */}
@@ -181,51 +199,41 @@ function RegisterContent() {
                 name="phone"
                 value={formData.phone}
                 onChange={handleChange}
-                required
-                placeholder="Phone Number"
+                placeholder="Phone Number (Optional)"
                 className="w-full pl-12 pr-4 py-3.5 border border-gray-200 rounded-xl focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary text-sm text-gray-800 placeholder-gray-400 transition"
               />
             </div>
 
             {/* Role */}
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                <UserCheck className="h-5 w-5 text-gray-400" />
-              </div>
-              <select
-                name="role"
-                value={formData.role}
-                onChange={handleChange}
-                className="w-full pl-12 pr-8 py-3.5 border border-gray-200 rounded-xl focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary text-sm text-gray-800 transition appearance-none bg-white"
+            <div className="grid grid-cols-2 gap-4">
+              <div
+                onClick={() => setFormData((prev) => ({ ...prev, role: 'parent' }))}
+                className={`flex items-center gap-3 p-3.5 border-2 rounded-xl cursor-pointer transition-all ${formData.role === 'parent'
+                  ? 'border-primary bg-primary/5 shadow-sm shadow-primary/10'
+                  : 'border-gray-200 hover:border-primary/30 hover:bg-gray-50 bg-white'
+                  }`}
               >
-                <option value="parent">Parent</option>
-                <option value="teacher">Tutor</option>
-              </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-500">
-                <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                  <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
-                </svg>
+                <Users className={`h-5 w-5 ${formData.role === 'parent' ? 'text-primary' : 'text-gray-400'}`} />
+                <span className={`font-semibold text-sm ${formData.role === 'parent' ? 'text-primary' : 'text-gray-600'}`}>
+                  Parent
+                </span>
+              </div>
+
+              <div
+                onClick={() => setFormData((prev) => ({ ...prev, role: 'teacher' }))}
+                className={`flex items-center gap-3 p-3.5 border-2 rounded-xl cursor-pointer transition-all ${formData.role === 'teacher'
+                  ? 'border-primary bg-primary/5 shadow-sm shadow-primary/10'
+                  : 'border-gray-200 hover:border-primary/30 hover:bg-gray-50 bg-white'
+                  }`}
+              >
+                <BookOpen className={`h-5 w-5 ${formData.role === 'teacher' ? 'text-primary' : 'text-gray-400'}`} />
+                <span className={`font-semibold text-sm ${formData.role === 'teacher' ? 'text-primary' : 'text-gray-600'}`}>
+                  Tutor
+                </span>
               </div>
             </div>
 
-            {/* Referral Code */}
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                <Hash className="h-5 w-5 text-gray-400" />
-              </div>
-              <input
-                type="text"
-                value={referralCode}
-                onChange={(e) => setReferralCode(e.target.value)}
-                placeholder="Referral Code (Optional)"
-                className="w-full pl-12 pr-12 py-3.5 border border-gray-200 rounded-xl focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary text-sm text-gray-800 placeholder-gray-400 transition"
-              />
-              {referralCode && (
-                <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
-                  <CheckCircle2 className="h-5 w-5 text-emerald-500" />
-                </div>
-              )}
-            </div>
+
 
             {/* Password */}
             <div className="relative">
@@ -271,6 +279,25 @@ function RegisterContent() {
               >
                 {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
               </button>
+            </div>
+
+            {/* Referral Code */}
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <Hash className="h-5 w-5 text-gray-400" />
+              </div>
+              <input
+                type="text"
+                value={referralCode}
+                onChange={(e) => setReferralCode(e.target.value)}
+                placeholder="Referral Code (Optional)"
+                className="w-full pl-12 pr-12 py-3.5 border border-gray-200 rounded-xl focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary text-sm text-gray-800 placeholder-gray-400 transition"
+              />
+              {referralCode && (
+                <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+                  <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+                </div>
+              )}
             </div>
 
             <button

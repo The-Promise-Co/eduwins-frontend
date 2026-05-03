@@ -14,7 +14,8 @@ export default function EditProfilePage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [formData, setFormData] = useState({
-    fullName: '',
+    firstName: '',
+    lastName: '',
     email: '',
     phone: '',
     bio: '',
@@ -35,7 +36,8 @@ export default function EditProfilePage() {
         const userData = JSON.parse(userJson);
         setUser(userData);
         setFormData({
-          fullName: userData.fullName || '',
+          firstName: userData.firstName || '',
+          lastName: userData.lastName || '',
           email: userData.email || '',
           phone: userData.phone || '',
           bio: userData.bio || '',
@@ -117,17 +119,30 @@ export default function EditProfilePage() {
             )}
 
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Full Name */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
-                <input
-                  type="text"
-                  name="fullName"
-                  value={formData.fullName}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#001A72]"
-                  placeholder="Enter your full name"
-                />
+              {/* Name Fields */}
+              <div className="flex gap-4">
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">First Name</label>
+                  <input
+                    type="text"
+                    name="firstName"
+                    value={formData.firstName}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#001A72]"
+                    placeholder="First name"
+                  />
+                </div>
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Last Name</label>
+                  <input
+                    type="text"
+                    name="lastName"
+                    value={formData.lastName}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#001A72]"
+                    placeholder="Last name"
+                  />
+                </div>
               </div>
 
               {/* Email */}

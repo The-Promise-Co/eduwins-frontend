@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, FormEvent, Suspense } from 'react';
+import { useState, FormEvent, Suspense, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import api from '../../services/api';
@@ -12,8 +12,43 @@ function VerifyOtpContent() {
   const { login } = useUser();
   const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
+  const [resending, setResending] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [countdown, setCountdown] = useState(60);
+
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (countdown > 0) {
+      timer = setInterval(() => {
+        setCountdown((prev) => prev - 1);
+      }, 1000);
+    }
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, [countdown]);
+
+  const handleResendOtp = async () => {
+    setError('');
+    setSuccess('');
+    const tokenFromStorage = sessionStorage.getItem('verificationToken');
+    if (!tokenFromStorage) {
+      setError('Verification session expired. Please log in again to receive a new OTP.');
+      return;
+    }
+
+    try {
+      setResending(true);
+      await api.post('/auth/resend-otp', { token: tokenFromStorage });
+      setSuccess('A new OTP has been sent to your email.');
+      setCountdown(60);
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Failed to resend OTP. Please try again.');
+    } finally {
+      setResending(false);
+    }
+  };
 
   const handleOtpSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -28,7 +63,7 @@ function VerifyOtpContent() {
     try {
       setLoading(true);
       const tokenFromStorage = sessionStorage.getItem('verificationToken');
-      
+
       if (!tokenFromStorage) {
         setError('Verification session expired or invalid. Please try registering again.');
         setLoading(false);
@@ -44,7 +79,7 @@ function VerifyOtpContent() {
       const user = response.data.user;
 
       login(user, token);
-      
+
       // Clean up session storage
       sessionStorage.removeItem('verificationToken');
 
@@ -104,10 +139,19 @@ function VerifyOtpContent() {
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || resending}
               className="w-full bg-primary hover:bg-primary/90 text-white font-semibold py-3.5 rounded-xl transition disabled:opacity-70 flex items-center justify-center shadow-sm"
             >
               {loading ? 'Verifying...' : 'Verify OTP'}
+            </button>
+
+            <button
+              type="button"
+              onClick={handleResendOtp}
+              disabled={resending || loading || countdown > 0}
+              className="block w-full text-center text-primary font-medium py-2 text-sm hover:underline transition disabled:opacity-50"
+            >
+              {resending ? 'Resending...' : countdown > 0 ? `Resend OTP in ${countdown}s` : 'Resend OTP'}
             </button>
 
             <Link

@@ -51,7 +51,13 @@ export default function LoginPage() {
       router.push('/app/dashboard');
     } catch (err: any) {
       console.log(err, "ERROR")
-      setError(err.response?.data?.error || 'Login failed. Please try again.');
+      if (err.response?.status === 403 && err.response?.data?.requiresVerification) {
+        sessionStorage.setItem('verificationToken', err.response.data.verificationToken);
+        setSuccess('Account not verified. Redirecting to verification...');
+        setTimeout(() => router.push('/verify-otp'), 1000);
+      } else {
+        setError(err.response?.data?.error || 'Login failed. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -86,6 +92,12 @@ export default function LoginPage() {
           {error && (
             <div className="w-full bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl mb-6 text-sm text-center">
               {error}
+            </div>
+          )}
+
+          {success && (
+            <div className="w-full bg-emerald-50 border border-emerald-200 text-emerald-600 px-4 py-3 rounded-xl mb-6 text-sm text-center">
+              {success}
             </div>
           )}
 

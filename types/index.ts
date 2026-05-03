@@ -3,6 +3,8 @@ export type Role = 'teacher' | 'parent' | 'admin' | 'ambassador';
 export interface User {
   id: string;
   fullName: string;
+  firstName?: string;
+  lastName?: string;
   email: string;
   role: Role;
   token?: string;

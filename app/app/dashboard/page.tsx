@@ -19,7 +19,11 @@ import {
   Lock,
   BookOpen,
   ChevronRight,
-  LucideIcon
+  LucideIcon,
+  Users,
+  ClipboardList,
+  X,
+  UserCircle
 } from 'lucide-react';
 
 interface FeatureCard {
@@ -40,34 +44,6 @@ const FEATURE_CARDS: FeatureCard[] = [
     color: 'bg-indigo-50 border-indigo-100',
   },
   {
-    icon: Search,
-    title: 'Find a Teacher',
-    description: 'Browse our verified network of expert tutors and book your first session today.',
-    href: '/app/search',
-    color: 'bg-blue-50 border-blue-100',
-  },
-  {
-    icon: Calendar,
-    title: 'My Schedule',
-    description: 'View your upcoming lessons, manage bookings, and confirm completed sessions.',
-    href: '/app/schedule',
-    color: 'bg-amber-50 border-amber-100',
-  },
-  {
-    icon: Box,
-    title: 'Digital Vault',
-    description: 'Buy and sell lesson notes, videos, and study materials from top educators.',
-    href: '/app/vault',
-    color: 'bg-purple-50 border-purple-100',
-  },
-  {
-    icon: BarChart3,
-    title: 'Progress Reports',
-    description: 'Track weekly educational growth, attendance, and skill improvement scores.',
-    href: '/app/progress-reports',
-    color: 'bg-green-50 border-green-100',
-  },
-  {
     icon: Wallet,
     title: 'Earnings',
     description: 'Review your income, track payments, and manage your withdrawal requests.',
@@ -80,23 +56,22 @@ const FEATURE_CARDS: FeatureCard[] = [
     title: 'Welfare Fund',
     description: 'Your protected savings account — 10% of every lesson payment secured for you.',
     href: '/app/welfare-fund',
-    color: 'bg-indigo-50 border-indigo-100',
+    color: 'bg-blue-50 border-blue-100',
     role: 'teacher',
   },
   {
-    icon: Gem,
-    title: 'Go Premium',
-    description: 'Unlock advanced features, boost your profile visibility, and earn more.',
-    href: '/app/premium-subscription',
-    color: 'bg-rose-50 border-rose-100',
-    role: 'teacher',
+    icon: Calendar,
+    title: 'Schedule',
+    description: 'View your upcoming lessons, manage bookings, and confirm completed sessions.',
+    href: '/app/schedule',
+    color: 'bg-amber-50 border-amber-100',
   },
   {
-    icon: Award,
-    title: 'Ambassador',
-    description: 'Join our ambassador programme, refer users, and earn rewards every month.',
-    href: '/app/ambassador',
-    color: 'bg-orange-50 border-orange-100',
+    icon: ClipboardList,
+    title: 'Assessments',
+    description: 'Track and complete your assigned assessments to improve your skills.',
+    href: '/app/assessments',
+    color: 'bg-purple-50 border-purple-100',
   },
   {
     icon: MessageSquare,
@@ -106,10 +81,25 @@ const FEATURE_CARDS: FeatureCard[] = [
     color: 'bg-teal-50 border-teal-100',
   },
   {
+    icon: Users,
+    title: 'Referrals',
+    description: 'Join our referral programme, refer users, and earn rewards every month.',
+    href: '/app/referrals',
+    color: 'bg-orange-50 border-orange-100',
+  },
+  {
+    icon: Gem,
+    title: 'Subscription',
+    description: 'Manage your premium subscription features to earn more.',
+    href: '/app/premium-subscription',
+    color: 'bg-rose-50 border-rose-100',
+    role: 'teacher',
+  },
+  {
     icon: Settings,
-    title: 'Account Settings',
+    title: 'Settings',
     description: 'Update your personal details, password, and notification preferences.',
-    href: '/app/dashboard-settings',
+    href: '/app/settings',
     color: 'bg-gray-50 border-gray-100',
   },
 ];
@@ -121,6 +111,7 @@ export default function DashboardPage() {
   const [otpInput, setOtpInput] = useState<Record<string, string>>({});
   const [confirmMessage, setConfirmMessage] = useState('');
   const [confirmError, setConfirmError] = useState('');
+  const [profileBannerVisible, setProfileBannerVisible] = useState(false);
 
   useEffect(() => {
     if (!loading && user?.role === 'parent') {
@@ -137,6 +128,15 @@ export default function DashboardPage() {
         }
       };
       fetchParentData();
+    }
+  }, [loading, user]);
+
+  useEffect(() => {
+    if (!loading && user?.id) {
+      const dismissed = localStorage.getItem(`profileSetupDismissed_${user.id}`);
+      if (!dismissed) {
+        setProfileBannerVisible(true);
+      }
     }
   }, [loading, user]);
 
@@ -158,6 +158,13 @@ export default function DashboardPage() {
     }
   };
 
+  const handleDismissProfileBanner = () => {
+    if (user?.id) {
+      localStorage.setItem(`profileSetupDismissed_${user.id}`, '1');
+    }
+    setProfileBannerVisible(false);
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -172,6 +179,38 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
+
+      {/* Profile Completion Banner */}
+      {profileBannerVisible && (
+        <div className="relative flex items-start sm:items-center justify-between gap-4 rounded-2xl border border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50 px-5 py-4 shadow-sm">
+          <div className="flex items-start sm:items-center gap-3">
+            <div className="shrink-0 w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center">
+              <UserCircle className="h-5 w-5 text-amber-600" />
+            </div>
+            <div>
+              <p className="font-bold text-sm text-amber-900">Complete your profile</p>
+              <p className="text-xs text-amber-700 mt-0.5 leading-relaxed">
+                Add your photo, bio, and contact details so {user?.role === 'teacher' ? 'students can find and book you.' : 'we can personalise your experience.'}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 shrink-0">
+            <Link
+              href="/app/settings"
+              className="text-xs font-semibold bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-xl transition whitespace-nowrap"
+            >
+              Set up profile
+            </Link>
+            <button
+              onClick={handleDismissProfileBanner}
+              className="text-amber-400 hover:text-amber-600 transition"
+              aria-label="Dismiss"
+            >
+              <X size={16} />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Welcome */}
       <div>
