@@ -35,6 +35,7 @@ export const useCloudinary = () => {
   const uploadFile = async (
     file: File,
     folder = 'eduwins',
+    resourceType: 'image' | 'video' | 'raw' = 'image',
   ): Promise<string | null> => {
     setIsUploading(true);
     setError(null);
@@ -57,7 +58,7 @@ export const useCloudinary = () => {
       formData.append('folder', folder);
 
       const response = await fetch(
-        `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+        `https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`,
         { method: 'POST', body: formData },
       );
 
@@ -67,6 +68,7 @@ export const useCloudinary = () => {
       }
 
       const data: CloudinaryUploadResult = await response.json();
+      console.log(data)
       return data.secure_url;
     } catch (err: any) {
       console.error('Cloudinary upload error:', err);

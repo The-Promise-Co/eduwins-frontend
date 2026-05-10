@@ -41,7 +41,7 @@ export default function AppSidebar({ collapsed, onToggle, isMobileOpen, onCloseM
 
   const navItems = [
     { label: 'Dashboard', href: '/app/dashboard', icon: Home },
-    // { label: 'Edit Profile', href: '/app/profile-edit', icon: UserCog },
+    // { label: 'Profile', href: '/app/profile', icon: UserCog },
     { label: 'Courses', href: '/app/courses', icon: BookOpen },
     ...(user?.role === 'teacher' ? [
       { label: 'Earnings', href: '/app/earnings', icon: Wallet },
@@ -51,7 +51,7 @@ export default function AppSidebar({ collapsed, onToggle, isMobileOpen, onCloseM
     { label: 'Assessments', href: '/app/assessments', icon: ClipboardList },
 
     { label: 'Chat', href: '/app/chat', icon: MessageSquare },
-    // { label: 'Settings', href: '/app/dashboard-settings', icon: Settings },
+    // { label: 'Settings', href: '/app/settings', icon: Settings },
   ];
 
   const otherItems = [

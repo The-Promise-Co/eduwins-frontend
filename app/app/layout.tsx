@@ -8,15 +8,14 @@ import AppHeader from '@/components/AppHeader';
 
 const PAGE_TITLES: Record<string, string> = {
   '/app/dashboard': 'Home',
-  '/app/profile-edit': 'Edit Profile',
-  '/app/profile-builder': 'Profile Builder',
+  '/app/profile': 'Profile',
   '/app/premium-subscription': 'Premium',
   '/app/premium-content': 'My Content',
   '/app/welfare-fund': 'Welfare Fund',
   '/app/schedule': 'Schedule',
   '/app/earnings': 'Earnings',
   '/app/progress': 'Progress Report',
-  '/app/dashboard-settings': 'Settings',
+  '/app/settings': 'Settings',
   '/app/search': 'Search Teachers',
   '/app/vault': 'Digital Vault',
   '/app/vault/create': 'Create Vault Item',
