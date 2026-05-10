@@ -4,7 +4,10 @@ import { useState, useEffect, ChangeEvent, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import api from '@/services/api';
 import DashboardNavigation from '@/components/DashboardNavigation';
+import PageHeader from '@/components/PageHeader';
+import Button from '@/components/Button';
 import { TeacherProfile } from '@/types';
+import { User, Camera, Mail, Phone, FileText } from 'lucide-react';
 
 export default function EditProfilePage() {
   const router = useRouter();
@@ -88,155 +91,180 @@ export default function EditProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#001A72] mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading profile...</p>
-        </div>
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#001A72]" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <DashboardNavigation user={user} />
-      <div className="py-8">
-        <div className="max-w-2xl mx-auto px-4">
-          <div className="bg-white rounded-lg shadow-lg p-8">
-            <h1 className="text-3xl font-bold text-[#001A72] mb-2">Edit Profile</h1>
-            <p className="text-gray-600 mb-6">Update your personal information</p>
+    <div className="space-y-6 max-w-4xl mx-auto pb-12">
+      <PageHeader
+        title="Edit Profile"
+        subtitle="Update your personal information and public bio"
+        rightElement={
+          <button
+            onClick={() => router.push('/app/dashboard')}
+            className="text-xs font-bold text-gray-400 hover:text-[#001A72] transition flex items-center gap-1"
+          >
+            Cancel and return
+          </button>
+        }
+      />
 
-            {error && (
-              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-                {error}
+      {error && (
+        <div className="bg-red-50 border border-red-100 text-red-600 px-4 py-3 rounded-xl text-sm font-medium flex items-center gap-3">
+          <div className="w-6 h-6 rounded-lg bg-red-100 flex items-center justify-center shrink-0">
+            <span className="font-bold">!</span>
+          </div>
+          {error}
+        </div>
+      )}
+
+      {success && (
+        <div className="bg-emerald-50 border border-emerald-100 text-emerald-600 px-4 py-3 rounded-xl text-sm font-medium flex items-center gap-3 animate-in fade-in slide-in-from-top-2">
+          <div className="w-6 h-6 rounded-lg bg-emerald-100 flex items-center justify-center shrink-0">
+            <span className="font-bold">✓</span>
+          </div>
+          {success}
+        </div>
+      )}
+
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <form onSubmit={handleSubmit} className="divide-y divide-gray-50">
+
+          {/* Section: Basic Info */}
+          <div className="p-8 space-y-6">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-[#001A72]">
+                <User size={18} />
               </div>
-            )}
+              <h2 className="text-sm font-bold text-gray-900 uppercase tracking-widest">Basic Information</h2>
+            </div>
 
-            {success && (
-              <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
-                {success}
+            <div className="grid sm:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">First Name</label>
+                <input
+                  type="text"
+                  name="firstName"
+                  value={formData.firstName}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#001A72]/20 focus:border-[#001A72] transition"
+                  placeholder="First name"
+                />
               </div>
-            )}
-
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Name Fields */}
-              <div className="flex gap-4">
-                <div className="flex-1">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">First Name</label>
-                  <input
-                    type="text"
-                    name="firstName"
-                    value={formData.firstName}
-                    onChange={handleChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#001A72]"
-                    placeholder="First name"
-                  />
-                </div>
-                <div className="flex-1">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Last Name</label>
-                  <input
-                    type="text"
-                    name="lastName"
-                    value={formData.lastName}
-                    onChange={handleChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#001A72]"
-                    placeholder="Last name"
-                  />
-                </div>
+              <div className="space-y-2">
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Last Name</label>
+                <input
+                  type="text"
+                  name="lastName"
+                  value={formData.lastName}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#001A72]/20 focus:border-[#001A72] transition"
+                  placeholder="Last name"
+                />
               </div>
+            </div>
 
-              {/* Email */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+            <div className="grid sm:grid-cols-2 gap-6">
+              <div className="space-y-2 opacity-70">
+                <label className="flex items-center gap-1.5 text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">
+                  <Mail size={12} /> Email Address
+                </label>
                 <input
                   type="email"
-                  name="email"
                   value={formData.email}
-                  onChange={handleChange}
                   disabled
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed"
-                  placeholder="Your email (cannot be changed)"
+                  className="w-full px-4 py-3 border border-gray-100 rounded-xl bg-gray-50 text-gray-500 text-sm cursor-not-allowed"
                 />
-                <p className="text-xs text-gray-500 mt-1">Email cannot be changed for security reasons</p>
               </div>
-
-              {/* Phone */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
+              <div className="space-y-2 opacity-70">
+                <label className="flex items-center gap-1.5 text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">
+                  <Phone size={12} /> Phone Number
+                </label>
                 <input
                   type="tel"
-                  name="phone"
                   value={formData.phone}
-                  onChange={handleChange}
                   disabled
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed"
-                  placeholder="Your phone number (cannot be changed)"
-                />
-                <p className="text-xs text-gray-500 mt-1">Phone cannot be changed for security reasons</p>
-              </div>
-
-              {/* Bio */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Bio / About</label>
-                <textarea
-                  name="bio"
-                  value={formData.bio}
-                  onChange={handleChange}
-                  rows={4}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#001A72]"
-                  placeholder="Tell us about yourself..."
+                  className="w-full px-4 py-3 border border-gray-100 rounded-xl bg-gray-50 text-gray-500 text-sm cursor-not-allowed"
                 />
               </div>
+            </div>
+          </div>
 
-              {/* Photo URL */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Profile Photo URL</label>
+          {/* Section: Bio & Profile */}
+          <div className="p-8 space-y-6 bg-gray-50/30">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-8 h-8 rounded-lg bg-purple-50 flex items-center justify-center text-purple-600">
+                <FileText size={18} />
+              </div>
+              <h2 className="text-sm font-bold text-gray-900 uppercase tracking-widest">Bio & Profile</h2>
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Professional Bio</label>
+              <textarea
+                name="bio"
+                value={formData.bio}
+                onChange={handleChange}
+                rows={5}
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#001A72]/20 focus:border-[#001A72] transition resize-none"
+                placeholder="Tell students about your experience, teaching style, and passion..."
+              />
+            </div>
+
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="flex items-center gap-1.5 text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">
+                  <Camera size={12} /> Profile Photo URL
+                </label>
                 <input
                   type="url"
                   name="photo_url"
                   value={formData.photo_url}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#001A72]"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#001A72]/20 focus:border-[#001A72] transition"
                   placeholder="https://example.com/photo.jpg"
                 />
-                {formData.photo_url && (
-                  <div className="mt-3">
-                    <img
-                      src={formData.photo_url}
-                      alt="Profile preview"
-                      className="h-24 w-24 rounded-lg object-cover border border-gray-300"
-                    />
-                  </div>
-                )}
               </div>
 
-              {/* Submit Button */}
-              <div className="flex gap-4 pt-6">
-                <button
-                  type="submit"
-                  disabled={saving}
-                  className="flex-1 bg-[#001A72] text-white py-2 rounded-lg font-semibold hover:bg-[#001A72]/90 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                >
-                  {saving ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                      Saving...
-                    </>
-                  ) : (
-                    'Save Changes'
-                  )}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => router.push('/dashboard')}
-                  className="flex-1 border-2 border-gray-300 text-gray-700 py-2 rounded-lg font-semibold hover:bg-gray-50 transition"
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
+              {formData.photo_url && (
+                <div className="flex items-center gap-4 p-4 bg-white rounded-2xl border border-gray-100 w-fit">
+                  <img
+                    src={formData.photo_url}
+                    alt="Profile preview"
+                    className="h-20 w-20 rounded-xl object-cover ring-4 ring-gray-50"
+                  />
+                  <div>
+                    <p className="text-xs font-bold text-gray-900">Preview</p>
+                    <p className="text-[10px] text-gray-400">How you appear to students</p>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
+
+          {/* Footer Actions */}
+          <div className="p-8 bg-gray-50 flex flex-col sm:flex-row gap-3">
+            <Button
+              type="submit"
+              isLoading={saving}
+              loadingText="Saving changes..."
+              variant="primary"
+              className="px-8 py-3.5"
+            >
+              Save Changes
+            </Button>
+            <button
+              type="button"
+              onClick={() => router.push('/app/dashboard')}
+              className="px-8 py-3.5 rounded-xl font-bold text-sm text-gray-600 hover:bg-gray-100 transition border border-transparent"
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );

@@ -6,6 +6,7 @@ import Link from 'next/link';
 import api from '@/services/api';
 import { Lock, Eye, EyeOff, CheckCircle2, XCircle, ArrowLeft } from 'lucide-react';
 import AuthLayout from '@/components/AuthLayout';
+import Button from '@/components/Button';
 
 type TokenState = 'loading' | 'valid' | 'invalid';
 
@@ -101,12 +102,12 @@ function ResetPasswordContent() {
           {tokenError || 'This password reset link is no longer valid. Please request a new one.'}
         </p>
 
-        <Link
+        <Button
           href="/forgot-password"
-          className="w-full bg-primary hover:bg-primary/90 text-white font-semibold py-3.5 rounded-xl transition flex items-center justify-center shadow-sm text-sm mb-4"
+          className="text-sm mb-4"
         >
           Request a New Link
-        </Link>
+        </Button>
 
         <Link
           href="/login"
@@ -224,24 +225,14 @@ function ResetPasswordContent() {
         )}
 
         {/* Submit */}
-        <button
+        <Button
           id="reset-password-submit"
           type="submit"
-          disabled={loading}
-          className="w-full bg-primary hover:bg-primary/90 text-white font-semibold py-3.5 rounded-xl transition disabled:opacity-70 flex items-center justify-center gap-2 mt-2 shadow-sm"
+          isLoading={loading}
+          loadingText="Resetting Password..."
         >
-          {loading ? (
-            <>
-              <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
-              </svg>
-              Resetting Password...
-            </>
-          ) : (
-            'Reset Password'
-          )}
-        </button>
+          Reset Password
+        </Button>
       </form>
     </>
   );

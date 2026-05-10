@@ -6,16 +6,18 @@ import Link from 'next/link';
 import api from '@/services/api';
 import DashboardNavigation from '@/components/DashboardNavigation';
 import { User } from '@/types';
-import { 
-  Wallet, 
-  Building2, 
-  HeartPulse, 
-  Calendar, 
-  ShieldCheck, 
-  TrendingUp, 
-  Brain, 
-  Undo2 
+import {
+  Wallet,
+  Building2,
+  HeartPulse,
+  Calendar,
+  ShieldCheck,
+  TrendingUp,
+  Brain,
+  Undo2
 } from 'lucide-react';
+import PageHeader from '@/components/PageHeader';
+import StatCard from '@/components/StatCard';
 
 interface HistoryEntry {
   date: string;
@@ -59,216 +61,161 @@ export default function EarningsPage(): ReactElement {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#001A72] mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading earnings dashboard...</p>
-        </div>
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#001A72]" />
       </div>
     );
   }
 
   const isTeacher = user?.role === 'teacher';
-
   return (
-    <div className="min-h-screen bg-gray-50">
-      <DashboardNavigation user={user} />
-      <div className="py-8">
-        <div className="max-w-6xl mx-auto px-4">
-          <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 border-b border-gray-100 pb-6">
+    <div className="space-y-6 max-w-7xl mx-auto">
+      <PageHeader
+        title="Earnings"
+        subtitle={isTeacher ? 'Track your income, splits, and wallet status' : 'Track your spending and transaction history'}
+        rightElement={
+          <div className="bg-[#FFB81C]/10 border border-[#FFB81C]/30 px-4 py-2.5 rounded-xl flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-[#FFB81C]/20 flex items-center justify-center">
+              <Wallet size={16} className="text-[#001A72]" />
+            </div>
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-widest text-[#001A72]/60 leading-none mb-1">Wallet Balance</p>
+              <p className="text-lg font-black text-[#001A72] leading-none">₦28,500</p>
+            </div>
+          </div>
+        }
+      />
+
+      {isTeacher ? (
+        <div className="space-y-6">
+          {/* Teacher Stats Grid */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <StatCard label="Personal Take (75%)" value="₦45,000" color="text-[#001A72]" bg="bg-[#001A72]/5" icon={Wallet} />
+            <StatCard label="Welfare Fund (10%)" value="₦6,000" color="text-purple-600" bg="bg-purple-50" icon={HeartPulse} />
+            <StatCard label="Total Booked" value="₦60,000" color="text-[#001A72]" bg="bg-[#FFB81C]/10" icon={Calendar} />
+            <StatCard label="Platform Growth" value="15%" color="text-emerald-600" bg="bg-emerald-50" icon={TrendingUp} />
+          </div>
+
+          {/* Welfare Fund Highlight */}
+          <div className="bg-white border-2 border-[#001A72]/10 rounded-2xl p-8 shadow-sm">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-8">
               <div>
-                <h1 className="text-3xl font-black text-[#001A72] mb-1">Your Earnings</h1>
-                <p className="text-gray-500 font-medium tracking-tight">Track your income, splits, and wallet status</p>
+                <h2 className="text-2xl font-black text-[#001A72] mb-1 flex items-center gap-2">
+                  <HeartPulse className="text-purple-600" /> Your Welfare Savings
+                </h2>
+                <p className="text-gray-500 text-sm">Funds accumulated from your teaching sessions to secure your future.</p>
               </div>
-              <div className="mt-4 md:mt-0 bg-[#FFB81C]/10 px-4 py-2 rounded-lg border border-[#FFB81C]/20">
-                <p className="text-xs font-black uppercase tracking-widest text-[#001A72]">Wallet Balance</p>
-                <p className="text-2xl font-black text-[#001A72]">₦28,500</p>
+              <div className="flex gap-3 shrink-0">
+                <Link href="/app/welfare-fund" className="bg-[#001A72] text-white px-6 py-3 rounded-xl font-bold text-sm hover:bg-[#001A72]/90 transition shadow-md">
+                  Manage Fund
+                </Link>
+                <button className="bg-gray-100 text-gray-700 px-6 py-3 rounded-xl font-bold text-sm hover:bg-gray-200 transition">
+                  Withdrawals
+                </button>
               </div>
             </div>
+            <div className="grid md:grid-cols-3 gap-6">
+              <WelfareBox label="Accumulated Total" value="₦156,000" sub="Total lifetime savings" />
+              <WelfareBox label="Available to Withdraw" value="₦140,000" sub="Ready for withdrawal" highlight />
+              <WelfareBox label="Locked (Current Period)" value="₦16,000" sub="Unlocks on the 5th" />
+            </div>
+          </div>
 
-            {isTeacher ? (
-              <div className="space-y-10">
-                {/* Teacher Stats Grid */}
-                <div className="grid md:grid-cols-4 gap-6">
-                  <StatCard label="Personal Take (75%)" value="₦45,000" color="bg-green-500" icon={Wallet} />
-                  <StatCard label="Platform Fee (15%)" value="₦9,000" color="bg-blue-500" icon={Building2} />
-                  <StatCard label="Welfare Fund (10%)" value="₦6,000" color="bg-purple-500" icon={HeartPulse} />
-                  <StatCard label="Total Booked" value="₦60,000" color="bg-[#FFB81C]" icon={Calendar} />
-                </div>
-
-                {/* Educational Split Explanation */}
-                <div className="bg-[#001A72] rounded-2xl p-8 text-white relative overflow-hidden">
-                  <div className="relative z-10">
-                    <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-                      <ShieldCheck size={24} /> Secure Split & Welfare Savings
-                    </h3>
-                    <p className="text-blue-100 mb-6 max-w-2xl leading-relaxed">
-                      Payments are automatically split at the source when a session is confirmed. This ensures transparency and builds your long-term welfare security.
-                    </p>
-                    <div className="grid md:grid-cols-3 gap-6">
-                      <SplitItem percentage="75%" label="Teacher Direct" desc="Paid instantly to your accessible wallet" />
-                      <SplitItem percentage="15%" label="System Fee" desc="Covers platform support and hosting" />
-                      <SplitItem percentage="10%" label="Welfare Fund" desc="Locked for your housing & emergency fund" />
-                    </div>
-                  </div>
-                  <div className="absolute -right-20 -bottom-20 w-64 h-64 bg-white/5 rounded-full blur-3xl"></div>
-                </div>
-
-                {/* Welfare Fund Highlight */}
-                <div className="bg-white border-2 border-purple-100 rounded-2xl p-8 shadow-sm">
-                  <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-8">
-                    <div>
-                      <h2 className="text-2xl font-black text-[#001A72] mb-1 flex items-center gap-2">
-                        <HeartPulse className="text-purple-600" /> Your Welfare Savings
-                      </h2>
-                      <p className="text-gray-500 text-sm">Funds accumulated from your teaching sessions</p>
-                    </div>
-                    <div className="flex gap-3">
-                      <Link href="/welfare-fund" className="bg-purple-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-purple-700 transition shadow-md">
-                        Manage Fund
-                      </Link>
-                      <button className="bg-gray-100 text-gray-700 px-6 py-3 rounded-xl font-bold hover:bg-gray-200 transition">
-                        Withdrawals
-                      </button>
-                    </div>
-                  </div>
-                  <div className="grid md:grid-cols-3 gap-6">
-                    <WelfareBox label="Accumulated Total" value="₦156,000" sub="Total lifetime savings" />
-                    <WelfareBox label="Available to Withdraw" value="₦140,000" sub="Ready for withdrawal" highlight />
-                    <WelfareBox label="Locked (Current Period)" value="₦16,000" sub="Unlocks on the 5th" />
-                  </div>
-                </div>
-
-                {/* Teacher Table */}
-                <div className="overflow-hidden rounded-2xl border border-gray-100 shadow-sm">
-                  <div className="p-6 bg-gray-50 border-b border-gray-100">
-                    <h2 className="text-xl font-black text-[#001A72]">Payment History</h2>
-                  </div>
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead className="bg-[#001A72]/5 text-[#001A72] uppercase text-[10px] font-black tracking-widest">
-                        <tr>
-                          <th className="py-4 px-6 text-left">Date</th>
-                          <th className="py-4 px-6 text-left">Lesson / Student</th>
-                          <th className="py-4 px-6 text-right">Earnings (75%)</th>
-                          <th className="py-4 px-6 text-right">Platform</th>
-                          <th className="py-4 px-6 text-right">Welfare</th>
-                          <th className="py-4 px-6 text-center">Status</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-100">
-                        {TEACHER_HISTORY.map((entry, i) => (
-                          <tr key={i} className="hover:bg-gray-50 transition">
-                            <td className="py-4 px-6 text-gray-500">{entry.date}</td>
-                            <td className="py-4 px-6">
-                              <p className="font-bold text-gray-900">{entry.lesson}</p>
-                              <p className="text-xs text-gray-500">{entry.student}</p>
-                            </td>
-                            <td className="py-4 px-6 text-right font-black text-green-600">₦{(Number(entry.amount) * 0.75).toLocaleString()}</td>
-                            <td className="py-4 px-6 text-right font-bold text-blue-600">₦{(Number(entry.amount) * 0.15).toLocaleString()}</td>
-                            <td className="py-4 px-6 text-right font-bold text-purple-600">₦{(Number(entry.amount) * 0.10).toLocaleString()}</td>
-                            <td className="py-4 px-6 text-center">
-                              <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase ${entry.status === 'Completed' ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800'
-                                }`}>
-                                {entry.status}
-                              </span>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-10">
-                {/* Parent Summary */}
-                <div className="grid md:grid-cols-4 gap-6">
-                  <StatCard label="Total Spent" value="₦45,000" color="bg-green-500" icon={TrendingUp} />
-                  <StatCard label="This Month" value="₦12,500" color="bg-blue-500" icon={Calendar} />
-                  <StatCard label="Active Sessions" value="5" color="bg-[#FFB81C]" icon={Brain} />
-                  <StatCard label="Refund Balance" value="₦0" color="bg-purple-500" icon={Undo2} />
-                </div>
-
-                {/* Parent Table */}
-                <div className="overflow-hidden rounded-2xl border border-gray-100 shadow-sm">
-                  <div className="p-6 bg-gray-50 border-b border-gray-100">
-                    <h2 className="text-xl font-black text-[#001A72]">Transaction History</h2>
-                  </div>
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead className="bg-[#001A72]/5 text-[#001A72] uppercase text-[10px] font-black tracking-widest">
-                        <tr>
-                          <th className="py-4 px-6 text-left">Date</th>
-                          <th className="py-4 px-6 text-left">Subject / Tutor</th>
-                          <th className="py-4 px-6 text-right">Amount</th>
-                          <th className="py-4 px-6 text-center">Status</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-100">
-                        {PARENT_HISTORY.map((entry, i) => (
-                          <tr key={i} className="hover:bg-gray-50 transition">
-                            <td className="py-4 px-6 text-gray-500">{entry.date}</td>
-                            <td className="py-4 px-6">
-                              <p className="font-bold text-gray-900">{entry.lesson}</p>
-                              <p className="text-xs text-gray-500">{entry.tutor}</p>
-                            </td>
-                            <td className="py-4 px-6 text-right font-black text-[#001A72]">{entry.amount}</td>
-                            <td className="py-4 px-6 text-center">
-                              <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase ${entry.status === 'Completed' ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800'
-                                }`}>
-                                {entry.status}
-                              </span>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </div>
-            )}
+          {/* Teacher Table */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-50 flex items-center justify-between">
+              <h2 className="text-sm font-bold text-gray-900 uppercase tracking-widest">Payment History</h2>
+              <button className="text-xs font-bold text-[#001A72] hover:underline">Export CSV</button>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-[#001A72]/5 text-[#001A72] text-[10px] font-black uppercase tracking-widest">
+                    <th className="py-4 px-6 text-left font-black">Date</th>
+                    <th className="py-4 px-6 text-left font-black">Lesson / Student</th>
+                    <th className="py-4 px-6 text-right font-black">Earnings (75%)</th>
+                    <th className="py-4 px-6 text-right font-black">Platform</th>
+                    <th className="py-4 px-6 text-right font-black">Welfare</th>
+                    <th className="py-4 px-6 text-center font-black">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {TEACHER_HISTORY.map((entry, i) => (
+                    <tr key={i} className="hover:bg-gray-50/50 transition-colors">
+                      <td className="py-4 px-6 text-gray-500 text-xs">{entry.date}</td>
+                      <td className="py-4 px-6">
+                        <p className="font-bold text-[#001A72] text-xs">{entry.lesson}</p>
+                        <p className="text-[10px] text-gray-400">{entry.student}</p>
+                      </td>
+                      <td className="py-4 px-6 text-right font-black text-emerald-600">₦{(Number(entry.amount) * 0.75).toLocaleString()}</td>
+                      <td className="py-4 px-6 text-right font-bold text-blue-600 text-xs">₦{(Number(entry.amount) * 0.15).toLocaleString()}</td>
+                      <td className="py-4 px-6 text-right font-bold text-purple-600 text-xs">₦{(Number(entry.amount) * 0.10).toLocaleString()}</td>
+                      <td className="py-4 px-6 text-center">
+                        <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase border ${entry.status === 'Completed'
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
+                            : 'bg-amber-50 text-amber-700 border-amber-100'
+                          }`}>
+                          {entry.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
-      </div>
-    </div>
-  );
-}
+      ) : (
+        <div className="space-y-6">
+          {/* Parent Summary */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <StatCard label="Total Spent" value="₦45,000" color="text-[#001A72]" bg="bg-[#001A72]/5" icon={TrendingUp} />
+            <StatCard label="This Month" value="₦12,500" color="text-[#001A72]" bg="bg-[#FFB81C]/10" icon={Calendar} />
+            <StatCard label="Active Sessions" value="5" color="text-emerald-600" bg="bg-emerald-50" icon={Brain} />
+            <StatCard label="Refund Balance" value="₦0" color="text-purple-600" bg="bg-purple-50" icon={Undo2} />
+          </div>
 
-interface StatCardProps {
-  label: string;
-  value: string;
-  color: string;
-  icon: any;
-}
-
-function StatCard({ label, value, color, icon: Icon }: StatCardProps): ReactElement {
-  return (
-    <div className="p-6 bg-gray-50 rounded-2xl border border-gray-100 flex items-center gap-4">
-      <div className={`w-12 h-12 rounded-xl ${color} flex items-center justify-center text-white text-2xl shadow-lg`}>
-        <Icon size={24} />
-      </div>
-      <div>
-        <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-0.5">{label}</p>
-        <p className="text-xl font-black text-[#001A72] leading-none">{value}</p>
-      </div>
-    </div>
-  );
-}
-
-interface SplitItemProps {
-  percentage: string;
-  label: string;
-  desc: string;
-}
-
-function SplitItem({ percentage, label, desc }: SplitItemProps): ReactElement {
-  return (
-    <div className="bg-white/10 p-4 rounded-xl border border-white/10">
-      <p className="text-2xl font-black mb-1 text-[#FFB81C]">{percentage}</p>
-      <p className="text-sm font-bold uppercase tracking-wide mb-1 opacity-90">{label}</p>
-      <p className="text-xs opacity-70 leading-relaxed font-medium">{desc}</p>
+          {/* Parent Table */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-50 flex items-center justify-between">
+              <h2 className="text-sm font-bold text-gray-900 uppercase tracking-widest">Transaction History</h2>
+              <button className="text-xs font-bold text-[#001A72] hover:underline">Download Invoices</button>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-[#001A72]/5 text-[#001A72] text-[10px] font-black uppercase tracking-widest">
+                    <th className="py-4 px-6 text-left font-black">Date</th>
+                    <th className="py-4 px-6 text-left font-black">Subject / Tutor</th>
+                    <th className="py-4 px-6 text-right font-black">Amount</th>
+                    <th className="py-4 px-6 text-center font-black">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {PARENT_HISTORY.map((entry, i) => (
+                    <tr key={i} className="hover:bg-gray-50/50 transition-colors">
+                      <td className="py-4 px-6 text-gray-500 text-xs">{entry.date}</td>
+                      <td className="py-4 px-6">
+                        <p className="font-bold text-[#001A72] text-xs">{entry.lesson}</p>
+                        <p className="text-[10px] text-gray-400">{entry.tutor}</p>
+                      </td>
+                      <td className="py-4 px-6 text-right font-black text-[#001A72] text-xs">{entry.amount}</td>
+                      <td className="py-4 px-6 text-center">
+                        <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase border ${entry.status === 'Completed'
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
+                            : 'bg-amber-50 text-amber-700 border-amber-100'
+                          }`}>
+                          {entry.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -282,10 +229,18 @@ interface WelfareBoxProps {
 
 function WelfareBox({ label, value, sub, highlight }: WelfareBoxProps): ReactElement {
   return (
-    <div className={`p-6 rounded-xl border ${highlight ? 'bg-purple-600 text-white border-purple-600' : 'bg-purple-50 text-[#001A72] border-purple-100'}`}>
-      <p className={`text-[10px] font-black uppercase tracking-widest mb-1 ${highlight ? 'text-white/70' : 'text-purple-400'}`}>{label}</p>
+    <div className={`p-6 rounded-xl border ${
+      highlight
+        ? 'bg-[#001A72] text-white border-[#001A72] shadow-lg'
+        : 'bg-[#001A72]/5 text-[#001A72] border-[#001A72]/10'
+    }`}>
+      <p className={`text-[10px] font-black uppercase tracking-widest mb-1 ${
+        highlight ? 'text-white/60' : 'text-[#001A72]/50'
+      }`}>{label}</p>
       <p className="text-2xl font-black mb-1">{value}</p>
-      <p className={`text-[10px] font-medium ${highlight ? 'text-white/50' : 'text-gray-400'}`}>{sub}</p>
+      <p className={`text-[10px] font-medium ${
+        highlight ? 'text-white/50' : 'text-gray-500'
+      }`}>{sub}</p>
     </div>
   );
 }

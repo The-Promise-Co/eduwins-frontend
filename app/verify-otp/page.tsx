@@ -6,6 +6,7 @@ import Link from 'next/link';
 import api from '../../services/api';
 import { useUser } from '../../context/UserContext';
 import AuthSlider from '../../components/AuthSlider';
+import Button from '../../components/Button';
 
 function VerifyOtpContent() {
   const router = useRouter();
@@ -137,22 +138,25 @@ function VerifyOtpContent() {
               />
             </div>
 
-            <button
+            <Button
               type="submit"
-              disabled={loading || resending}
-              className="w-full bg-primary hover:bg-primary/90 text-white font-semibold py-3.5 rounded-xl transition disabled:opacity-70 flex items-center justify-center shadow-sm"
+              isLoading={loading}
+              loadingText="Verifying..."
             >
-              {loading ? 'Verifying...' : 'Verify OTP'}
-            </button>
+              Verify OTP
+            </Button>
 
-            <button
+            <Button
               type="button"
+              variant="ghost"
               onClick={handleResendOtp}
-              disabled={resending || loading || countdown > 0}
-              className="block w-full text-center text-primary font-medium py-2 text-sm hover:underline transition disabled:opacity-50"
+              isLoading={resending}
+              loadingText="Resending..."
+              disabled={loading || countdown > 0}
+              className="text-primary font-medium py-2 text-sm hover:underline shadow-none"
             >
-              {resending ? 'Resending...' : countdown > 0 ? `Resend OTP in ${countdown}s` : 'Resend OTP'}
-            </button>
+              {countdown > 0 ? `Resend OTP in ${countdown}s` : 'Resend OTP'}
+            </Button>
 
             <Link
               href="/register"

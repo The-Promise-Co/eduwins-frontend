@@ -6,8 +6,11 @@ import {
   GraduationCap, 
   MessageSquare, 
   AlertTriangle, 
-  Send 
+  Send,
+  ArrowLeft
 } from 'lucide-react';
+import PageHeader from '@/components/PageHeader';
+import Button from '@/components/Button';
 
 export default function ChatPage() {
   const [messages, setMessages] = useState<any[]>([]);
@@ -60,87 +63,82 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#001A72]/10 to-[#FFB81C]/10 flex flex-col">
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-4xl mx-auto px-4 py-4">
-          <div className="flex items-center gap-3">
-            <div className="text-[#001A72]">
-              <GraduationCap size={40} />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">{conversationTitle}</h1>
-              <p className="text-gray-600 text-sm">Online</p>
-            </div>
+    <div className="h-full flex flex-col space-y-6 max-w-4xl mx-auto pb-6">
+      <PageHeader 
+        title={conversationTitle}
+        subtitle="Online"
+        rightElement={
+          <div className="flex items-center gap-2 text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-100">
+            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            Live Support
           </div>
-        </div>
-      </div>
+        }
+      />
 
       {/* Chat Area */}
-      <div className="flex-1 max-w-4xl mx-auto w-full px-4 py-6 overflow-y-auto">
-        {messages.length === 0 ? (
-          <div className="flex items-center justify-center h-full text-center">
-            <div className="text-[#001A72] opacity-20">
-              <div className="flex justify-center mb-4">
-                <MessageSquare size={80} />
-              </div>
-              <p className="text-gray-600 text-lg">No messages yet. Start a conversation!</p>
+      <div className="flex-1 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col min-h-[400px]">
+        <div className="flex-1 p-6 overflow-y-auto space-y-4">
+          {messages.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full text-center opacity-30 py-20">
+              <MessageSquare size={64} className="text-[#001A72] mb-4" />
+              <p className="text-gray-900 font-bold">No messages yet</p>
+              <p className="text-sm">Start a conversation with your tutor</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {messages.map((msg) => (
+                <div key={msg.id} className={`flex ${msg.sender_id === 1 ? 'justify-end' : 'justify-start'}`}>
+                  <div className={`max-w-[80%] px-4 py-2.5 rounded-2xl text-sm ${
+                    msg.sender_id === 1
+                      ? 'bg-[#001A72] text-white rounded-tr-none'
+                      : msg.is_flagged
+                        ? 'bg-amber-50 text-amber-900 border border-amber-200 rounded-tl-none'
+                        : 'bg-gray-100 text-gray-900 rounded-tl-none'
+                  }`}>
+                    <p>{msg.content}</p>
+                    {msg.is_flagged && (
+                      <p className="text-[10px] mt-1 font-black uppercase tracking-widest flex items-center gap-1 text-amber-600">
+                        <AlertTriangle size={10} /> Flagged
+                      </p>
+                    )}
+                    <p className="text-[10px] mt-1 opacity-50 font-medium">
+                      {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Warning Zone */}
+        {warning && (
+          <div className="px-6 py-2">
+            <div className="bg-amber-50 border border-amber-100 p-3 rounded-xl flex items-center gap-3 animate-in fade-in slide-in-from-bottom-2">
+              <AlertTriangle className="text-amber-600 shrink-0" size={16} />
+              <p className="text-amber-800 text-xs font-medium leading-relaxed">{warning}</p>
             </div>
           </div>
-        ) : (
-          <div className="space-y-4">
-            {messages.map((msg) => (
-              <div key={msg.id} className={`flex ${msg.sender_id === 1 ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-sm px-4 py-2 rounded-lg ${msg.sender_id === 1
-                    ? 'bg-[#001A72] text-white'
-                    : msg.is_flagged
-                      ? 'bg-[#FFB81C]/20 text-gray-900 border-2 border-[#FFB81C]/70'
-                      : 'bg-gray-200 text-gray-900'
-                  }`}>
-                  <p>{msg.content}</p>
-                  {msg.is_flagged && (
-                    <p className="text-xs mt-1 font-semibold flex items-center gap-1">
-                      <AlertTriangle size={12} /> Flagged content
-                    </p>
-                  )}
-                  <p className="text-xs mt-1 opacity-75">
-                    {new Date(msg.created_at).toLocaleTimeString()}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
         )}
-      </div>
 
-      {/* Warning Zone */}
-      {warning && (
-        <div className="max-w-4xl mx-auto w-full px-4">
-          <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4 rounded flex items-center gap-3">
-            <AlertTriangle className="text-yellow-600" size={20} />
-            <p className="text-yellow-800 font-medium">{warning}</p>
-          </div>
+        {/* Input Area */}
+        <div className="p-4 bg-gray-50 border-t border-gray-50">
+          <form onSubmit={sendMessage} className="flex gap-2">
+            <input
+              type="text"
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+              placeholder="Type your message... (Avoid sharing phone/email)"
+              className="flex-1 border border-gray-200 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#001A72]/20 focus:border-[#001A72] transition bg-white"
+            />
+            <Button
+              type="submit"
+              className="px-6"
+            >
+              <Send size={18} />
+            </Button>
+          </form>
         </div>
-      )}
-
-      {/* Input Area */}
-      <div className="bg-white border-t border-gray-200 p-4">
-        <form onSubmit={sendMessage} className="max-w-4xl mx-auto flex gap-3">
-          <input
-            type="text"
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            placeholder="Type your message... (Avoid sharing phone/email)"
-            className="flex-1 border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-[#001A72] outline-none"
-          />
-          <button
-            type="submit"
-            className="bg-[#001A72] text-white px-6 py-3 rounded-lg hover:bg-[#001A72]/90 font-semibold transition flex items-center gap-2"
-          >
-            <span>Send</span>
-            <Send size={18} />
-          </button>
-        </form>
       </div>
     </div>
   );

@@ -13,7 +13,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/app/premium-subscription': 'Premium',
   '/app/premium-content': 'My Content',
   '/app/welfare-fund': 'Welfare Fund',
-  '/app/schedule': 'View Schedule',
+  '/app/schedule': 'Schedule',
   '/app/earnings': 'Earnings',
   '/app/progress': 'Progress Report',
   '/app/dashboard-settings': 'Settings',
@@ -26,6 +26,8 @@ const PAGE_TITLES: Record<string, string> = {
   '/app/progress-reports': 'Progress Reports',
   '/app/courses': 'Courses',
   '/app/courses/create': 'Create Course',
+  '/app/referrals': 'Referrals',
+  '/app/assessments': 'Assessments',
 };
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {

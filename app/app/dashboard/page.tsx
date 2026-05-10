@@ -5,16 +5,16 @@ import Link from 'next/link';
 import api from '@/services/api';
 import { useUser } from '@/context/UserContext';
 import { User, Booking } from '@/types';
-import { 
-  Search, 
-  Calendar, 
-  Box, 
-  BarChart3, 
-  Wallet, 
-  Handshake, 
-  Gem, 
-  Award, 
-  MessageSquare, 
+import {
+  Search,
+  Calendar,
+  Box,
+  BarChart3,
+  Wallet,
+  Handshake,
+  Gem,
+  Award,
+  MessageSquare,
   Settings,
   Lock,
   BookOpen,
@@ -23,8 +23,11 @@ import {
   Users,
   ClipboardList,
   X,
-  UserCircle
+  UserCircle,
+  HeartPulse
 } from 'lucide-react';
+import StatCard from '@/components/StatCard';
+import PageHeader from '@/components/PageHeader';
 
 interface FeatureCard {
   icon: LucideIcon;
@@ -212,12 +215,10 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Welcome */}
-      <div>
-        <h2 className="text-xl font-bold text-gray-900">
-          Welcome, <span className="text-[#001A72]">{firstName}</span>
-        </h2>
-      </div>
+      <PageHeader
+        title={`Welcome back, ${firstName}! 👋`}
+        subtitle={user?.role === 'teacher' ? "Here's what's happening with your classes today." : "Track your children's progress and upcoming lessons."}
+      />
 
       {/* Promo Banner */}
       <div className="relative rounded-2xl bg-gradient-to-r from-[#001A72] to-[#0028a5] overflow-hidden px-8 py-6 flex items-center justify-between">
@@ -237,21 +238,20 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Stats Row */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {user?.role === 'teacher' ? (
           <>
-            <StatBox label="Referral Code" value={user?.referralCode || 'N/A'} sub="Share with friends" accent="text-[#001A72]" />
-            <StatBox label="Referred Users" value={String(user?.referralCount || 0)} sub="Total referrals" accent="text-[#FFB81C]" />
-            <StatBox label="Referral Rewards" value={`₦${((user?.referralCount || 0) * 500).toLocaleString()}`} sub="Earned" accent="text-green-600" />
-            <StatBox label="Welfare Boost" value={`₦${(user?.welfareBoost || 0).toLocaleString()}`} sub="Your savings" accent="text-indigo-600" />
+            <StatCard label="Referral Code" value={user?.referralCode || 'N/A'} icon={Users} bg="bg-[#001A72]/5" color="text-[#001A72]" />
+            <StatCard label="Referred Users" value={String(user?.referralCount || 0)} icon={Users} bg="bg-[#FFB81C]/10" color="text-[#001A72]" />
+            <StatCard label="Referral Rewards" value={`₦${((user?.referralCount || 0) * 500).toLocaleString()}`} icon={Wallet} bg="bg-emerald-50" color="text-emerald-600" />
+            <StatCard label="Welfare Boost" value={`₦${(user?.welfareBoost || 0).toLocaleString()}`} icon={HeartPulse} bg="bg-purple-50" color="text-purple-600" />
           </>
         ) : (
           <>
-            <StatBox label="Referral Code" value={user?.referralCode || 'N/A'} sub="Share with friends" accent="text-[#001A72]" />
-            <StatBox label="Referred Users" value={String(user?.referralCount || 0)} sub="Total referrals" accent="text-[#FFB81C]" />
-            <StatBox label="Referral Income" value={`₦${((user?.referralCount || 0) * 1000).toLocaleString()}`} sub="Earned" accent="text-green-600" />
-            <StatBox label="Children Linked" value={String(children.length)} sub="Active students" accent="text-indigo-600" />
+            <StatCard label="Referral Code" value={user?.referralCode || 'N/A'} icon={Users} bg="bg-[#001A72]/5" color="text-[#001A72]" />
+            <StatCard label="Referred Users" value={String(user?.referralCount || 0)} icon={Users} bg="bg-[#FFB81C]/10" color="text-[#001A72]" />
+            <StatCard label="Referral Income" value={`₦${((user?.referralCount || 0) * 1000).toLocaleString()}`} icon={Wallet} bg="bg-emerald-50" color="text-emerald-600" />
+            <StatCard label="Children Linked" value={String(children.length)} icon={Users} bg="bg-purple-50" color="text-purple-600" />
           </>
         )}
       </div>
@@ -362,15 +362,6 @@ export default function DashboardPage() {
   );
 }
 
-function StatBox({ label, value, sub, accent }: { label: string; value: string; sub: string; accent: string }) {
-  return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">{label}</p>
-      <p className={`text-2xl font-black ${accent} leading-tight`}>{value}</p>
-      <p className="text-[10px] text-gray-400 mt-1">{sub}</p>
-    </div>
-  );
-}
 
 function FeatureCardItem({ card }: { card: FeatureCard }) {
   const Icon = card.icon;

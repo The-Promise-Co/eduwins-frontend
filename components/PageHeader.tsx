@@ -16,17 +16,17 @@ export default function PageHeader({ title, subtitle, backHref, rightElement }: 
         {backHref && (
           <Link
             href={backHref}
-            className="w-9 h-9 rounded-xl border border-gray-200 bg-white flex items-center justify-center hover:bg-gray-50 transition shrink-0"
+            className="w-10 h-10 rounded-xl border border-gray-200 bg-white flex items-center justify-center hover:bg-gray-50 transition shrink-0 shadow-sm"
           >
-            <ArrowLeft size={16} className="text-gray-600" />
+            <ArrowLeft size={18} className="text-gray-600" />
           </Link>
         )}
         <div>
-          <h1 className="text-xl font-black text-gray-900">{title}</h1>
+          <h1 className="text-2xl font-black text-gray-900">{title}</h1>
           {subtitle && <p className="text-sm text-gray-500 mt-0.5">{subtitle}</p>}
         </div>
       </div>
-      {rightElement && <div>{rightElement}</div>}
+      {rightElement && <div className="shrink-0">{rightElement}</div>}
     </div>
   );
 }

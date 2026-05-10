@@ -47,6 +47,7 @@ function LoginContent() {
       login(response.data.user, response.data.token);
       router.push('/app/dashboard');
     } catch (err: any) {
+      console.log(err);
       if (err.response?.status === 403 && err.response?.data?.requiresVerification) {
         sessionStorage.setItem('verificationToken', err.response.data.verificationToken);
         setSuccess('Account not verified. Redirecting to verification...');

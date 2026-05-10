@@ -5,7 +5,6 @@ import Link from 'next/link';
 import api from '@/services/api';
 import { useUser } from '@/context/UserContext';
 import {
-  Plus,
   Search,
   BookOpen,
   Users,
@@ -16,7 +15,10 @@ import {
   PlayCircle,
   FileText,
   Layers,
+  Plus,
 } from 'lucide-react';
+import PageHeader from '@/components/PageHeader';
+import StatCard from '@/components/StatCard';
 import { useSubjects } from './misc/api';
 import { Course, LEVELS } from '@/types/course';
 
@@ -184,37 +186,34 @@ export default function CoursesPage() {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-black text-gray-900">Courses</h1>
-          <p className="text-sm text-gray-500 mt-0.5">
-            {isTeacher ? 'Manage and track your created courses' : 'Explore available courses'}
-          </p>
-        </div>
-        {isTeacher && (
-          <Link
-            href="/app/courses/create"
-            className="inline-flex items-center gap-2 bg-[#001A72] text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-[#001A72]/90 transition shadow-sm hover:shadow-md"
-          >
-            <Plus size={16} />
-            Create Course
-          </Link>
-        )}
-      </div>
+      <PageHeader
+        title="Courses"
+        subtitle={isTeacher ? 'Manage and track your created courses' : 'Explore available courses'}
+        rightElement={
+          isTeacher && (
+            <Link
+              href="/app/courses/create"
+              className="inline-flex items-center gap-2 bg-[#001A72] text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-[#001A72]/90 transition shadow-sm hover:shadow-md"
+            >
+              <Plus size={16} />
+              Create Course
+            </Link>
+          )
+        }
+      />
 
       {/* Stats Banner */}
       {isTeacher && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard label="My Courses" value={String(courses.length)} icon={BookOpen} color="text-[#001A72]" bg="bg-blue-50" />
+          <StatCard label="My Courses" value={String(courses.length)} icon={BookOpen} color="text-[#001A72]" bg="bg-[#001A72]/5" />
           <StatCard label="Published" value={String(publishedCount)} icon={PlayCircle} color="text-emerald-600" bg="bg-emerald-50" />
-          <StatCard label="Total Enrolled" value={totalEnrolled.toLocaleString()} icon={Users} color="text-purple-600" bg="bg-purple-50" />
+          <StatCard label="Total Enrolled" value={totalEnrolled.toLocaleString()} icon={Users} color="text-[#001A72]" bg="bg-[#FFB81C]/10" />
           <StatCard
             label="Avg. Rating"
             value={(courses.reduce((s, c) => s + (c.rating_avg || 0), 0) / (courses.length || 1)).toFixed(1)}
             icon={Star}
-            color="text-amber-600"
-            bg="bg-amber-50"
+            color="text-[#FFB81C]"
+            bg="bg-[#FFB81C]/10"
           />
         </div>
       )}
@@ -234,9 +233,8 @@ export default function CoursesPage() {
           </div>
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-semibold transition ${
-              showFilters ? 'bg-[#001A72] text-white border-[#001A72]' : 'border-gray-200 text-gray-600 hover:bg-gray-50'
-            }`}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-semibold transition ${showFilters ? 'bg-[#001A72] text-white border-[#001A72]' : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+              }`}
           >
             <Filter size={15} />
             Filters
@@ -252,11 +250,10 @@ export default function CoursesPage() {
                   <button
                     key={s.id}
                     onClick={() => setSelectedSubject(s.name)}
-                    className={`px-3 py-1 rounded-full text-xs font-semibold border transition ${
-                      selectedSubject === s.name
+                    className={`px-3 py-1 rounded-full text-xs font-semibold border transition ${selectedSubject === s.name
                         ? 'bg-[#001A72] text-white border-[#001A72]'
                         : 'border-gray-200 text-gray-600 hover:border-[#001A72] hover:text-[#001A72]'
-                    }`}
+                      }`}
                   >
                     {s.name}
                   </button>
@@ -270,11 +267,10 @@ export default function CoursesPage() {
                   <button
                     key={l}
                     onClick={() => setSelectedLevel(l)}
-                    className={`px-3 py-1 rounded-full text-xs font-semibold border transition capitalize ${
-                      selectedLevel === l
+                    className={`px-3 py-1 rounded-full text-xs font-semibold border transition capitalize ${selectedLevel === l
                         ? 'bg-[#001A72] text-white border-[#001A72]'
                         : 'border-gray-200 text-gray-600 hover:border-[#001A72] hover:text-[#001A72]'
-                    }`}
+                      }`}
                   >
                     {l.replace('_', ' ')}
                   </button>
@@ -317,21 +313,6 @@ export default function CoursesPage() {
   );
 }
 
-function StatCard({
-  label, value, icon: Icon, color, bg,
-}: {
-  label: string; value: string; icon: any; color: string; bg: string;
-}) {
-  return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-      <div className={`w-9 h-9 ${bg} rounded-xl flex items-center justify-center mb-3`}>
-        <Icon size={18} className={color} />
-      </div>
-      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-0.5">{label}</p>
-      <p className={`text-2xl font-black ${color}`}>{value}</p>
-    </div>
-  );
-}
 
 function CourseCard({ course, isTeacher }: { course: Course; isTeacher: boolean }) {
   return (
