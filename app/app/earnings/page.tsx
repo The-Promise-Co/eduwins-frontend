@@ -152,8 +152,8 @@ export default function EarningsPage(): ReactElement {
                       <td className="py-4 px-6 text-right font-bold text-purple-600 text-xs">₦{(Number(entry.amount) * 0.10).toLocaleString()}</td>
                       <td className="py-4 px-6 text-center">
                         <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase border ${entry.status === 'Completed'
-                            ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
-                            : 'bg-amber-50 text-amber-700 border-amber-100'
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
+                          : 'bg-amber-50 text-amber-700 border-amber-100'
                           }`}>
                           {entry.status}
                         </span>
@@ -202,8 +202,8 @@ export default function EarningsPage(): ReactElement {
                       <td className="py-4 px-6 text-right font-black text-[#001A72] text-xs">{entry.amount}</td>
                       <td className="py-4 px-6 text-center">
                         <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase border ${entry.status === 'Completed'
-                            ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
-                            : 'bg-amber-50 text-amber-700 border-amber-100'
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
+                          : 'bg-amber-50 text-amber-700 border-amber-100'
                           }`}>
                           {entry.status}
                         </span>
@@ -229,18 +229,15 @@ interface WelfareBoxProps {
 
 function WelfareBox({ label, value, sub, highlight }: WelfareBoxProps): ReactElement {
   return (
-    <div className={`p-6 rounded-xl border ${
-      highlight
+    <div className={`p-6 rounded-xl border ${highlight
         ? 'bg-[#001A72] text-white border-[#001A72] shadow-lg'
         : 'bg-[#001A72]/5 text-[#001A72] border-[#001A72]/10'
-    }`}>
-      <p className={`text-[10px] font-black uppercase tracking-widest mb-1 ${
-        highlight ? 'text-white/60' : 'text-[#001A72]/50'
-      }`}>{label}</p>
+      }`}>
+      <p className={`text-[10px] font-black uppercase tracking-widest mb-1 ${highlight ? 'text-white/60' : 'text-[#001A72]/50'
+        }`}>{label}</p>
       <p className="text-2xl font-black mb-1">{value}</p>
-      <p className={`text-[10px] font-medium ${
-        highlight ? 'text-white/50' : 'text-gray-500'
-      }`}>{sub}</p>
+      <p className={`text-[10px] font-medium ${highlight ? 'text-white/50' : 'text-gray-500'
+        }`}>{sub}</p>
     </div>
   );
 }
