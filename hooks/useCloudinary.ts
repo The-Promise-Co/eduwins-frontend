@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import axios from 'axios';
 import api from '../services/api';
 
 interface CloudinaryUploadResult {
@@ -15,21 +16,9 @@ interface SignResponse {
   cloudName: string;
 }
 
-/**
- * Signed Cloudinary upload hook.
- *
- * Flow:
- *  1. Request a short-lived signature from the backend (POST /uploads/sign).
- *     The API secret never leaves the server.
- *  2. Upload the file directly to Cloudinary using the API key + signature.
- *
- * Backend env vars required:
- *   CLOUDINARY_API_KEY
- *   CLOUDINARY_API_SECRET
- *   CLOUDINARY_CLOUD_NAME
- */
 export const useCloudinary = () => {
   const [isUploading, setIsUploading] = useState(false);
+  const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
   const uploadFile = async (
@@ -38,6 +27,7 @@ export const useCloudinary = () => {
     resourceType: 'image' | 'video' | 'raw' = 'image',
   ): Promise<string | null> => {
     setIsUploading(true);
+    setProgress(0);
     setError(null);
 
     try {
@@ -57,27 +47,29 @@ export const useCloudinary = () => {
       formData.append('signature', signature);
       formData.append('folder', folder);
 
-      const response = await fetch(
+      const response = await axios.post(
         `https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`,
-        { method: 'POST', body: formData },
+        formData,
+        {
+          onUploadProgress: (progressEvent) => {
+            const percentCompleted = Math.round(
+              (progressEvent.loaded * 100) / (progressEvent.total || 1)
+            );
+            setProgress(percentCompleted);
+          },
+        }
       );
 
-      if (!response.ok) {
-        const errData = await response.json().catch(() => ({}));
-        throw new Error(errData?.error?.message || 'Upload to Cloudinary failed.');
-      }
-
-      const data: CloudinaryUploadResult = await response.json();
-      console.log(data)
-      return data.secure_url;
+      return response.data.secure_url;
     } catch (err: any) {
       console.error('Cloudinary upload error:', err);
-      setError(err.message || 'Image upload failed');
+      const msg = err.response?.data?.error?.message || err.message || 'Upload failed';
+      setError(msg);
       return null;
     } finally {
       setIsUploading(false);
     }
   };
 
-  return { uploadFile, isUploading, error };
+  return { uploadFile, isUploading, progress, error, setError };
 };

@@ -125,6 +125,35 @@ export default function ProfilePage(): ReactElement {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // ── Validation ──
+    const sizeInMB = file.size / (1024 * 1024);
+    let maxSize = 5;
+
+    if (uploadType === 'headshot') {
+      maxSize = 5;
+      if (!file.type.startsWith('image/')) {
+        setMessage({ type: 'error', text: 'Please select a valid image file.' });
+        return;
+      }
+    } else if (uploadType === 'videoIntro') {
+      maxSize = 50;
+      if (!file.type.startsWith('video/')) {
+        setMessage({ type: 'error', text: 'Please select a valid video file.' });
+        return;
+      }
+    } else if (uploadType === 'credentials') {
+      maxSize = 10;
+      if (file.type !== 'application/pdf') {
+        setMessage({ type: 'error', text: 'Please upload a PDF document.' });
+        return;
+      }
+    }
+
+    if (sizeInMB > maxSize) {
+      setMessage({ type: 'error', text: `File is too large (${sizeInMB.toFixed(1)}MB). Max allowed is ${maxSize}MB.` });
+      return;
+    }
+
     setUploading((p) => ({ ...p, [uploadType]: true }));
     setMessage({ type: '', text: '' });
 

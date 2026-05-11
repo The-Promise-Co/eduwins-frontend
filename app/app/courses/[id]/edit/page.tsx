@@ -65,7 +65,7 @@ export default function EditCoursePage() {
   const updateCourseMutation = useUpdateCourse(id);
   const updateLessonMutation = useUpdateLesson(id);
   const deleteLessonMutation = useDeleteLesson(id);
-  const { uploadFile, isUploading: isUploadingVideo } = useCloudinary();
+  const { uploadFile, isUploading: isUploadingVideo, progress: uploadProgress, error: uploadError, setError: setUploadError } = useCloudinary();
 
   // module panel
   const [selectedModuleId, setSelectedModuleId] = useState<string | null>(null);
@@ -112,6 +112,17 @@ export default function EditCoursePage() {
 
   // ── video upload helper ────────────────────────────────────────────
   const handleVideoUpload = async (file: File) => {
+    // ── Validation ──
+    if (!file.type.startsWith('video/')) {
+      setError('Please select a valid video file.');
+      return;
+    }
+    const sizeInMB = file.size / (1024 * 1024);
+    if (sizeInMB > 500) {
+      setError(`Video file is too large (${sizeInMB.toFixed(1)}MB). Max 500MB allowed.`);
+      return;
+    }
+
     setVideoFileName(file.name);
     const tempUrl = URL.createObjectURL(file);
     const vid = document.createElement('video');
@@ -425,6 +436,8 @@ export default function EditCoursePage() {
                         videoFileName={videoFileName}
                         setVideoFileName={setVideoFileName}
                         isUploadingVideo={isUploadingVideo}
+                        uploadProgress={uploadProgress}
+                        uploadError={uploadError}
                         handleVideoUpload={handleVideoUpload}
                         onSave={handleSaveLesson}
                         onCancel={closeForm}
@@ -446,6 +459,8 @@ export default function EditCoursePage() {
                 videoFileName={videoFileName}
                 setVideoFileName={setVideoFileName}
                 isUploadingVideo={isUploadingVideo}
+                uploadProgress={uploadProgress}
+                uploadError={uploadError}
                 handleVideoUpload={handleVideoUpload}
                 onSave={handleSaveLesson}
                 onCancel={closeForm}
@@ -478,6 +493,8 @@ interface LessonFormProps {
   videoFileName: string | null;
   setVideoFileName: (v: string | null) => void;
   isUploadingVideo: boolean;
+  uploadProgress: number;
+  uploadError: string | null;
   handleVideoUpload: (file: File) => Promise<void>;
   onSave: () => void;
   onCancel: () => void;
@@ -487,7 +504,7 @@ interface LessonFormProps {
 }
 
 function LessonForm({
-  draft, setField, videoFileName, isUploadingVideo,
+  draft, setField, videoFileName, isUploadingVideo, uploadProgress, uploadError,
   handleVideoUpload, onSave, onCancel, isSaving, isEdit, setError,
 }: LessonFormProps) {
   return (
@@ -571,11 +588,33 @@ function LessonForm({
                 }}
               />
               {isUploadingVideo ? (
-                <><Loader2 size={22} className="animate-spin text-amber-500" /><span className="text-xs font-bold text-amber-600">Uploading video…</span></>
+                <div className="w-full space-y-3">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs font-bold text-amber-600 flex items-center gap-2">
+                      <Loader2 size={14} className="animate-spin" /> Uploading video…
+                    </span>
+                    <span className="text-xs font-black text-amber-600">{uploadProgress}%</span>
+                  </div>
+                  <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
+                    <div 
+                      className="bg-amber-500 h-full transition-all duration-300 ease-out" 
+                      style={{ width: `${uploadProgress}%` }}
+                    />
+                  </div>
+                </div>
               ) : (
-                <><Upload size={22} className="text-gray-400" /><span className="text-sm font-bold text-gray-600">Click to upload video</span><span className="text-xs text-gray-400">MP4, MOV, WebM</span></>
+                <>
+                  <Upload size={22} className="text-gray-400" />
+                  <span className="text-sm font-bold text-gray-600">Click to upload video</span>
+                  <span className="text-xs text-gray-400">MP4, MOV, WebM</span>
+                </>
               )}
             </label>
+          )}
+          {uploadError && (
+            <p className="mt-2 text-xs font-bold text-red-500 flex items-center gap-1">
+              <X size={12} className="shrink-0" /> {uploadError}
+            </p>
           )}
         </div>
       ) : (

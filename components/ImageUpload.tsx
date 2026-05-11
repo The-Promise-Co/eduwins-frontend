@@ -20,6 +20,12 @@ interface ImageUploadProps {
   className?: string;
   /** Disabled state (e.g. during upload at submit time) */
   disabled?: boolean;
+  /** Max file size in MB — default 5MB */
+  maxSizeMB?: number;
+  /** Allowed MIME types — default images */
+  allowedTypes?: string[];
+  /** Called when validation fails */
+  onError?: (error: string) => void;
 
   // ── Optional caption fields ──────────────────────────
   /** Show title + description inputs below the drop zone */
@@ -50,6 +56,9 @@ export default function ImageUpload({
   removeLabel = 'Remove image',
   className = '',
   disabled = false,
+  maxSizeMB = 5,
+  allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'],
+  onError,
   showCaption = false,
   title = '',
   onTitleChange,
@@ -63,6 +72,21 @@ export default function ImageUpload({
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    // ── Validation ──
+    const sizeInMB = file.size / (1024 * 1024);
+    if (sizeInMB > maxSizeMB) {
+      onError?.(`File is too large (${sizeInMB.toFixed(1)}MB). Max allowed is ${maxSizeMB}MB.`);
+      if (inputRef.current) inputRef.current.value = '';
+      return;
+    }
+
+    if (!allowedTypes.includes(file.type)) {
+      onError?.(`File type ${file.type} is not supported. Please upload an image.`);
+      if (inputRef.current) inputRef.current.value = '';
+      return;
+    }
+
     onFileSelect(file);
     // Reset so the same file can be re-selected after a clear
     if (inputRef.current) inputRef.current.value = '';
@@ -72,13 +96,12 @@ export default function ImageUpload({
     <div className={`flex flex-col gap-3 ${className}`}>
       {/* ── Drop zone ── */}
       <div
-        className={`relative border-2 border-dashed rounded-xl overflow-hidden group transition ${
-          disabled
+        className={`relative border-2 border-dashed rounded-xl overflow-hidden group transition ${disabled
             ? 'opacity-60 cursor-not-allowed border-gray-200 bg-gray-50'
             : preview
-            ? 'border-transparent cursor-pointer'
-            : 'border-gray-200 bg-gray-50 hover:bg-gray-100 cursor-pointer'
-        }`}
+              ? 'border-transparent cursor-pointer'
+              : 'border-gray-200 bg-gray-50 hover:bg-gray-100 cursor-pointer'
+          }`}
       >
         <input
           ref={inputRef}

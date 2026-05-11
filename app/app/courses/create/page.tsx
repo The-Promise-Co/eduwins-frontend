@@ -264,8 +264,10 @@ export default function CreateCoursePage() {
                     setThumbnailFile(file);
                     setThumbnailPreview(URL.createObjectURL(file));
                     setField('thumbnail_url', '');
+                    setError(''); // Clear any previous error on valid select
                   }}
                   onClear={clearThumbnail}
+                  onError={setError}
                   disabled={saving}
                 />
               </FormField>

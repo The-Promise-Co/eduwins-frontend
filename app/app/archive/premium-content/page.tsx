@@ -130,6 +130,18 @@ export default function PremiumContentPage(): ReactElement {
       return;
     }
 
+    // ── Validation ──
+    const file = videoForm.file;
+    if (!file.type.startsWith('video/')) {
+      setMessage({ type: 'error', text: 'Please select a valid video file.' });
+      return;
+    }
+    const sizeInMB = file.size / (1024 * 1024);
+    if (sizeInMB > 500) {
+      setMessage({ type: 'error', text: `Video file is too large (${sizeInMB.toFixed(1)}MB). Max 500MB allowed.` });
+      return;
+    }
+
     setUploading(true);
     const formData = new FormData();
     formData.append('subject', videoForm.subject);
@@ -155,6 +167,19 @@ export default function PremiumContentPage(): ReactElement {
     e.preventDefault();
     if (!materialForm.file || !materialForm.subject || !materialForm.title || !materialForm.price) {
       setMessage({ type: 'error', text: 'Please fill all fields and select a file' });
+      return;
+    }
+
+    // ── Validation ──
+    const file = materialForm.file;
+    const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+    if (!allowedTypes.includes(file.type)) {
+      setMessage({ type: 'error', text: 'Please upload a PDF or Word document.' });
+      return;
+    }
+    const sizeInMB = file.size / (1024 * 1024);
+    if (sizeInMB > 20) {
+      setMessage({ type: 'error', text: `File is too large (${sizeInMB.toFixed(1)}MB). Max 20MB allowed.` });
       return;
     }
 
