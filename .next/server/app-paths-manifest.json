@@ -1,7 +1,1 @@
-{
-  "/register/page": "app/register/page.js",
-  "/(website)/page": "app/(website)/page.js",
-  "/(website)/search/page": "app/(website)/search/page.js",
-  "/(website)/become-a-tutor/page": "app/(website)/become-a-tutor/page.js",
-  "/app/courses/[id]/edit/page": "app/app/courses/[id]/edit/page.js"
-}
+{}

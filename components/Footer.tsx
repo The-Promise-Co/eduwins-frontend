@@ -35,7 +35,7 @@ export default function Footer(): React.ReactElement {
             <h3 className="text-white font-bold mb-4">Help</h3>
             <ul className="space-y-2 text-sm">
               <li><Link href="#" className="hover:text-white">Support</Link></li>
-              <li><Link href="#" className="hover:text-white">FAQ</Link></li>
+              <li><Link href="/support/faq" className="hover:text-white">FAQ</Link></li>
               <li><Link href="#" className="hover:text-white">Contact</Link></li>
             </ul>
           </div>

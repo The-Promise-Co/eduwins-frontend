@@ -284,7 +284,7 @@ export default function PremiumSubscriptionPage(): ReactElement {
 
       <p className="text-center text-xs text-gray-400">
         Questions about our plans?{' '}
-        <a href="/support" className="text-[#001A72] font-bold hover:underline">
+        <a href="/support/faq" className="text-[#001A72] font-bold hover:underline">
           Contact our support team
         </a>
       </p>
