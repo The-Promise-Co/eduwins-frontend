@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import api from '@/services/api';
 import { useUser } from '@/context/UserContext';
@@ -134,6 +134,12 @@ const STATUS_COLORS: Record<string, string> = {
   archived: 'bg-gray-100 text-gray-500 border-gray-200',
 };
 
+/** "all_levels" → "All levels" */
+const toSentenceCase = (s: string) => {
+  const spaced = s.replace(/_/g, ' ');
+  return spaced.charAt(0).toUpperCase() + spaced.slice(1).toLowerCase();
+};
+
 export default function CoursesPage() {
   const { user } = useUser();
   const [courses, setCourses] = useState<Course[]>([]);
@@ -142,9 +148,15 @@ export default function CoursesPage() {
   const [selectedSubject, setSelectedSubject] = useState('All');
   const [selectedLevel, setSelectedLevel] = useState('all');
   const [showFilters, setShowFilters] = useState(false);
+  const [subjectSearch, setSubjectSearch] = useState('');
+  const [subjectOpen, setSubjectOpen] = useState(false);
+  const subjectRef = useRef<HTMLDivElement>(null);
 
   const { data: subjectsData } = useSubjects();
-  const FILTER_SUBJECTS = [{ id: 'all', name: 'All' }, ...(subjectsData || [])];
+  const ALL_SUBJECTS = [{ id: 'all', name: 'All' }, ...(subjectsData || [])];
+  const filteredSubjectOptions = ALL_SUBJECTS.filter((s) =>
+    s.name.toLowerCase().includes(subjectSearch.toLowerCase())
+  );
 
   const isTeacher = user?.role === 'teacher';
 
@@ -242,24 +254,52 @@ export default function CoursesPage() {
         </div>
 
         {showFilters && (
-          <div className="mt-4 pt-4 border-t border-gray-100 grid sm:grid-cols-2 gap-3">
+          <div className="mt-4 pt-4 border-t border-gray-100 grid sm:grid-cols-2 gap-4">
+            {/* Subject — searchable combobox */}
             <div>
               <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1.5">Subject</label>
-              <div className="flex flex-wrap gap-1.5">
-                {FILTER_SUBJECTS.map((s) => (
-                  <button
-                    key={s.id}
-                    onClick={() => setSelectedSubject(s.name)}
-                    className={`px-3 py-1 rounded-full text-xs font-semibold border transition ${selectedSubject === s.name
-                        ? 'bg-[#001A72] text-white border-[#001A72]'
-                        : 'border-gray-200 text-gray-600 hover:border-[#001A72] hover:text-[#001A72]'
-                      }`}
-                  >
-                    {s.name}
-                  </button>
-                ))}
+              <div className="relative" ref={subjectRef}>
+                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                <input
+                  type="text"
+                  value={subjectSearch || (selectedSubject !== 'All' ? selectedSubject : '')}
+                  onChange={(e) => { setSubjectSearch(e.target.value); setSubjectOpen(true); }}
+                  onFocus={() => setSubjectOpen(true)}
+                  onBlur={() => setTimeout(() => setSubjectOpen(false), 150)}
+                  placeholder={selectedSubject === 'All' ? 'Search subjects…' : selectedSubject}
+                  className="w-full pl-8 pr-3 py-2 border border-gray-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#001A72]/20 focus:border-[#001A72] transition"
+                />
+                {subjectOpen && filteredSubjectOptions.length > 0 && (
+                  <div className="absolute z-20 top-full mt-1 left-0 right-0 bg-white border border-gray-100 rounded-xl shadow-lg max-h-48 overflow-y-auto">
+                    {filteredSubjectOptions.map((s) => (
+                      <button
+                        key={s.id}
+                        onMouseDown={() => {
+                          setSelectedSubject(s.name);
+                          setSubjectSearch('');
+                          setSubjectOpen(false);
+                        }}
+                        className={`w-full text-left px-4 py-2.5 text-xs font-semibold transition hover:bg-gray-50 ${
+                          selectedSubject === s.name ? 'text-[#001A72] bg-[#001A72]/5' : 'text-gray-700'
+                        }`}
+                      >
+                        {s.name}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
+              {selectedSubject !== 'All' && (
+                <button
+                  onClick={() => { setSelectedSubject('All'); setSubjectSearch(''); }}
+                  className="mt-1.5 text-[10px] text-gray-400 hover:text-[#001A72] font-bold"
+                >
+                  Clear
+                </button>
+              )}
             </div>
+
+            {/* Level */}
             <div>
               <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1.5">Level</label>
               <div className="flex flex-wrap gap-1.5">
@@ -267,12 +307,13 @@ export default function CoursesPage() {
                   <button
                     key={l}
                     onClick={() => setSelectedLevel(l)}
-                    className={`px-3 py-1 rounded-full text-xs font-semibold border transition capitalize ${selectedLevel === l
+                    className={`px-3 py-1 rounded-full text-xs font-semibold border transition ${
+                      selectedLevel === l
                         ? 'bg-[#001A72] text-white border-[#001A72]'
                         : 'border-gray-200 text-gray-600 hover:border-[#001A72] hover:text-[#001A72]'
-                      }`}
+                    }`}
                   >
-                    {l.replace('_', ' ')}
+                    {toSentenceCase(l)}
                   </button>
                 ))}
               </div>
@@ -324,8 +365,8 @@ function CourseCard({ course, isTeacher }: { course: Course; isTeacher: boolean 
         <div className="p-5 flex-1 flex flex-col">
           {/* Badges row */}
           <div className="flex items-center gap-2 mb-3 flex-wrap">
-            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border capitalize ${LEVEL_COLORS[course.level as string] || 'bg-gray-50 text-gray-600 border-gray-200'}`}>
-              {(course.level as string).replace('_', ' ')}
+            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${LEVEL_COLORS[course.level as string] || 'bg-gray-50 text-gray-600 border-gray-200'}`}>
+              {toSentenceCase(course.level as string)}
             </span>
             <span className="text-[10px] font-bold px-2 py-0.5 rounded-full border bg-[#001A72]/5 text-[#001A72] border-[#001A72]/20">
               {course.subject}

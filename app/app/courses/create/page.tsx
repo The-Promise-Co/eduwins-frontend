@@ -1,16 +1,17 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import api from '@/services/api';
 import { useUser } from '@/context/UserContext';
 import {
   BookOpen,
-  Image as ImageIcon,
   AlertCircle,
   Loader2,
+  Search,
 } from "lucide-react"
+import ImageUpload from '@/components/ImageUpload';
 import Section from '@/components/Section';
 import AlertError from '@/components/AlertError';
 import { useCloudinary } from '@/hooks/useCloudinary';
@@ -23,6 +24,14 @@ export default function CreateCoursePage() {
   const { user } = useUser();
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [subjectSearch, setSubjectSearch] = useState('');
+  const [subjectOpen, setSubjectOpen] = useState(false);
+  const subjectRef = useRef<HTMLDivElement>(null);
+
+  const toSentenceCase = (s: string) => {
+    const spaced = s.replace(/_/g, ' ');
+    return spaced.charAt(0).toUpperCase() + spaced.slice(1).toLowerCase();
+  };
 
 
   const [form, setForm] = useState({
@@ -42,6 +51,7 @@ export default function CreateCoursePage() {
 
   const { uploadFile, isUploading } = useCloudinary();
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
+  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
 
   const { data: subjects, isLoading: loadingSubjects } = useSubjects();
 
@@ -60,21 +70,20 @@ export default function CreateCoursePage() {
   const setField = (key: keyof typeof form, value: any) =>
     setForm((p) => ({ ...p, [key]: value }));
 
-  const handleThumbnailUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  /** Only preview — actual upload happens on submit */
+  const handleThumbnailSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    setThumbnailFile(file);
+    setThumbnailPreview(URL.createObjectURL(file));
+    // Clear any stale Cloudinary URL so validation knows we have a pending file
+    setField('thumbnail_url', '');
+  };
 
-    // Quick preview
-    const objectUrl = URL.createObjectURL(file);
-    setThumbnailPreview(objectUrl);
-
-    const url = await uploadFile(file);
-    if (url) {
-      setField('thumbnail_url', url);
-    } else {
-      setError('Failed to upload thumbnail');
-      setThumbnailPreview(null);
-    }
+  const clearThumbnail = () => {
+    setThumbnailFile(null);
+    setThumbnailPreview(null);
+    setField('thumbnail_url', '');
   };
 
   const handleSubmit = async () => {
@@ -82,20 +91,33 @@ export default function CreateCoursePage() {
     if (!form.description.trim()) { setError('Description is required.'); return; }
     if (!form.subject) { setError('Subject is required.'); return; }
     if (!form.is_free && !form.price) { setError('Please enter a price or mark as free.'); return; }
-    if (!form.thumbnail_url && !thumbnailPreview) { setError('Please upload a course thumbnail.'); return; }
+    if (!thumbnailFile && !form.thumbnail_url) { setError('Please select a course thumbnail.'); return; }
 
     setError('');
     setSaving(true);
 
-    const payload = {
-      ...form,
-      status: 'draft',
-      price: form.is_free ? 0 : Number(form.price),
-      duration_weeks: Number(form.duration_weeks),
-      tags: form.tags.split(',').map((t) => t.trim()).filter(Boolean),
-    };
-
     try {
+      // Upload thumbnail now if one was selected
+      let thumbnailUrl = form.thumbnail_url;
+      if (thumbnailFile) {
+        const uploaded = await uploadFile(thumbnailFile);
+        if (!uploaded) {
+          setError('Failed to upload thumbnail. Please try again.');
+          setSaving(false);
+          return;
+        }
+        thumbnailUrl = uploaded;
+      }
+
+      const payload = {
+        ...form,
+        thumbnail_url: thumbnailUrl,
+        status: 'draft',
+        price: form.is_free ? 0 : Number(form.price),
+        duration_weeks: Number(form.duration_weeks),
+        tags: form.tags.split(',').map((t) => t.trim()).filter(Boolean),
+      };
+
       const res = await api.post('/courses', payload);
       router.push(`/app/courses/${res.data.id}/edit`);
     } catch (err: any) {
@@ -146,23 +168,49 @@ export default function CreateCoursePage() {
 
               <div className="grid sm:grid-cols-2 gap-4">
                 <FormField label="Subject">
-                  <select
-                    value={form.subject}
-                    onChange={(e) => setField('subject', e.target.value)}
-                    className={INPUT}
-                    disabled={loadingSubjects}
-                  >
-                    <option value="" disabled>
-                      {loadingSubjects ? 'Loading subjects...' : 'Select a subject'}
-                    </option>
-                    {subjects?.map((s) => (
-                      <option key={s.id} value={s.id}>{s.name}</option>
-                    ))}
-                  </select>
+                  <div className="relative" ref={subjectRef}>
+                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                    <input
+                      type="text"
+                      value={subjectSearch || (form.subject ? subjects?.find(s => s.id === form.subject)?.name ?? '' : '')}
+                      onChange={(e) => { setSubjectSearch(e.target.value); setSubjectOpen(true); }}
+                      onFocus={() => setSubjectOpen(true)}
+                      onBlur={() => setTimeout(() => setSubjectOpen(false), 150)}
+                      placeholder={loadingSubjects ? 'Loading subjects...' : 'Search subjects...'}
+                      disabled={loadingSubjects}
+                      className={INPUT + ' pl-9'}
+                    />
+                    {subjectOpen && !loadingSubjects && (
+                      <div className="absolute z-20 top-full mt-1 left-0 right-0 bg-white border border-gray-100 rounded-xl shadow-lg max-h-52 overflow-y-auto">
+                        {(subjects || []).filter(s =>
+                          s.name.toLowerCase().includes(subjectSearch.toLowerCase())
+                        ).map((s) => (
+                          <button
+                            key={s.id}
+                            type="button"
+                            onMouseDown={() => {
+                              setField('subject', s.id);
+                              setSubjectSearch('');
+                              setSubjectOpen(false);
+                            }}
+                            className={`w-full text-left px-4 py-2.5 text-sm transition hover:bg-gray-50 ${form.subject === s.id ? 'text-[#001A72] font-bold bg-[#001A72]/5' : 'text-gray-700'
+                              }`}
+                          >
+                            {s.name}
+                          </button>
+                        ))}
+                        {(subjects || []).filter(s =>
+                          s.name.toLowerCase().includes(subjectSearch.toLowerCase())
+                        ).length === 0 && (
+                            <p className="px-4 py-3 text-xs text-gray-400">No subjects found</p>
+                          )}
+                      </div>
+                    )}
+                  </div>
                 </FormField>
                 <FormField label="Level">
                   <select value={form.level} onChange={(e) => setField('level', e.target.value)} className={INPUT}>
-                    {LEVELS.map((l) => <option key={l} value={l} className="capitalize">{l.replace('_', ' ')}</option>)}
+                    {LEVELS.map((l) => <option key={l} value={l}>{toSentenceCase(l)}</option>)}
                   </select>
                 </FormField>
               </div>
@@ -210,35 +258,16 @@ export default function CreateCoursePage() {
               </FormField>
 
               <FormField label="Thumbnail Image *">
-                <div className="relative border-2 border-dashed border-gray-200 rounded-xl bg-gray-50 flex items-center justify-center p-6 text-center hover:bg-gray-100 transition group overflow-hidden">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleThumbnailUpload}
-                    disabled={isUploading}
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed z-20"
-                  />
-                  {thumbnailPreview ? (
-                    <div className="relative w-full aspect-video rounded-lg overflow-hidden flex items-center justify-center">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={thumbnailPreview} alt="Thumbnail preview" className={`object-cover w-full h-full ${isUploading ? 'opacity-50' : ''}`} />
-                      {isUploading && (
-                        <div className="absolute inset-0 flex flex-col items-center justify-center text-white bg-black/30">
-                          <Loader2 className="w-8 h-8 animate-spin mb-2" />
-                          <span className="text-sm font-bold">Uploading...</span>
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center">
-                      <div className="w-12 h-12 rounded-full bg-[#001A72]/5 text-[#001A72] flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-                        <ImageIcon size={24} />
-                      </div>
-                      <p className="text-sm font-bold text-gray-700">Click or drag image to upload</p>
-                      <p className="text-xs text-gray-400 mt-1">Recommended: 1280x720px (16:9)</p>
-                    </div>
-                  )}
-                </div>
+                <ImageUpload
+                  preview={thumbnailPreview}
+                  onFileSelect={(file) => {
+                    setThumbnailFile(file);
+                    setThumbnailPreview(URL.createObjectURL(file));
+                    setField('thumbnail_url', '');
+                  }}
+                  onClear={clearThumbnail}
+                  disabled={saving}
+                />
               </FormField>
             </div>
           </Section>
@@ -278,11 +307,17 @@ export default function CreateCoursePage() {
 
             <div className="flex flex-col gap-2 pt-2 border-t border-gray-100">
               <button
-                disabled={saving || isUploading}
+                disabled={saving}
                 onClick={handleSubmit}
-                className="w-full bg-[#001A72] text-white py-2.5 rounded-xl font-bold text-sm hover:bg-[#001A72]/90 transition disabled:opacity-60"
+                className="w-full bg-[#001A72] text-white py-2.5 rounded-xl font-bold text-sm hover:bg-[#001A72]/90 transition disabled:opacity-60 flex items-center justify-center gap-2"
               >
-                {saving ? 'Creating...' : 'Continue to Curriculum'}
+                {saving && isUploading ? (
+                  <><Loader2 size={15} className="animate-spin" /> Uploading image…</>
+                ) : saving ? (
+                  <><Loader2 size={15} className="animate-spin" /> Creating…</>
+                ) : (
+                  'Continue to Curriculum'
+                )}
               </button>
             </div>
           </div>

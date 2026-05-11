@@ -11,16 +11,6 @@
       "static/chunks/main-app.js",
       "static/chunks/app/app/layout.js"
     ],
-    "/app/dashboard/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/app/dashboard/page.js"
-    ],
-    "/app/courses/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/app/courses/page.js"
-    ],
     "/app/courses/create/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
@@ -31,15 +21,60 @@
       "static/chunks/main-app.js",
       "static/chunks/app/app/settings/page.js"
     ],
-    "/app/profile-edit/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/app/profile-edit/page.js"
-    ],
     "/app/profile/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/app/profile/page.js"
+    ],
+    "/app/welfare-fund/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/app/welfare-fund/page.js"
+    ],
+    "/app/courses/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/app/courses/page.js"
+    ],
+    "/app/courses/[id]/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/app/courses/[id]/page.js"
+    ],
+    "/(website)/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(website)/page.js"
+    ],
+    "/(website)/layout": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(website)/layout.js"
+    ],
+    "/(website)/search/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(website)/search/page.js"
+    ],
+    "/app/dashboard/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/app/dashboard/page.js"
+    ],
+    "/(website)/become-a-tutor/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(website)/become-a-tutor/page.js"
+    ],
+    "/register/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/register/page.js"
+    ],
+    "/app/courses/[id]/edit/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/app/courses/[id]/edit/page.js"
     ]
   }
 }

@@ -26,7 +26,7 @@ export default function Footer(): React.ReactElement {
           <div>
             <h3 className="text-white font-bold mb-4">For Tutors</h3>
             <ul className="space-y-2 text-sm">
-              <li><Link href="/register-teacher" className="hover:text-white">Become a Tutor</Link></li>
+              <li><Link href="/become-a-tutor" className="hover:text-white">Become a Tutor</Link></li>
               <li><Link href="/app/dashboard" className="hover:text-white">Dashboard</Link></li>
               <li><Link href="/app/earnings" className="hover:text-white">Earnings</Link></li>
             </ul>

@@ -148,8 +148,8 @@ export default function WelfareFundPage(): ReactElement {
 
           {message.text && (
             <div className={`mb-6 p-4 rounded-xl border-2 ${message.type === 'success'
-                ? 'bg-green-50 text-green-700 border-green-100'
-                : 'bg-red-50 text-red-700 border-red-100'
+              ? 'bg-green-50 text-green-700 border-green-100'
+              : 'bg-red-50 text-red-700 border-red-100'
               }`}>
               <p className="font-bold flex items-center gap-2">
                 {message.type === 'success' ? '✅' : '❌'} {message.text}
@@ -165,7 +165,7 @@ export default function WelfareFundPage(): ReactElement {
               color="border-purple-500 text-purple-600"
               sub="Lifetime savings"
             />
-            <StatBox
+            {/* <StatBox
               label="AVAILABLE TO WITHDRAW"
               value={(welfareFund?.available_balance || 0).toLocaleString()}
               color="border-indigo-500 text-indigo-600"
@@ -176,65 +176,11 @@ export default function WelfareFundPage(): ReactElement {
               value={(welfareFund?.locked_balance || 0).toLocaleString()}
               color="border-pink-500 text-pink-600"
               sub="Unlocks on the 5th"
-            />
+            /> */}
           </div>
 
           {/* Withdraw Section */}
-          <div className="bg-white border-2 border-[#001A72]/10 rounded-2xl shadow-sm p-8 mb-8">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h2 className="text-2xl font-black text-[#001A72]">Withdraw from Fund</h2>
-                <p className="text-sm text-gray-500">Access your available welfare savings</p>
-              </div>
-              <button
-                onClick={() => setShowWithdrawForm(!showWithdrawForm)}
-                className={`px-6 py-3 rounded-xl font-bold transition shadow-sm ${showWithdrawForm
-                    ? 'bg-gray-100 text-gray-600'
-                    : 'bg-[#001A72] text-white hover:bg-[#001A72]/90'
-                  }`}
-              >
-                {showWithdrawForm ? 'Close Form' : 'Start Withdrawal'}
-              </button>
-            </div>
 
-            {showWithdrawForm && (
-              <form onSubmit={handleWithdraw} className="bg-gray-50 rounded-2xl p-6 border border-gray-100 space-y-6 animate-in fade-in slide-in-from-top-4 duration-300">
-                <div>
-                  <label className="block text-sm font-black text-[#001A72] uppercase tracking-widest mb-2">
-                    Withdrawal Amount (₦)
-                  </label>
-                  <input
-                    type="number"
-                    value={withdrawAmount}
-                    onChange={(e) => setWithdrawAmount(e.target.value)}
-                    placeholder="Enter amount"
-                    className="w-full px-4 py-4 border-2 border-white rounded-xl focus:outline-none focus:border-[#FFB81C] transition text-xl font-black shadow-inner"
-                    min="1"
-                    step="0.01"
-                    required
-                  />
-                  <div className="mt-3 flex justify-between items-center bg-white px-4 py-2 rounded-lg border border-gray-100">
-                    <p className="text-xs font-bold text-gray-500">AVAILABLE BALANCE</p>
-                    <p className="text-sm font-black text-[#001A72]">₦{(welfareFund?.available_balance || 0).toLocaleString()}</p>
-                  </div>
-                </div>
-
-                <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 flex gap-3">
-                  <span className="text-xl">ℹ️</span>
-                  <p className="text-xs text-blue-800 leading-relaxed">
-                    <strong>Payment Schedule:</strong> Welfare fund withdrawals are processed manually by our finance team within 48-72 hours to ensure security.
-                  </p>
-                </div>
-
-                <button
-                  type="submit"
-                  className="w-full bg-[#FFB81C] text-[#001A72] py-4 rounded-xl font-black hover:bg-[#FFB81C]/90 transition shadow-lg shadow-[#FFB81C]/20"
-                >
-                  Confirm Withdrawal Request
-                </button>
-              </form>
-            )}
-          </div>
 
           <div className="grid md:grid-cols-2 gap-8 mb-12">
             {/* Benefits */}
@@ -285,8 +231,8 @@ export default function WelfareFundPage(): ReactElement {
                       </td>
                       <td className="py-4 px-6 text-center">
                         <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase ${contrib.status === 'Available'
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-orange-100 text-orange-800'
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-orange-100 text-orange-800'
                           }`}>
                           {contrib.status}
                         </span>

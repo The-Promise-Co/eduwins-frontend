@@ -21,6 +21,7 @@ interface EditorProps {
 
 export default function Editor({ content, onChange }: EditorProps) {
   const editor = useEditor({
+    immediatelyRender: false,
     extensions: [
       StarterKit,
     ],
@@ -110,7 +111,10 @@ export default function Editor({ content, onChange }: EditorProps) {
           <Redo size={16} />
         </MenuButton>
       </div>
-      <div className="p-4 min-h-[200px] prose prose-sm max-w-none focus:outline-none">
+      <div
+        className="p-4 min-h-[200px] prose prose-sm max-w-none focus:outline-none cursor-text"
+        onClick={() => editor.commands.focus()}
+      >
         <EditorContent editor={editor} />
       </div>
     </div>

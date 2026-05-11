@@ -76,7 +76,7 @@ export default function HomePage(): ReactElement {
               <span className="text-[#FFB81C] relative">
                 Best Tutors
                 <svg className="absolute -bottom-1 left-0 w-full" viewBox="0 0 200 8" fill="none">
-                  <path d="M0 6 Q100 0 200 6" stroke="#FFB81C" strokeWidth="3" strokeLinecap="round" fill="none" opacity="0.5"/>
+                  <path d="M0 6 Q100 0 200 6" stroke="#FFB81C" strokeWidth="3" strokeLinecap="round" fill="none" opacity="0.5" />
                 </svg>
               </span>{' '}
               in Nigeria
@@ -123,7 +123,7 @@ export default function HomePage(): ReactElement {
         {/* wave divider */}
         <div className="absolute bottom-0 left-0 right-0">
           <svg viewBox="0 0 1440 60" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full">
-            <path d="M0 60 L0 30 Q360 0 720 30 Q1080 60 1440 30 L1440 60 Z" fill="white"/>
+            <path d="M0 60 L0 30 Q360 0 720 30 Q1080 60 1440 30 L1440 60 Z" fill="white" />
           </svg>
         </div>
       </section>
@@ -210,7 +210,7 @@ export default function HomePage(): ReactElement {
               { icon: ShieldCheck, title: 'Secure & Safe', desc: 'OTP verification & filtered chat keep every interaction safe and trusted.', color: 'text-emerald-400', bg: 'bg-emerald-400/10' },
               { icon: Star, title: 'Trusted Tutors', desc: 'Dynamic trust scores based on real student reviews and lesson history.', color: 'text-[#FFB81C]', bg: 'bg-[#FFB81C]/10' },
               { icon: Banknote, title: 'Fair Payments', desc: 'Secure escrow — tutors keep 80%, fully transparent with no hidden fees.', color: 'text-blue-400', bg: 'bg-blue-400/10' },
-              { icon: Smartphone, title: 'Works Offline', desc: 'Progressive web app — install on any device and access from anywhere.', color: 'text-purple-400', bg: 'bg-purple-400/10' },
+              // { icon: Smartphone, title: 'Works Offline', desc: 'Progressive web app — install on any device and access from anywhere.', color: 'text-purple-400', bg: 'bg-purple-400/10' },
             ].map(({ icon: Icon, title, desc, color, bg }) => (
               <div key={title} className="bg-white/5 border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition">
                 <div className={`w-12 h-12 ${bg} rounded-xl flex items-center justify-center mb-4`}>

@@ -12,6 +12,7 @@ export const useSubjects = () => {
     queryKey: ['subjects'],
     queryFn: async () => {
       const response = await api.get('/subjects');
+      console.log("subjects", response.data);
       return response.data;
     },
   });
@@ -66,6 +67,31 @@ export const useUpdateCourse = (id: string) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['course', id] });
       queryClient.invalidateQueries({ queryKey: ['subjects'] });
+    },
+  });
+};
+
+export const useUpdateLesson = (courseId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ lessonId, ...data }: { lessonId: string; title?: string; type?: string; video_url?: string; duration_seconds?: number; content?: string; is_preview?: boolean }) => {
+      const response = await api.put(`/courses/lessons/${lessonId}`, data);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['course', courseId] });
+    },
+  });
+};
+
+export const useDeleteLesson = (courseId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (lessonId: string) => {
+      await api.delete(`/courses/lessons/${lessonId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['course', courseId] });
     },
   });
 };
