@@ -9,6 +9,7 @@ import React, { Suspense } from 'react';
 
 import { UserProvider } from '@/context/UserContext';
 import QueryProvider from '@/context/QueryProvider';
+import { Toaster } from 'sonner';
 
 export const metadata: Metadata = {
   title: 'EduWins - Connect with Quality Tutors',
@@ -30,6 +31,7 @@ export default function RootLayout({
                 {children}
               </Suspense>
             </main>
+            <Toaster richColors position="top-right" closeButton />
           </UserProvider>
         </QueryProvider>
       </body>

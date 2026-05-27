@@ -18,11 +18,13 @@ import {
   ChevronRight,
   Pencil,
   X,
+  AlertCircle,
 } from 'lucide-react';
-import AlertError from '@/components/AlertError';
 import PageHeader from '@/components/PageHeader';
 import Editor from '@/components/Editor';
-import { useCloudinary } from '@/hooks/useCloudinary';
+import { useR2 } from '@/hooks/useR2';
+import { toast } from 'sonner';
+import { useForm, UseFormRegister, UseFormSetValue } from 'react-hook-form';
 import {
   useCourse,
   useAddModule,
@@ -60,82 +62,109 @@ export default function EditCoursePage() {
   const { id } = useParams() as { id: string };
 
   const { data: course, isLoading, error: courseError } = useCourse(id);
-  const addModuleMutation    = useAddModule(id);
-  const addLessonMutation    = useAddLesson(id);
+  const addModuleMutation = useAddModule(id);
+  const addLessonMutation = useAddLesson(id);
   const updateCourseMutation = useUpdateCourse(id);
   const updateLessonMutation = useUpdateLesson(id);
   const deleteLessonMutation = useDeleteLesson(id);
-  const { uploadFile, isUploading: isUploadingVideo, progress: uploadProgress, error: uploadError, setError: setUploadError } = useCloudinary();
+  const { uploadFile, isUploading: isUploadingVideo, progress: uploadProgress, error: uploadError, setError: setUploadError } = useR2();
 
   // module panel
   const [selectedModuleId, setSelectedModuleId] = useState<string | null>(null);
-  const [addingModule, setAddingModule]           = useState(false);
-  const [newModuleTitle, setNewModuleTitle]       = useState('');
+  const [addingModule, setAddingModule] = useState(false);
+  const [newModuleTitle, setNewModuleTitle] = useState('');
 
   // lesson form — null = closed, 'new' = creating, string = lessonId being edited
   const [lessonFormMode, setLessonFormMode] = useState<null | 'new' | string>(null);
-  const [lessonDraft, setLessonDraft]       = useState<LessonDraft>(EMPTY_LESSON);
-  const [videoFileName, setVideoFileName]   = useState<string | null>(null);
+  const [videoFileName, setVideoFileName] = useState<string | null>(null);
 
-  // feedback
-  const [error, setError]     = useState('');
-  const [success, setSuccess] = useState('');
+  // Pending upload states
+  const [pendingVideoFile, setPendingVideoFile] = useState<File | null>(null);
+  const [videoPreviewUrl, setVideoPreviewUrl] = useState<string | null>(null);
+  const [isSavingLesson, setIsSavingLesson] = useState(false);
+
+  const { register, setValue, watch, reset: resetLessonForm } = useForm<LessonDraft>({
+    defaultValues: EMPTY_LESSON,
+  });
+
+  const lessonDraft = watch();
 
   // ── helpers ────────────────────────────────────────────────────────
-  const setField = (k: keyof LessonDraft, v: any) =>
-    setLessonDraft(p => ({ ...p, [k]: v }));
+  const setField = (k: keyof LessonDraft, v: any) => {
+    setValue(k, v);
+  };
 
   const openNew = () => {
-    setLessonDraft(EMPTY_LESSON);
+    resetLessonForm(EMPTY_LESSON);
     setVideoFileName(null);
+    setPendingVideoFile(null);
+    setVideoPreviewUrl(null);
     setLessonFormMode('new');
   };
 
   const openEdit = (lesson: any) => {
-    setLessonDraft({
-      title:            lesson.title    || '',
-      type:             lesson.type     || 'video',
-      video_url:        lesson.video_url || '',
+    resetLessonForm({
+      title: lesson.title || '',
+      type: lesson.type || 'video',
+      video_url: lesson.video_url || '',
       duration_seconds: lesson.duration_seconds || 0,
-      content:          lesson.content  || '',
-      is_preview:       lesson.is_preview ?? false,
+      content: lesson.content || '',
+      is_preview: lesson.is_preview ?? false,
     });
     setVideoFileName(null);
+    setPendingVideoFile(null);
+    setVideoPreviewUrl(lesson.video_url || null);
     setLessonFormMode(lesson.id);
   };
 
   const closeForm = () => {
     setLessonFormMode(null);
-    setLessonDraft(EMPTY_LESSON);
+    resetLessonForm(EMPTY_LESSON);
     setVideoFileName(null);
+    setPendingVideoFile(null);
+    if (videoPreviewUrl && videoPreviewUrl.startsWith('blob:')) {
+      URL.revokeObjectURL(videoPreviewUrl);
+    }
+    setVideoPreviewUrl(null);
+  };
+
+  const handleClearVideo = () => {
+    setValue('video_url', '');
+    setValue('duration_seconds', 0);
+    setVideoFileName(null);
+    setPendingVideoFile(null);
+    if (videoPreviewUrl && videoPreviewUrl.startsWith('blob:')) {
+      URL.revokeObjectURL(videoPreviewUrl);
+    }
+    setVideoPreviewUrl(null);
   };
 
   // ── video upload helper ────────────────────────────────────────────
   const handleVideoUpload = async (file: File) => {
     // ── Validation ──
     if (!file.type.startsWith('video/')) {
-      setError('Please select a valid video file.');
+      toast.error('Please select a valid video file.');
       return;
     }
     const sizeInMB = file.size / (1024 * 1024);
     if (sizeInMB > 500) {
-      setError(`Video file is too large (${sizeInMB.toFixed(1)}MB). Max 500MB allowed.`);
+      toast.error(`Video file is too large (${sizeInMB.toFixed(1)}MB). Max 500MB allowed.`);
       return;
     }
 
     setVideoFileName(file.name);
+    setPendingVideoFile(file);
+
     const tempUrl = URL.createObjectURL(file);
+    setVideoPreviewUrl(tempUrl);
+
     const vid = document.createElement('video');
     vid.preload = 'metadata';
     vid.src = tempUrl;
     vid.onloadedmetadata = () => {
       if (vid.duration && isFinite(vid.duration))
         setField('duration_seconds', Math.round(vid.duration));
-      URL.revokeObjectURL(tempUrl);
     };
-    const url = await uploadFile(file, 'video');
-    if (url) setField('video_url', url);
-    else setError('Failed to upload video.');
   };
 
   // ── mutations ──────────────────────────────────────────────────────
@@ -148,33 +177,65 @@ export default function EditCoursePage() {
       });
       setNewModuleTitle('');
       setAddingModule(false);
+      toast.success('Module added successfully!');
       if (created?.id) setSelectedModuleId(created.id);
     } catch (e: any) {
-      setError(e.response?.data?.error || 'Failed to add module');
+      toast.error(e.response?.data?.error || 'Failed to add module');
     }
   };
 
   const handleSaveLesson = async () => {
     if (!lessonDraft.title.trim() || !selectedModuleId) return;
+    setIsSavingLesson(true);
+
     try {
+      let finalVideoUrl = lessonDraft.video_url;
+
+      // Perform R2 upload when saving
+      if (lessonDraft.type === 'video' && pendingVideoFile) {
+        const url = await uploadFile(pendingVideoFile, `courses/${id}`);
+        console.log(url, "UPLOADED URL")
+        if (!url) {
+          toast.error('Failed to upload video.');
+          setIsSavingLesson(false);
+          return;
+        }
+        finalVideoUrl = url;
+
+        // Update states immediately so we don't upload this file again
+        setField('video_url', url);
+        setPendingVideoFile(null);
+        setVideoPreviewUrl(url);
+      }
+
+      const finalLessonDraft = {
+        ...lessonDraft,
+        video_url: lessonDraft.type === 'video' ? finalVideoUrl : '',
+        duration_seconds: lessonDraft.type === 'video' ? lessonDraft.duration_seconds : 0,
+        content: lessonDraft.type === 'article' ? lessonDraft.content : '',
+      };
+
       if (lessonFormMode === 'new') {
         const selectedModule = course?.modules?.find((m: any) => m.id === selectedModuleId);
         await addLessonMutation.mutateAsync({
           moduleId: selectedModuleId,
-          ...lessonDraft,
+          ...finalLessonDraft,
           order_index: selectedModule?.lessons?.length || 0,
         });
-        setSuccess('Lesson added!');
+        toast.success('Lesson added successfully!');
       } else {
         await updateLessonMutation.mutateAsync({
           lessonId: lessonFormMode as string,
-          ...lessonDraft,
+          ...finalLessonDraft,
         });
-        setSuccess('Lesson updated!');
+        toast.success('Lesson updated successfully!');
       }
       closeForm();
     } catch (e: any) {
-      setError(e.response?.data?.error || 'Failed to save lesson');
+      console.error(e);
+      toast.error(e.response?.data?.error || 'Failed to save lesson');
+    } finally {
+      setIsSavingLesson(false);
     }
   };
 
@@ -182,21 +243,21 @@ export default function EditCoursePage() {
     if (!confirm('Delete this lesson? This cannot be undone.')) return;
     try {
       await deleteLessonMutation.mutateAsync(lessonId);
-      setSuccess('Lesson deleted.');
+      toast.success('Lesson deleted successfully.');
       if (lessonFormMode === lessonId) closeForm();
     } catch (e: any) {
-      setError(e.response?.data?.error || 'Failed to delete lesson');
+      toast.error(e.response?.data?.error || 'Failed to delete lesson');
     }
   };
 
   const handlePublish = async () => {
-    if (!course?.modules?.length) { setError('Add at least one module before publishing.'); return; }
-    if (!course.modules.some((m: any) => m.lessons?.length > 0)) { setError('Add at least one lesson.'); return; }
+    if (!course?.modules?.length) { toast.error('Add at least one module before publishing.'); return; }
+    if (!course.modules.some((m: any) => m.lessons?.length > 0)) { toast.error('Add at least one lesson.'); return; }
     try {
       await updateCourseMutation.mutateAsync({ status: 'published' });
-      setSuccess('Course published!');
+      toast.success('Course published successfully!');
     } catch (e: any) {
-      setError(e.response?.data?.error || 'Failed to publish');
+      toast.error(e.response?.data?.error || 'Failed to publish course');
     }
   };
 
@@ -209,7 +270,17 @@ export default function EditCoursePage() {
       </div>
     );
   }
-  if (courseError) return <AlertError message="Failed to load course details." />;
+  if (courseError) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 text-center">
+        <AlertCircle size={40} className="text-red-500 mb-3" />
+        <p className="font-bold text-gray-700">Failed to load course details.</p>
+        <Link href="/app/courses" className="mt-3 text-[#001A72] text-sm font-semibold hover:underline">
+          Back to courses
+        </Link>
+      </div>
+    );
+  }
 
   const selectedModule = course?.modules?.find((m: any) => m.id === selectedModuleId) ?? null;
   const isBusy = addModuleMutation.isPending || addLessonMutation.isPending || updateLessonMutation.isPending;
@@ -253,19 +324,7 @@ export default function EditCoursePage() {
         }
       />
 
-      {/* Feedback */}
-      {(error || success) && (
-        <div className="space-y-2">
-          {error   && <AlertError message={error} />}
-          {success && (
-            <div className="flex items-center gap-3 p-4 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-800 text-sm">
-              <CheckCircle size={18} className="text-emerald-500 shrink-0" />
-              <p className="font-semibold flex-1">{success}</p>
-              <button onClick={() => setSuccess('')} className="text-emerald-400 hover:text-emerald-600">✕</button>
-            </div>
-          )}
-        </div>
-      )}
+
 
       {/* ── Split panel ─────────────────────────────────────────────── */}
       <div className="grid lg:grid-cols-[280px_1fr] gap-5 items-start">
@@ -287,15 +346,13 @@ export default function EditCoursePage() {
                 <button
                   key={mod.id}
                   onClick={() => { setSelectedModuleId(mod.id); closeForm(); }}
-                  className={`w-full flex items-center gap-3 px-5 py-4 text-left transition group ${
-                    isSelected
-                      ? 'bg-[#001A72]/5 border-l-4 border-l-[#001A72]'
-                      : 'hover:bg-gray-50 border-l-4 border-l-transparent'
-                  }`}
+                  className={`w-full flex items-center gap-3 px-5 py-4 text-left transition group ${isSelected
+                    ? 'bg-[#001A72]/5 border-l-4 border-l-[#001A72]'
+                    : 'hover:bg-gray-50 border-l-4 border-l-transparent'
+                    }`}
                 >
-                  <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-black shrink-0 transition ${
-                    isSelected ? 'bg-[#001A72] text-white' : 'bg-gray-100 text-gray-500'
-                  }`}>
+                  <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-black shrink-0 transition ${isSelected ? 'bg-[#001A72] text-white' : 'bg-gray-100 text-gray-500'
+                    }`}>
                     {idx + 1}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -387,9 +444,8 @@ export default function EditCoursePage() {
                   <div key={ls.id}>
                     {/* Row */}
                     <div className={`flex items-center gap-4 px-6 py-4 group transition ${isEditing ? 'bg-[#001A72]/5' : 'hover:bg-gray-50'}`}>
-                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
-                        ls.type === 'video' ? 'bg-blue-50 text-blue-600' : 'bg-amber-50 text-amber-600'
-                      }`}>
+                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${ls.type === 'video' ? 'bg-blue-50 text-blue-600' : 'bg-amber-50 text-amber-600'
+                        }`}>
                         {ls.type === 'video' ? <Video size={16} /> : <FileText size={16} />}
                       </div>
                       <div className="flex-1 min-w-0">
@@ -431,19 +487,21 @@ export default function EditCoursePage() {
                     {/* Inline edit form */}
                     {isEditing && (
                       <LessonForm
+                        register={register}
+                        setValue={setValue}
                         draft={lessonDraft}
                         setField={setField}
                         videoFileName={videoFileName}
-                        setVideoFileName={setVideoFileName}
+                        videoPreviewUrl={videoPreviewUrl}
+                        onClearVideo={handleClearVideo}
                         isUploadingVideo={isUploadingVideo}
                         uploadProgress={uploadProgress}
                         uploadError={uploadError}
                         handleVideoUpload={handleVideoUpload}
                         onSave={handleSaveLesson}
                         onCancel={closeForm}
-                        isSaving={updateLessonMutation.isPending}
+                        isSaving={isSavingLesson}
                         isEdit
-                        setError={setError}
                       />
                     )}
                   </div>
@@ -454,19 +512,21 @@ export default function EditCoursePage() {
             {/* Add Lesson form */}
             {lessonFormMode === 'new' && (
               <LessonForm
+                register={register}
+                setValue={setValue}
                 draft={lessonDraft}
                 setField={setField}
                 videoFileName={videoFileName}
-                setVideoFileName={setVideoFileName}
+                videoPreviewUrl={videoPreviewUrl}
+                onClearVideo={handleClearVideo}
                 isUploadingVideo={isUploadingVideo}
                 uploadProgress={uploadProgress}
                 uploadError={uploadError}
                 handleVideoUpload={handleVideoUpload}
                 onSave={handleSaveLesson}
                 onCancel={closeForm}
-                isSaving={addLessonMutation.isPending}
+                isSaving={isSavingLesson}
                 isEdit={false}
-                setError={setError}
               />
             )}
           </div>
@@ -488,10 +548,13 @@ export default function EditCoursePage() {
 
 // ── LessonForm component ───────────────────────────────────────────────
 interface LessonFormProps {
+  register: UseFormRegister<LessonDraft>;
+  setValue: UseFormSetValue<LessonDraft>;
   draft: LessonDraft;
   setField: (k: keyof LessonDraft, v: any) => void;
   videoFileName: string | null;
-  setVideoFileName: (v: string | null) => void;
+  videoPreviewUrl: string | null;
+  onClearVideo: () => void;
   isUploadingVideo: boolean;
   uploadProgress: number;
   uploadError: string | null;
@@ -500,12 +563,11 @@ interface LessonFormProps {
   onCancel: () => void;
   isSaving: boolean;
   isEdit: boolean;
-  setError: (msg: string) => void;
 }
 
 function LessonForm({
-  draft, setField, videoFileName, isUploadingVideo, uploadProgress, uploadError,
-  handleVideoUpload, onSave, onCancel, isSaving, isEdit, setError,
+  register, setValue, draft, setField, videoFileName, videoPreviewUrl, onClearVideo, isUploadingVideo, uploadProgress, uploadError,
+  handleVideoUpload, onSave, onCancel, isSaving, isEdit,
 }: LessonFormProps) {
   return (
     <div className="border-t border-[#001A72]/10 p-6 space-y-5 bg-[#001A72]/[0.02]">
@@ -524,8 +586,7 @@ function LessonForm({
           <label className={LABEL}>Lesson Title</label>
           <input
             type="text"
-            value={draft.title}
-            onChange={e => setField('title', e.target.value)}
+            {...register('title')}
             placeholder="e.g. Introduction to Derivatives"
             className={INPUT}
           />
@@ -537,12 +598,11 @@ function LessonForm({
               <button
                 key={t}
                 type="button"
-                onClick={() => setField('type', t)}
-                className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border text-xs font-bold transition ${
-                  draft.type === t
-                    ? 'bg-[#001A72] text-white border-[#001A72]'
-                    : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
-                }`}
+                onClick={() => setValue('type', t)}
+                className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border text-xs font-bold transition ${draft.type === t
+                  ? 'bg-[#001A72] text-white border-[#001A72]'
+                  : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                  }`}
               >
                 {t === 'video' ? <Video size={13} /> : <FileText size={13} />}
                 {t.charAt(0).toUpperCase() + t.slice(1)}
@@ -556,61 +616,78 @@ function LessonForm({
       {draft.type === 'video' ? (
         <div>
           <label className={LABEL}>Lesson Video</label>
-          {draft.video_url ? (
-            <div className="flex items-center gap-3 p-3 bg-emerald-50 border border-emerald-200 rounded-xl">
-              <Video size={18} className="text-emerald-600 shrink-0" />
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-bold text-emerald-800 truncate">{videoFileName || 'Video uploaded'}</p>
-                {draft.duration_seconds > 0 && (
-                  <p className="text-[10px] text-emerald-600">{Math.round(draft.duration_seconds / 60)} min detected</p>
-                )}
+          {(draft.video_url || videoPreviewUrl) ? (
+            <div className="space-y-4">
+              {/* Premium video player preview */}
+              {videoPreviewUrl && (
+                <div className="relative rounded-2xl overflow-hidden border border-gray-100 bg-black aspect-video max-w-md mx-auto shadow-md">
+                  <video
+                    src={videoPreviewUrl}
+                    controls
+                    className="w-full h-full object-contain"
+                  />
+                </div>
+              )}
+
+              <div className="flex items-center gap-3 p-3 bg-emerald-50 border border-emerald-200 rounded-xl">
+                <Video size={18} className="text-emerald-600 shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-bold text-emerald-800 truncate">
+                    {videoFileName || (draft.video_url ? 'Saved Video' : 'Selected Video')}
+                  </p>
+                  {draft.duration_seconds > 0 && (
+                    <p className="text-[10px] text-emerald-600">{Math.round(draft.duration_seconds / 60)} min detected</p>
+                  )}
+                  {videoPreviewUrl && videoPreviewUrl.startsWith('blob:') && (
+                    <p className="text-[10px] text-amber-600 font-semibold mt-0.5">⚠️ Unsaved changes (Click Save to upload)</p>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={onClearVideo}
+                  className="text-[10px] font-bold text-emerald-500 hover:text-red-500 transition"
+                >
+                  Change
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={() => { setField('video_url', ''); setField('duration_seconds', 0); }}
-                className="text-[10px] font-bold text-emerald-500 hover:text-red-500 transition"
-              >
-                Change
-              </button>
             </div>
           ) : (
-            <label className={`relative flex flex-col items-center justify-center gap-2 border-2 border-dashed rounded-xl p-8 cursor-pointer transition ${
-              isUploadingVideo ? 'border-amber-300 bg-amber-50' : 'border-gray-200 bg-white hover:bg-gray-50 hover:border-[#001A72]/30'
-            }`}>
+            <label className={`relative flex flex-col items-center justify-center gap-2 border-2 border-dashed rounded-xl p-8 cursor-pointer transition border-gray-200 bg-white hover:bg-gray-50 hover:border-[#001A72]/30`}>
               <input
                 type="file"
                 accept="video/*"
-                disabled={isUploadingVideo}
                 className="absolute inset-0 opacity-0 w-full h-full cursor-pointer disabled:cursor-not-allowed"
                 onChange={async (e) => {
                   const file = e.target.files?.[0];
                   if (file) await handleVideoUpload(file);
                 }}
               />
-              {isUploadingVideo ? (
-                <div className="w-full space-y-3">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs font-bold text-amber-600 flex items-center gap-2">
-                      <Loader2 size={14} className="animate-spin" /> Uploading video…
-                    </span>
-                    <span className="text-xs font-black text-amber-600">{uploadProgress}%</span>
-                  </div>
-                  <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
-                    <div 
-                      className="bg-amber-500 h-full transition-all duration-300 ease-out" 
-                      style={{ width: `${uploadProgress}%` }}
-                    />
-                  </div>
-                </div>
-              ) : (
-                <>
-                  <Upload size={22} className="text-gray-400" />
-                  <span className="text-sm font-bold text-gray-600">Click to upload video</span>
-                  <span className="text-xs text-gray-400">MP4, MOV, WebM</span>
-                </>
-              )}
+              <>
+                <Upload size={22} className="text-gray-400" />
+                <span className="text-sm font-bold text-gray-600">Click to select video</span>
+                <span className="text-xs text-gray-400">MP4, MOV, WebM (Max 500MB)</span>
+              </>
             </label>
           )}
+
+          {/* R2 upload progress indicator shown only during active saving/uploading */}
+          {isSaving && isUploadingVideo && (
+            <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-xl space-y-3">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs font-bold text-amber-600 flex items-center gap-2">
+                  <Loader2 size={14} className="animate-spin" /> Uploading video…
+                </span>
+                <span className="text-xs font-black text-amber-600">{uploadProgress}%</span>
+              </div>
+              <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
+                <div
+                  className="bg-amber-500 h-full transition-all duration-300 ease-out"
+                  style={{ width: `${uploadProgress}%` }}
+                />
+              </div>
+            </div>
+          )}
+
           {uploadError && (
             <p className="mt-2 text-xs font-bold text-red-500 flex items-center gap-1">
               <X size={12} className="shrink-0" /> {uploadError}
@@ -620,7 +697,7 @@ function LessonForm({
       ) : (
         <div>
           <label className={LABEL}>Article Content</label>
-          <Editor content={draft.content} onChange={html => setField('content', html)} />
+          <Editor content={draft.content} onChange={html => setValue('content', html)} />
         </div>
       )}
 
@@ -629,19 +706,18 @@ function LessonForm({
         <label className="flex items-center gap-2 text-xs text-gray-600 cursor-pointer select-none">
           <input
             type="checkbox"
-            checked={draft.is_preview}
-            onChange={e => setField('is_preview', e.target.checked)}
+            {...register('is_preview')}
             className="rounded border-gray-300 text-[#001A72]"
           />
           Free preview (visible to non-enrolled students)
         </label>
         <button
           onClick={onSave}
-          disabled={isSaving || isUploadingVideo || !draft.title.trim()}
+          disabled={isSaving || !draft.title.trim()}
           className="flex items-center gap-2 bg-[#001A72] text-white px-6 py-2.5 rounded-xl font-bold text-sm hover:bg-[#001A72]/90 transition shadow-md disabled:opacity-50"
         >
           {isSaving
-            ? <><Loader2 size={14} className="animate-spin" /> Saving…</>
+            ? <><Loader2 size={14} className="animate-spin" /> {isUploadingVideo ? 'Uploading…' : 'Saving…'}</>
             : isEdit ? 'Save Changes' : 'Add Lesson'}
         </button>
       </div>

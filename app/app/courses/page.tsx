@@ -82,7 +82,8 @@ export default function CoursesPage() {
       c.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       c.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
       c.teacher_name?.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchSubject = selectedSubject === 'All' || c.subject === selectedSubject;
+    const subjectName = typeof c.subject === 'object' && c.subject ? c.subject.name : c.subject;
+    const matchSubject = selectedSubject === 'All' || subjectName === selectedSubject;
     const matchLevel = selectedLevel === 'all' || c.level === selectedLevel;
     const matchStatus = selectedStatus === 'all' || c.status === selectedStatus;
     return matchSearch && matchSubject && matchLevel && matchStatus;

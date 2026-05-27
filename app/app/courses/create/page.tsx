@@ -13,8 +13,11 @@ import {
 } from "lucide-react"
 import ImageUpload from '@/components/ImageUpload';
 import Section from '@/components/Section';
-import AlertError from '@/components/AlertError';
-import { useCloudinary } from '@/hooks/useCloudinary';
+import { useR2 } from '@/hooks/useR2';
+import { toast } from 'sonner';
+import { useForm } from 'react-hook-form';
+import { CourseFormInput } from '@/types/course';
+
 import PageHeader from '@/components/PageHeader';
 import { useSubjects } from '@/app/app/courses/misc/api';
 import { LEVELS } from '@/types/course';
@@ -23,7 +26,6 @@ export default function CreateCoursePage() {
   const router = useRouter();
   const { user } = useUser();
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState('');
   const [subjectSearch, setSubjectSearch] = useState('');
   const [subjectOpen, setSubjectOpen] = useState(false);
   const subjectRef = useRef<HTMLDivElement>(null);
@@ -33,23 +35,26 @@ export default function CreateCoursePage() {
     return spaced.charAt(0).toUpperCase() + spaced.slice(1).toLowerCase();
   };
 
-
-  const [form, setForm] = useState({
-    title: '',
-    description: '',
-    subject: '',
-    level: LEVELS[0],
-    duration_weeks: 4,
-    price: '',
-    is_free: false,
-    status: 'draft' as 'draft' | 'published',
-    tags: '',
-    requirements: '',
-    what_you_learn: '',
-    thumbnail_url: '',
+  const { register, setValue, watch } = useForm<CourseFormInput>({
+    defaultValues: {
+      title: '',
+      description: '',
+      subject: '',
+      level: LEVELS[0],
+      duration_weeks: 4,
+      price: '',
+      is_free: false,
+      status: 'draft',
+      tags: '',
+      requirements: '',
+      what_you_learn: '',
+      thumbnail_url: '',
+    }
   });
 
-  const { uploadFile, isUploading } = useCloudinary();
+  const form = watch();
+
+  const { uploadFile, isUploading } = useR2();
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
 
@@ -67,51 +72,25 @@ export default function CreateCoursePage() {
     );
   }
 
-  const setField = (key: keyof typeof form, value: any) =>
-    setForm((p) => ({ ...p, [key]: value }));
-
-  /** Only preview — actual upload happens on submit */
-  const handleThumbnailSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setThumbnailFile(file);
-    setThumbnailPreview(URL.createObjectURL(file));
-    // Clear any stale Cloudinary URL so validation knows we have a pending file
-    setField('thumbnail_url', '');
-  };
-
   const clearThumbnail = () => {
     setThumbnailFile(null);
     setThumbnailPreview(null);
-    setField('thumbnail_url', '');
+    setValue('thumbnail_url', '');
   };
 
   const handleSubmit = async () => {
-    if (!form.title.trim()) { setError('Course title is required.'); return; }
-    if (!form.description.trim()) { setError('Description is required.'); return; }
-    if (!form.subject) { setError('Subject is required.'); return; }
-    if (!form.is_free && !form.price) { setError('Please enter a price or mark as free.'); return; }
-    if (!thumbnailFile && !form.thumbnail_url) { setError('Please select a course thumbnail.'); return; }
+    if (!form.title.trim()) { toast.error('Course title is required.'); return; }
+    if (!form.description.trim()) { toast.error('Description is required.'); return; }
+    if (!form.subject) { toast.error('Subject is required.'); return; }
+    if (!form.is_free && !form.price) { toast.error('Please enter a price or mark as free.'); return; }
+    if (!thumbnailFile && !form.thumbnail_url) { toast.error('Please select a course thumbnail.'); return; }
 
-    setError('');
     setSaving(true);
 
     try {
-      // Upload thumbnail now if one was selected
-      let thumbnailUrl = form.thumbnail_url;
-      if (thumbnailFile) {
-        const uploaded = await uploadFile(thumbnailFile);
-        if (!uploaded) {
-          setError('Failed to upload thumbnail. Please try again.');
-          setSaving(false);
-          return;
-        }
-        thumbnailUrl = uploaded;
-      }
-
       const payload = {
         ...form,
-        thumbnail_url: thumbnailUrl,
+        thumbnail_url: form.thumbnail_url,
         status: 'draft',
         price: form.is_free ? 0 : Number(form.price),
         duration_weeks: Number(form.duration_weeks),
@@ -119,10 +98,27 @@ export default function CreateCoursePage() {
       };
 
       const res = await api.post('/courses', payload);
-      router.push(`/app/courses/${res.data.id}/edit`);
+      const courseId = res.data.id;
+
+      // Upload thumbnail now if one was selected, grouped under the course ID folder
+      if (thumbnailFile) {
+        const uploaded = await uploadFile(thumbnailFile, `courses/${courseId}`);
+        if (!uploaded) {
+          toast.error('Failed to upload thumbnail. Please try again.');
+          setSaving(false);
+          return;
+        }
+        // Update the course with the uploaded thumbnail URL
+        await api.put(`/courses/${courseId}`, {
+          thumbnail_url: uploaded,
+        });
+      }
+
+      toast.success('Course created successfully!');
+      router.push(`/app/courses/${courseId}/edit`);
     } catch (err: any) {
       console.error(err);
-      setError(err.response?.data?.error || 'Failed to create course.');
+      toast.error(err.response?.data?.error || 'Failed to create course.');
     } finally {
       setSaving(false);
     }
@@ -137,8 +133,6 @@ export default function CreateCoursePage() {
         backHref="/app/courses"
       />
 
-      {error && <AlertError message={error} />}
-
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-5">
@@ -146,11 +140,24 @@ export default function CreateCoursePage() {
           {/* Basic Info */}
           <Section title="Basic Information" icon={BookOpen}>
             <div className="space-y-4">
+              <FormField label="Thumbnail Image *">
+                <ImageUpload
+                  preview={thumbnailPreview}
+                  onFileSelect={(file) => {
+                    setThumbnailFile(file);
+                    setThumbnailPreview(URL.createObjectURL(file));
+                    setValue('thumbnail_url', '');
+                  }}
+                  onClear={clearThumbnail}
+                  onError={(msg) => toast.error(msg)}
+                  disabled={saving}
+                />
+              </FormField>
+
               <FormField label="Course Title *">
                 <input
                   type="text"
-                  value={form.title}
-                  onChange={(e) => setField('title', e.target.value)}
+                  {...register('title')}
                   placeholder="e.g. Complete Mathematics for WAEC & JAMB"
                   className={INPUT}
                 />
@@ -158,8 +165,7 @@ export default function CreateCoursePage() {
 
               <FormField label="Description *">
                 <textarea
-                  value={form.description}
-                  onChange={(e) => setField('description', e.target.value)}
+                  {...register('description')}
                   rows={4}
                   placeholder="Describe what students will learn in this course..."
                   className={INPUT + ' resize-none'}
@@ -189,7 +195,7 @@ export default function CreateCoursePage() {
                             key={s.id}
                             type="button"
                             onMouseDown={() => {
-                              setField('subject', s.id);
+                              setValue('subject', s.id);
                               setSubjectSearch('');
                               setSubjectOpen(false);
                             }}
@@ -209,7 +215,7 @@ export default function CreateCoursePage() {
                   </div>
                 </FormField>
                 <FormField label="Level">
-                  <select value={form.level} onChange={(e) => setField('level', e.target.value)} className={INPUT}>
+                  <select {...register('level')} className={INPUT}>
                     {LEVELS.map((l) => <option key={l} value={l}>{toSentenceCase(l)}</option>)}
                   </select>
                 </FormField>
@@ -221,16 +227,14 @@ export default function CreateCoursePage() {
                     type="number"
                     min={1}
                     max={52}
-                    value={form.duration_weeks}
-                    onChange={(e) => setField('duration_weeks', e.target.value)}
+                    {...register('duration_weeks', { valueAsNumber: true })}
                     className={INPUT}
                   />
                 </FormField>
                 <FormField label="Tags (comma-separated)">
                   <input
                     type="text"
-                    value={form.tags}
-                    onChange={(e) => setField('tags', e.target.value)}
+                    {...register('tags')}
                     placeholder="WAEC, Algebra, Equations"
                     className={INPUT}
                   />
@@ -239,8 +243,7 @@ export default function CreateCoursePage() {
 
               <FormField label="What Students Will Learn">
                 <textarea
-                  value={form.what_you_learn}
-                  onChange={(e) => setField('what_you_learn', e.target.value)}
+                  {...register('what_you_learn')}
                   rows={3}
                   placeholder="List key learning outcomes, one per line..."
                   className={INPUT + ' resize-none'}
@@ -249,28 +252,14 @@ export default function CreateCoursePage() {
 
               <FormField label="Requirements / Prerequisites">
                 <textarea
-                  value={form.requirements}
-                  onChange={(e) => setField('requirements', e.target.value)}
+                  {...register('requirements')}
                   rows={2}
                   placeholder="What should students know before taking this course?"
                   className={INPUT + ' resize-none'}
                 />
               </FormField>
 
-              <FormField label="Thumbnail Image *">
-                <ImageUpload
-                  preview={thumbnailPreview}
-                  onFileSelect={(file) => {
-                    setThumbnailFile(file);
-                    setThumbnailPreview(URL.createObjectURL(file));
-                    setField('thumbnail_url', '');
-                    setError(''); // Clear any previous error on valid select
-                  }}
-                  onClear={clearThumbnail}
-                  onError={setError}
-                  disabled={saving}
-                />
-              </FormField>
+
             </div>
           </Section>
         </div>
@@ -284,8 +273,7 @@ export default function CreateCoursePage() {
             <label className="flex items-center gap-3 p-3 rounded-xl border border-gray-100 bg-gray-50 cursor-pointer">
               <input
                 type="checkbox"
-                checked={form.is_free}
-                onChange={(e) => setField('is_free', e.target.checked)}
+                {...register('is_free')}
                 className="rounded border-gray-300 text-[#001A72]"
               />
               <span className="text-sm font-semibold text-gray-700">Free Course</span>
@@ -298,8 +286,7 @@ export default function CreateCoursePage() {
                   <input
                     type="number"
                     min={0}
-                    value={form.price}
-                    onChange={(e) => setField('price', e.target.value)}
+                    {...register('price')}
                     placeholder="0"
                     className={INPUT + ' pl-7'}
                   />

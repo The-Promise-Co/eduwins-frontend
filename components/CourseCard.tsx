@@ -109,7 +109,7 @@ export default function CourseCard({ course, isTeacher }: CourseCardProps) {
             {toSentenceCase(course.level as string)}
           </span>
           <span className="text-[10px] font-bold px-2 py-0.5 rounded-full border bg-[#001A72]/5 text-[#001A72] border-[#001A72]/20">
-            {course.subject}
+            {typeof course.subject === 'object' && course.subject ? course.subject.name : course.subject}
           </span>
           {isTeacher && (
             <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ml-auto capitalize ${STATUS_COLORS[course.status]}`}>

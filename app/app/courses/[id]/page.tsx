@@ -48,70 +48,11 @@ interface StudentEnrolled {
   last_active?: string;
 }
 
-const MOCK_COURSE: Course = {
-  id: '1',
-  title: 'Complete Mathematics for WAEC & JAMB',
-  description: 'Master all Mathematics topics needed to ace your WAEC and JAMB examinations, with step-by-step video lessons, practice tests and over 500 past exam questions with worked solutions. This course covers Algebra, Sequences, Trigonometry, Calculus, Statistics and Probability.',
-  subject: 'Mathematics',
-  level: 'intermediate',
-  duration_weeks: 12,
-  price: 15000,
-  is_free: false,
-  status: 'published',
-  teacher_name: 'Mr. Adewale Okonkwo',
-  rating_avg: 4.8,
-  enrolled_count: 324,
-  lesson_count: 48,
-  created_at: '2025-01-15T09:00:00Z',
-  tags: ['WAEC', 'JAMB', 'Algebra', 'Calculus', 'Trigonometry'],
-};
-
-const MOCK_ANALYTICS: AnalyticSnapshot[] = [
-  { week: 'Week 1', enrollments: 24, revenue: 360000, views: 312 },
-  { week: 'Week 2', enrollments: 38, revenue: 570000, views: 498 },
-  { week: 'Week 3', enrollments: 29, revenue: 435000, views: 401 },
-  { week: 'Week 4', enrollments: 56, revenue: 840000, views: 712 },
-  { week: 'Week 5', enrollments: 41, revenue: 615000, views: 534 },
-  { week: 'Week 6', enrollments: 67, revenue: 1005000, views: 879 },
-  { week: 'Week 7', enrollments: 69, revenue: 1035000, views: 924 },
-];
-
-const MOCK_STUDENTS: StudentEnrolled[] = [
-  { id: '1', name: 'Adaeze Nwosu', email: 'adaeze@mail.com', enrolled_at: '2025-01-20', progress_percent: 82, last_active: '2025-04-10' },
-  { id: '2', name: 'Chidi Okafor', email: 'chidi@mail.com', enrolled_at: '2025-02-01', progress_percent: 45, last_active: '2025-04-22' },
-  { id: '3', name: 'Fatima Bello', email: 'fatima@mail.com', enrolled_at: '2025-02-14', progress_percent: 100, last_active: '2025-03-30' },
-  { id: '4', name: 'Emeka Eze', email: 'emeka@mail.com', enrolled_at: '2025-03-01', progress_percent: 21, last_active: '2025-04-18' },
-  { id: '5', name: 'Ngozi Ibrahim', email: 'ngozi@mail.com', enrolled_at: '2025-03-15', progress_percent: 67, last_active: '2025-04-23' },
-];
-
-const MOCK_MODULES = [
-  {
-    id: 1, title: 'Module 1: Number & Numeration', lessons: [
-      { id: 1, title: 'Integers and Number Bases', duration_seconds: 45 * 60, is_preview: true },
-      { id: 2, title: 'Fractions, Decimals & Percentages', duration_seconds: 38 * 60, is_preview: false },
-      { id: 3, title: 'Indices and Logarithms', duration_seconds: 52 * 60, is_preview: false },
-    ]
-  },
-  {
-    id: 2, title: 'Module 2: Algebra', lessons: [
-      { id: 4, title: 'Linear Equations & Inequalities', duration_seconds: 60 * 60, is_preview: false },
-      { id: 5, title: 'Quadratic Equations', duration_seconds: 55 * 60, is_preview: false },
-      { id: 6, title: 'Simultaneous Equations', duration_seconds: 48 * 60, is_preview: false },
-    ]
-  },
-  {
-    id: 3, title: 'Module 3: Geometry & Trigonometry', lessons: [
-      { id: 7, title: 'Angles and Polygons', duration_seconds: 42 * 60, is_preview: false },
-      { id: 8, title: 'Circles and Constructions', duration_seconds: 50 * 60, is_preview: false },
-      { id: 9, title: 'Trigonometric Ratios', duration_seconds: 65 * 60, is_preview: false },
-    ]
-  },
-];
-
 const LEVEL_COLORS: Record<string, string> = {
-  Beginner: 'bg-green-50 text-green-700 border-green-200',
-  Intermediate: 'bg-blue-50 text-blue-700 border-blue-200',
-  Advanced: 'bg-purple-50 text-purple-700 border-purple-200',
+  beginner: 'bg-green-50 text-green-700 border-green-200',
+  intermediate: 'bg-blue-50 text-blue-700 border-blue-200',
+  advanced: 'bg-purple-50 text-purple-700 border-purple-200',
+  all_levels: 'bg-indigo-50 text-indigo-700 border-indigo-200',
 };
 
 const STATUS_COLORS: Record<string, string> = {
@@ -127,7 +68,7 @@ export default function CourseDetailPage() {
   const router = useRouter();
   const { user } = useUser();
   const [course, setCourse] = useState<Course | null>(null);
-  const [modules, setModules] = useState(MOCK_MODULES);
+  const [modules, setModules] = useState<any[]>([]);
   const [analytics, setAnalytics] = useState<AnalyticSnapshot[]>([]);
   const [students, setStudents] = useState<StudentEnrolled[]>([]);
   const [loading, setLoading] = useState(true);
@@ -135,6 +76,7 @@ export default function CourseDetailPage() {
   const [expandedModules, setExpandedModules] = useState<Record<number, boolean>>({ 0: true });
   const [enrolling, setEnrolling] = useState(false);
   const [enrollSuccess, setEnrollSuccess] = useState(false);
+  const [enrollError, setEnrollError] = useState<string | null>(null);
 
   const isTeacher = user?.role === 'teacher';
 
@@ -143,16 +85,21 @@ export default function CourseDetailPage() {
       try {
         const [courseRes, analyticsRes, studentsRes] = await Promise.all([
           api.get(`/courses/${id}`),
-          api.get(`/courses/${id}/analytics`),
-          isTeacher ? api.get(`/courses/${id}/students`) : Promise.resolve({ data: [] }),
+          api.get(`/courses/${id}/analytics`).catch(() => ({ data: [] })),
+          isTeacher ? api.get(`/courses/${id}/students`).catch(() => ({ data: [] })) : Promise.resolve({ data: [] }),
         ]);
-        setCourse(courseRes.data);
-        setAnalytics(analyticsRes.data);
-        setStudents(studentsRes.data);
-      } catch {
-        setCourse(MOCK_COURSE);
-        setAnalytics(MOCK_ANALYTICS);
-        setStudents(isTeacher ? MOCK_STUDENTS : []);
+        
+        const courseData = courseRes.data;
+        setCourse(courseData);
+        setModules(courseData.modules || []);
+        setAnalytics(analyticsRes.data || []);
+        setStudents(studentsRes.data || []);
+      } catch (err) {
+        console.error('Error fetching course details:', err);
+        setCourse(null);
+        setModules([]);
+        setAnalytics([]);
+        setStudents([]);
       } finally {
         setLoading(false);
       }
@@ -162,11 +109,13 @@ export default function CourseDetailPage() {
 
   const handleEnroll = async () => {
     setEnrolling(true);
+    setEnrollError(null);
     try {
       await api.post(`/courses/${id}/enroll`);
       setEnrollSuccess(true);
-    } catch {
-      setEnrollSuccess(true); // Demo mode
+    } catch (err: any) {
+      console.error(err);
+      setEnrollError(err.response?.data?.error || 'Failed to enroll in this course. Please try again.');
     } finally {
       setEnrolling(false);
     }
@@ -174,10 +123,11 @@ export default function CourseDetailPage() {
 
   const handleStatusChange = async (newStatus: string) => {
     try {
-      await api.patch(`/courses/${id}`, { status: newStatus });
+      await api.put(`/courses/${id}`, { status: newStatus });
       setCourse((p) => p ? { ...p, status: newStatus as any } : p);
-    } catch {
-      setCourse((p) => p ? { ...p, status: newStatus as any } : p);
+    } catch (err: any) {
+      console.error('Failed to change course status:', err);
+      alert(err.response?.data?.error || 'Failed to update course status.');
     }
   };
 
@@ -185,8 +135,11 @@ export default function CourseDetailPage() {
     if (!confirm('Are you sure you want to delete this course? This action cannot be undone.')) return;
     try {
       await api.delete(`/courses/${id}`);
-    } catch { /* demo */ }
-    router.push('/app/courses');
+      router.push('/app/courses');
+    } catch (err: any) {
+      console.error('Failed to delete course:', err);
+      alert(err.response?.data?.error || 'Failed to delete course.');
+    }
   };
 
   if (loading) {
@@ -209,7 +162,7 @@ export default function CourseDetailPage() {
 
   const totalRevenue = analytics.reduce((s, a) => s + a.revenue, 0);
   const totalViews = analytics.reduce((s, a) => s + a.views, 0);
-  const maxEnrollments = Math.max(...analytics.map((a) => a.enrollments), 1);
+  const maxEnrollments = analytics.length > 0 ? Math.max(...analytics.map((a) => a.enrollments), 1) : 1;
 
   const TABS: { id: TabId; label: string; icon: any }[] = [
     { id: 'overview', label: 'Overview', icon: BookOpen },
@@ -217,6 +170,15 @@ export default function CourseDetailPage() {
     { id: 'curriculum', label: 'Curriculum', icon: Layers },
     ...(isTeacher ? [{ id: 'students' as TabId, label: 'Students', icon: Users }] : []),
   ];
+
+  // Helper values
+  const formattedPrice = course.price ? Number(course.price).toLocaleString() : '0';
+  const lessonCount = modules.reduce((sum, mod) => sum + (mod.lessons?.length || 0), 0);
+  const tagsArray = typeof course.tags === 'string'
+    ? (course.tags as string).split(',').map(t => t.trim()).filter(Boolean)
+    : Array.isArray(course.tags)
+      ? course.tags
+      : [];
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
@@ -241,14 +203,16 @@ export default function CourseDetailPage() {
           <div className="flex-1 min-w-0">
             {/* Badge row */}
             <div className="flex flex-wrap items-center gap-2 mb-3">
-              <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border capitalize ${LEVEL_COLORS[course.level]}`}>
-                {course.level.replace('_', ' ')}
+              <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border capitalize ${LEVEL_COLORS[course.level] || LEVEL_COLORS.beginner}`}>
+                {(course.level || '').replace('_', ' ')}
               </span>
-              <span className="text-[10px] font-bold px-2.5 py-1 rounded-full border border-white/20 bg-white/10 text-white">
-                {course.subject}
-              </span>
+              {course.subject && (
+                <span className="text-[10px] font-bold px-2.5 py-1 rounded-full border border-white/20 bg-white/10 text-white">
+                  {typeof course.subject === 'object' && course.subject ? course.subject.name : course.subject}
+                </span>
+              )}
               {isTeacher && (
-                <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border capitalize ${STATUS_COLORS[course.status]}`}>
+                <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border capitalize ${STATUS_COLORS[course.status] || STATUS_COLORS.draft}`}>
                   {course.status}
                 </span>
               )}
@@ -262,30 +226,30 @@ export default function CourseDetailPage() {
             {/* Meta */}
             <div className="flex flex-wrap items-center gap-4 text-sm">
               <span className="flex items-center gap-1.5 text-white/70">
-                <Users size={14} /> {course.enrolled_count?.toLocaleString()} enrolled
+                <Users size={14} /> {course.enrolled_count?.toLocaleString() || '0'} enrolled
               </span>
               <span className="flex items-center gap-1.5 text-white/70">
-                <Layers size={14} /> {course.lesson_count} lessons
+                <Layers size={14} /> {lessonCount} lessons
               </span>
               <span className="flex items-center gap-1.5 text-white/70">
                 <Clock size={14} /> {course.duration_weeks} weeks
               </span>
-              {course.rating_avg && course.rating_avg > 0 && (
+              {course.rating_avg && Number(course.rating_avg) > 0 && (
                 <span className="flex items-center gap-1.5 text-[#FFB81C]">
                   <Star size={14} className="fill-[#FFB81C]" />
-                  <span className="font-bold">{course.rating_avg.toFixed(1)}</span>
+                  <span className="font-bold">{Number(course.rating_avg).toFixed(1)}</span>
                 </span>
               )}
             </div>
 
-            <p className="text-white/50 text-xs mt-3">By {course.teacher_name}</p>
+            {course.teacher_name && <p className="text-white/50 text-xs mt-3">By {course.teacher_name}</p>}
           </div>
 
           {/* Price / Actions panel */}
           <div className="md:w-56 lg:w-64 shrink-0">
             <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-5 border border-white/20">
               <p className="text-3xl font-black mb-1">
-                {course.is_free ? <span className="text-emerald-300">Free</span> : `₦${course.price?.toLocaleString()}`}
+                {course.is_free ? <span className="text-emerald-300">Free</span> : `₦${formattedPrice}`}
               </p>
               {!course.is_free && <p className="text-xs text-white/50 mb-4">One-time access</p>}
 
@@ -327,13 +291,20 @@ export default function CourseDetailPage() {
                   <p className="text-white/60 text-xs mt-1">Start learning below</p>
                 </div>
               ) : (
-                <button
-                  onClick={handleEnroll}
-                  disabled={enrolling}
-                  className="w-full bg-[#FFB81C] text-[#001A72] py-3 rounded-xl font-black text-sm hover:bg-[#FFB81C]/90 transition disabled:opacity-60"
-                >
-                  {enrolling ? 'Processing…' : course.is_free ? 'Enroll for Free' : 'Enroll Now'}
-                </button>
+                <div className="space-y-2">
+                  <button
+                    onClick={handleEnroll}
+                    disabled={enrolling}
+                    className="w-full bg-[#FFB81C] text-[#001A72] py-3 rounded-xl font-black text-sm hover:bg-[#FFB81C]/90 transition disabled:opacity-60"
+                  >
+                    {enrolling ? 'Processing…' : course.is_free ? 'Enroll for Free' : 'Enroll Now'}
+                  </button>
+                  {enrollError && (
+                    <p className="text-[10px] text-red-300 text-center font-medium mt-1">
+                      {enrollError}
+                    </p>
+                  )}
+                </div>
               )}
             </div>
           </div>
@@ -341,9 +312,9 @@ export default function CourseDetailPage() {
       </div>
 
       {/* Tags */}
-      {course.tags && course.tags.length > 0 && (
+      {tagsArray.length > 0 && (
         <div className="flex flex-wrap gap-2">
-          {course.tags.map((tag) => (
+          {tagsArray.map((tag) => (
             <span key={tag} className="flex items-center gap-1 text-xs font-medium px-3 py-1 bg-[#001A72]/5 text-[#001A72] rounded-full border border-[#001A72]/10">
               <Tag size={11} /> {tag}
             </span>
@@ -381,8 +352,8 @@ export default function CourseDetailPage() {
             <Section title="Course Stats" icon={TrendingUp}>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <MetaStat icon={Users} label="Students" value={course.enrolled_count?.toLocaleString() ?? '0'} color="text-blue-600" bg="bg-blue-50" />
-                <MetaStat icon={Star} label="Rating" value={course.rating_avg?.toFixed(1) ?? 'N/A'} color="text-amber-600" bg="bg-amber-50" />
-                <MetaStat icon={Layers} label="Lessons" value={String(course.lesson_count ?? 0)} color="text-purple-600" bg="bg-purple-50" />
+                <MetaStat icon={Star} label="Rating" value={course.rating_avg && Number(course.rating_avg) > 0 ? Number(course.rating_avg).toFixed(1) : 'N/A'} color="text-amber-600" bg="bg-amber-50" />
+                <MetaStat icon={Layers} label="Lessons" value={String(lessonCount)} color="text-purple-600" bg="bg-purple-50" />
                 <MetaStat icon={Clock} label="Duration" value={`${course.duration_weeks}w`} color="text-green-600" bg="bg-green-50" />
               </div>
             </Section>
@@ -392,11 +363,11 @@ export default function CourseDetailPage() {
           <div className="space-y-4">
             <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-5 space-y-3">
               <h3 className="font-bold text-gray-700 text-sm border-b border-gray-100 pb-3">Course Details</h3>
-              <DetailRow icon={Tag} label="Subject" value={course.subject?.toString() || 'N/A'} />
-              <DetailRow icon={BookOpen} label="Level" value={course.level} />
+              <DetailRow icon={Tag} label="Subject" value={(typeof course.subject === 'object' && course.subject ? course.subject.name : course.subject) || 'N/A'} />
+              <DetailRow icon={BookOpen} label="Level" value={(course.level || '').replace('_', ' ')} />
               <DetailRow icon={Clock} label="Duration" value={`${course.duration_weeks} weeks`} />
-              <DetailRow icon={Layers} label="Lessons" value={`${course.lesson_count} lessons`} />
-              <DetailRow icon={DollarSign} label="Price" value={course.is_free ? 'Free' : `₦${course.price?.toLocaleString()}`} />
+              <DetailRow icon={Layers} label="Lessons" value={`${lessonCount} lessons`} />
+              <DetailRow icon={DollarSign} label="Price" value={course.is_free ? 'Free' : `₦${formattedPrice}`} />
               {course.created_at && (
                 <DetailRow
                   icon={Calendar}
@@ -404,7 +375,7 @@ export default function CourseDetailPage() {
                   value={new Date(course.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
                 />
               )}
-              <DetailRow icon={UserCheck} label="Instructor" value={course.teacher_name ?? 'N/A'} />
+              {course.teacher_name && <DetailRow icon={UserCheck} label="Instructor" value={course.teacher_name} />}
             </div>
           </div>
         </div>
@@ -417,95 +388,119 @@ export default function CourseDetailPage() {
             <KpiCard label="Total Revenue" value={`₦${totalRevenue.toLocaleString()}`} sub="All time" icon={DollarSign} color="text-emerald-600" bg="bg-emerald-50" />
             <KpiCard label="Total Enrolled" value={(course.enrolled_count ?? 0).toLocaleString()} sub="Students" icon={Users} color="text-blue-600" bg="bg-blue-50" />
             <KpiCard label="Total Views" value={totalViews.toLocaleString()} sub="Course page views" icon={Eye} color="text-purple-600" bg="bg-purple-50" />
-            <KpiCard label="Avg. Rating" value={(course.rating_avg ?? 0).toFixed(1)} sub="Out of 5" icon={Star} color="text-amber-600" bg="bg-amber-50" />
+            <KpiCard label="Avg. Rating" value={Number(course.rating_avg ?? 0).toFixed(1)} sub="Out of 5" icon={Star} color="text-amber-600" bg="bg-amber-50" />
           </div>
 
-          {/* Weekly Enrollments Chart */}
-          <Section title="Weekly Enrollments" icon={TrendingUp}>
-            <div className="space-y-2">
-              {analytics.map((snapshot) => (
-                <div key={snapshot.week} className="flex items-center gap-3">
-                  <span className="text-xs text-gray-500 w-14 shrink-0">{snapshot.week}</span>
-                  <div className="flex-1 bg-gray-100 rounded-full h-5 overflow-hidden">
-                    <div
-                      className="h-full bg-gradient-to-r from-[#001A72] to-[#0040c8] rounded-full transition-all duration-700 flex items-center justify-end pr-2"
-                      style={{ width: `${(snapshot.enrollments / maxEnrollments) * 100}%` }}
-                    >
-                      <span className="text-[10px] font-bold text-white">{snapshot.enrollments}</span>
+          {analytics.length === 0 ? (
+            <Section title="Course Analytics" icon={BarChart3}>
+              <div className="text-center py-12">
+                <BarChart3 size={40} className="text-gray-200 mx-auto mb-3" />
+                <p className="text-gray-500 text-sm font-medium">No analytics data available yet</p>
+              </div>
+            </Section>
+          ) : (
+            <>
+              {/* Weekly Enrollments Chart */}
+              <Section title="Weekly Enrollments" icon={TrendingUp}>
+                <div className="space-y-2">
+                  {analytics.map((snapshot) => (
+                    <div key={snapshot.week} className="flex items-center gap-3">
+                      <span className="text-xs text-gray-500 w-14 shrink-0">{snapshot.week}</span>
+                      <div className="flex-1 bg-gray-100 rounded-full h-5 overflow-hidden">
+                        <div
+                          className="h-full bg-gradient-to-r from-[#001A72] to-[#0040c8] rounded-full transition-all duration-700 flex items-center justify-end pr-2"
+                          style={{ width: `${(snapshot.enrollments / maxEnrollments) * 100}%` }}
+                        >
+                          <span className="text-[10px] font-bold text-white">{snapshot.enrollments}</span>
+                        </div>
+                      </div>
+                      <span className="text-xs font-bold text-gray-700 w-20 text-right shrink-0">
+                        ₦{snapshot.revenue.toLocaleString()}
+                      </span>
                     </div>
-                  </div>
-                  <span className="text-xs font-bold text-gray-700 w-20 text-right shrink-0">
-                    ₦{snapshot.revenue.toLocaleString()}
-                  </span>
+                  ))}
                 </div>
-              ))}
-            </div>
-          </Section>
+              </Section>
 
-          {/* Revenue chart */}
-          <Section title="Revenue Trend (₦)" icon={DollarSign}>
-            <div className="flex items-end gap-2 h-32">
-              {analytics.map((snapshot, i) => {
-                const maxRev = Math.max(...analytics.map((a) => a.revenue), 1);
-                const pct = (snapshot.revenue / maxRev) * 100;
-                return (
-                  <div key={i} className="flex-1 flex flex-col items-center gap-1">
-                    <span className="text-[9px] text-gray-400 font-medium">{(snapshot.revenue / 1000).toFixed(0)}k</span>
-                    <div
-                      className="w-full bg-gradient-to-t from-[#FFB81C] to-[#FFB81C]/60 rounded-t-lg"
-                      style={{ height: `${pct}%`, minHeight: 4 }}
-                    />
-                    <span className="text-[9px] text-gray-400">{snapshot.week.replace('Week ', 'W')}</span>
-                  </div>
-                );
-              })}
-            </div>
-          </Section>
+              {/* Revenue chart */}
+              <Section title="Revenue Trend (₦)" icon={DollarSign}>
+                <div className="flex items-end gap-2 h-32">
+                  {analytics.map((snapshot, i) => {
+                    const maxRev = Math.max(...analytics.map((a) => a.revenue), 1);
+                    const pct = (snapshot.revenue / maxRev) * 100;
+                    return (
+                      <div key={i} className="flex-1 flex flex-col items-center gap-1">
+                        <span className="text-[9px] text-gray-400 font-medium">{(snapshot.revenue / 1000).toFixed(0)}k</span>
+                        <div
+                          className="w-full bg-gradient-to-t from-[#FFB81C] to-[#FFB81C]/60 rounded-t-lg"
+                          style={{ height: `${pct}%`, minHeight: 4 }}
+                        />
+                        <span className="text-[9px] text-gray-400">{snapshot.week.replace('Week ', 'W')}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </Section>
+            </>
+          )}
         </div>
       )}
 
       {activeTab === 'curriculum' && (
         <Section title={`Course Curriculum — ${modules.length} Modules`} icon={Layers}>
-          <div className="space-y-3">
-            {modules.map((mod, i) => (
-              <div key={mod.id} className="border border-gray-200 rounded-xl overflow-hidden">
-                <button
-                  onClick={() => setExpandedModules((p) => ({ ...p, [i]: !p[i] }))}
-                  className="w-full flex items-center justify-between px-4 py-3.5 bg-gray-50 hover:bg-gray-100 transition text-left"
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="text-xs font-black text-white bg-[#001A72] w-6 h-6 rounded-full flex items-center justify-center shrink-0">
-                      {i + 1}
-                    </span>
-                    <span className="font-bold text-gray-800 text-sm">{mod.title}</span>
-                  </div>
-                  <div className="flex items-center gap-3 shrink-0">
-                    <span className="text-xs text-gray-400">{mod.lessons.length} lesson{mod.lessons.length !== 1 ? 's' : ''}</span>
-                    {expandedModules[i] ? <ChevronUp size={14} className="text-gray-400" /> : <ChevronDown size={14} className="text-gray-400" />}
-                  </div>
-                </button>
+          {modules.length === 0 ? (
+            <div className="text-center py-12">
+              <Layers size={40} className="text-gray-200 mx-auto mb-3" />
+              <p className="text-gray-500 text-sm font-medium">No curriculum modules added yet</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {modules.map((mod, i) => (
+                <div key={mod.id} className="border border-gray-200 rounded-xl overflow-hidden">
+                  <button
+                    onClick={() => setExpandedModules((p) => ({ ...p, [i]: !p[i] }))}
+                    className="w-full flex items-center justify-between px-4 py-3.5 bg-gray-50 hover:bg-gray-100 transition text-left"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs font-black text-white bg-[#001A72] w-6 h-6 rounded-full flex items-center justify-center shrink-0">
+                        {i + 1}
+                      </span>
+                      <span className="font-bold text-gray-800 text-sm">{mod.title}</span>
+                    </div>
+                    <div className="flex items-center gap-3 shrink-0">
+                      <span className="text-xs text-gray-400">{(mod.lessons || []).length} lesson{(mod.lessons || []).length !== 1 ? 's' : ''}</span>
+                      {expandedModules[i] ? <ChevronUp size={14} className="text-gray-400" /> : <ChevronDown size={14} className="text-gray-400" />}
+                    </div>
+                  </button>
 
-                {expandedModules[i] && (
-                  <div className="divide-y divide-gray-50">
-                    {mod.lessons.map((lesson, j) => (
-                      <div key={lesson.id} className="flex items-center gap-3 px-5 py-3 bg-white hover:bg-gray-50/50 transition">
-                        <PlayCircle size={15} className="text-gray-300 shrink-0" />
-                        <span className="text-sm text-gray-700 flex-1">{lesson.title}</span>
-                        <div className="flex items-center gap-3">
-                          {lesson.is_preview && (
-                            <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
-                              Preview
-                            </span>
-                          )}
-                          <span className="text-xs text-gray-400">{lesson.duration_seconds ? Math.round(lesson.duration_seconds / 60) : 0}m</span>
+                  {expandedModules[i] && (
+                    <div className="divide-y divide-gray-50">
+                      {(mod.lessons || []).length === 0 ? (
+                        <div className="px-5 py-3 text-xs text-gray-400 bg-white italic">
+                          No lessons in this module.
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
+                      ) : (
+                        (mod.lessons || []).map((lesson: any, j: number) => (
+                          <div key={lesson.id} className="flex items-center gap-3 px-5 py-3 bg-white hover:bg-gray-50/50 transition">
+                            <PlayCircle size={15} className="text-gray-300 shrink-0" />
+                            <span className="text-sm text-gray-700 flex-1">{lesson.title}</span>
+                            <div className="flex items-center gap-3">
+                              {lesson.is_preview && (
+                                <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                                  Preview
+                                </span>
+                              )}
+                              <span className="text-xs text-gray-400">{lesson.duration_seconds ? Math.round(lesson.duration_seconds / 60) : 0}m</span>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </Section>
       )}
 

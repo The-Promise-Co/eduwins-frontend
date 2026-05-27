@@ -1,8 +1,18 @@
+/** ============================================================================
+ * 1. Constants & Arrays
+ * ============================================================================ */
 export const LEVELS = ["beginner", "intermediate", "advanced", "all_levels"] as const;
+
+/** ============================================================================
+ * 2. Type Aliases (Enums, Statuses, Discriminators)
+ * ============================================================================ */
 export type CourseLevel = typeof LEVELS[number];
 export type CourseStatus = "draft" | "published";
 export type LessonType = "video" | "article";
 
+/** ============================================================================
+ * 3. Database Entities & Core Interfaces
+ * ============================================================================ */
 export interface Lesson {
   id?: string;
   module_id: string;
@@ -39,7 +49,7 @@ export interface Course {
   id: string;
   title: string;
   description: string;
-  subject?: string | null;
+  subject?: string | { id: string; name: string } | null;
   level: CourseLevel;
   duration_weeks: number;
   price?: number | string | null;
@@ -57,4 +67,22 @@ export interface Course {
   enrolled_count?: number;
   lesson_count?: number;
   modules?: Module[];
+}
+
+/** ============================================================================
+ * 4. Form Input & Mutation Payloads
+ * ============================================================================ */
+export interface CourseFormInput {
+  title: string;
+  description: string;
+  subject: string;
+  level: CourseLevel;
+  duration_weeks: number;
+  price: string;
+  is_free: boolean;
+  status: CourseStatus;
+  tags: string;
+  requirements: string;
+  what_you_learn: string;
+  thumbnail_url: string;
 }
