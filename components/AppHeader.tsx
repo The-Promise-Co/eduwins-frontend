@@ -90,7 +90,7 @@ export default function AppHeader({ title, onToggleMobileMenu }: AppHeaderProps)
                     <p className="text-[10px] text-gray-400 mt-0.5 capitalize">{user?.role} Account</p>
                   </div>
                   <div className="py-1">
-                    <Link href="/app/profile" onClick={() => setDropdownOpen(false)} className="flex items-center gap-3 px-4 py-2.5 text-xs text-gray-700 hover:bg-gray-50 transition">
+                    <Link href="/app/profile/settings" onClick={() => setDropdownOpen(false)} className="flex items-center gap-3 px-4 py-2.5 text-xs text-gray-700 hover:bg-gray-50 transition">
                       <UserCog size={14} className="text-gray-400" /> Edit Profile
                     </Link>
                     <Link href="/app/schedule" onClick={() => setDropdownOpen(false)} className="flex items-center gap-3 px-4 py-2.5 text-xs text-gray-700 hover:bg-gray-50 transition">
@@ -99,7 +99,7 @@ export default function AppHeader({ title, onToggleMobileMenu }: AppHeaderProps)
                     <Link href="/app/earnings" onClick={() => setDropdownOpen(false)} className="flex items-center gap-3 px-4 py-2.5 text-xs text-gray-700 hover:bg-gray-50 transition">
                       <Wallet size={14} className="text-gray-400" /> Earnings
                     </Link>
-                    <Link href="/app/settings" onClick={() => setDropdownOpen(false)} className="flex items-center gap-3 px-4 py-2.5 text-xs text-gray-700 hover:bg-gray-50 transition">
+                    <Link href="/app/profile/settings" onClick={() => setDropdownOpen(false)} className="flex items-center gap-3 px-4 py-2.5 text-xs text-gray-700 hover:bg-gray-50 transition">
                       <Settings size={14} className="text-gray-400" /> Settings
                     </Link>
                   </div>

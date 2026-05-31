@@ -2,9 +2,12 @@
 
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
+import Underline from '@tiptap/extension-underline';
 import {
   Bold,
   Italic,
+  Underline as UnderlineIcon,
+  Strikethrough,
   List,
   ListOrdered,
   Quote,
@@ -13,6 +16,7 @@ import {
   Undo,
   Redo
 } from 'lucide-react';
+
 
 interface EditorProps {
   content: string;
@@ -24,6 +28,7 @@ export default function Editor({ content, onChange }: EditorProps) {
     immediatelyRender: false,
     extensions: [
       StarterKit,
+      Underline,
     ],
     content: content,
     onUpdate: ({ editor }: { editor: any }) => {
@@ -70,6 +75,18 @@ export default function Editor({ content, onChange }: EditorProps) {
           isActive={editor.isActive('italic')}
         >
           <Italic size={16} />
+        </MenuButton>
+        <MenuButton
+          onClick={() => editor.chain().focus().toggleUnderline().run()}
+          isActive={editor.isActive('underline')}
+        >
+          <UnderlineIcon size={16} />
+        </MenuButton>
+        <MenuButton
+          onClick={() => editor.chain().focus().toggleStrike().run()}
+          isActive={editor.isActive('strike')}
+        >
+          <Strikethrough size={16} />
         </MenuButton>
         <div className="w-px h-6 bg-gray-200 mx-1" />
         <MenuButton

@@ -51,13 +51,13 @@ export default function AppSidebar({ collapsed, onToggle, isMobileOpen, onCloseM
     { label: 'Assessments', href: '/app/assessments', icon: ClipboardList },
 
     { label: 'Chat', href: '/app/chat', icon: MessageSquare },
-    // { label: 'Settings', href: '/app/settings', icon: Settings },
+    // { label: 'Settings', href: '/app/profile/settings', icon: Settings },
   ];
 
   const otherItems = [
     { label: 'Referrals', href: '/app/referrals', icon: Users },
     ...(user?.role == 'teacher' ? [{ label: 'Subscription', href: '/app/premium-subscription', icon: Gem }] : []),
-    { label: 'Settings', href: '/app/settings', icon: Settings },
+    { label: 'Settings', href: '/app/profile/settings', icon: Settings },
   ];
 
   const SidebarContent = ({ isMobile = false }) => (

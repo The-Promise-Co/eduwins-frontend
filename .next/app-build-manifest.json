@@ -1,20 +1,45 @@
 {
   "pages": {
+    "/app/layout": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/app/layout.js"
+    ],
     "/layout": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/css/app/layout.css",
       "static/chunks/app/layout.js"
     ],
-    "/app/layout": [
+    "/app/profile/settings/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/app/layout.js"
+      "static/chunks/app/app/profile/settings/page.js"
     ],
-    "/app/courses/[id]/edit/page": [
+    "/app/profile/settings/layout": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/app/courses/[id]/edit/page.js"
+      "static/chunks/app/app/profile/settings/layout.js"
+    ],
+    "/app/profile/settings/notifications/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/app/profile/settings/notifications/page.js"
+    ],
+    "/app/profile/layout": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/app/profile/layout.js"
+    ],
+    "/app/profile/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/app/profile/page.js"
+    ],
+    "/app/profile/settings/security/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/app/profile/settings/security/page.js"
     ]
   }
 }

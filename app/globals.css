@@ -22,3 +22,75 @@ code {
 #root {
   min-height: 100vh;
 }
+
+/* ── Rich Text & Tiptap Editor Styling ── */
+.ProseMirror {
+  outline: none;
+}
+
+.ProseMirror p {
+  margin-bottom: 0.5rem;
+}
+
+.rich-text-content ul,
+.ProseMirror ul {
+  list-style-type: disc !important;
+  padding-left: 1.5rem !important;
+  margin-top: 0.5rem !important;
+  margin-bottom: 0.5rem !important;
+}
+
+.rich-text-content ol,
+.ProseMirror ol {
+  list-style-type: decimal !important;
+  padding-left: 1.5rem !important;
+  margin-top: 0.5rem !important;
+  margin-bottom: 0.5rem !important;
+}
+
+.rich-text-content li,
+.ProseMirror li {
+  margin-top: 0.25rem;
+  margin-bottom: 0.25rem;
+}
+
+.rich-text-content h1,
+.ProseMirror h1 {
+  font-size: 1.5rem;
+  font-weight: 800;
+  margin-top: 1.25rem;
+  margin-bottom: 0.75rem;
+  color: #111827;
+}
+
+.rich-text-content h2,
+.ProseMirror h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+  color: #1f2937;
+}
+
+.rich-text-content blockquote,
+.ProseMirror blockquote {
+  border-left: 4px solid #001A72;
+  padding-left: 1rem;
+  font-style: italic;
+  color: #4b5563;
+  margin-top: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.rich-text-content u,
+.ProseMirror u {
+  text-decoration: underline !important;
+}
+
+.rich-text-content s,
+.rich-text-content strike,
+.ProseMirror s,
+.ProseMirror strike {
+  text-decoration: line-through !important;
+}
+
