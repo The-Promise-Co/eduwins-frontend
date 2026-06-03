@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import api from '../../services/api';
+import { useApiMutation, useApiQuery } from '@/hooks/useApi';
 import { Booking } from '@/types';
 
 function PaymentContent() {
@@ -10,58 +10,51 @@ function PaymentContent() {
   const searchParams = useSearchParams();
   const bookingId = searchParams.get('bookingId');
 
-  const [booking, setBooking] = useState<Booking | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [processing, setProcessing] = useState(false);
   const [error, setError] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('card');
+  const bookingQuery = useApiQuery<Booking>(
+    ['bookings', bookingId],
+    bookingId ? `/bookings/${bookingId}` : null,
+    { retry: false }
+  );
+  const initializePaymentMutation = useApiMutation<{ authorizationUrl: string }, any>({
+    method: 'post',
+    url: '/paystack/initialize',
+    data: (data) => data,
+  });
 
   useEffect(() => {
     if (!bookingId) {
       router.push('/search');
       return;
     }
-    fetchBooking();
+    bookingQuery.refetch();
   }, [bookingId, router]);
 
-  const fetchBooking = async () => {
-    try {
-      const response = await api.get(`/bookings/${bookingId}`);
-      setBooking(response.data);
-    } catch (err) {
-      setError('Failed to load booking details');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handlePayment = async () => {
-    if (!booking) return;
+    if (!bookingQuery.data) return;
 
-    setProcessing(true);
     setError('');
 
     try {
       // Initialize payment with Paystack
-      const response = await api.post('/paystack/initialize', {
+      const response = await initializePaymentMutation.mutateAsync({
         bookingId,
-        amount: booking.totalCost * 100, // Paystack accepts amount in kobo
-        email: booking.parentEmail || (typeof window !== 'undefined' ? localStorage.getItem('userEmail') : ''),
+        amount: bookingQuery.data.totalCost * 100, // Paystack accepts amount in kobo
+        email: bookingQuery.data.parentEmail || (typeof window !== 'undefined' ? localStorage.getItem('userEmail') : ''),
         paymentMethod
       });
 
-      const { authorizationUrl } = response.data;
+      const { authorizationUrl } = response;
 
       // Redirect to Paystack payment page
       window.location.href = authorizationUrl;
     } catch (err: any) {
       setError(err.response?.data?.message || 'Payment initialization failed');
-    } finally {
-      setProcessing(false);
     }
   };
 
-  if (loading) {
+  if (bookingQuery.isLoading || bookingQuery.isPending) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-[#001A72] animate-pulse font-bold text-xl">Loading payment details...</div>
@@ -69,7 +62,7 @@ function PaymentContent() {
     );
   }
 
-  if (!booking) {
+  if (bookingQuery.isError || !bookingQuery.data) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-red-600 font-bold text-xl">No booking found</div>
@@ -77,6 +70,7 @@ function PaymentContent() {
     );
   }
 
+  const booking = bookingQuery.data;
   const teacherEarnings = Math.floor(booking.totalCost * 0.85);
   const platformFee = Math.floor(booking.totalCost * 0.10);
   const welfareContribution = Math.floor(booking.totalCost * 0.05);
@@ -160,10 +154,10 @@ function PaymentContent() {
 
               <button
                 onClick={handlePayment}
-                disabled={processing}
+                disabled={initializePaymentMutation.isPending}
                 className="w-full bg-[#001A72] text-white py-4 rounded-lg font-bold text-lg hover:bg-[#001A72]/90 disabled:opacity-50 transition"
               >
-                {processing ? 'Processing...' : `Pay ₦${booking.totalCost.toLocaleString()} with ${paymentMethod.toUpperCase()}`}
+                {initializePaymentMutation.isPending ? 'Processing...' : `Pay ₦${booking.totalCost.toLocaleString()} with ${paymentMethod.toUpperCase()}`}
               </button>
             </div>
           </div>

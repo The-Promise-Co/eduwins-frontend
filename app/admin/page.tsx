@@ -2,20 +2,37 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import api from '../../services/api';
+import { useApiMutation, useApiQuery } from '@/hooks/useApi';
 import { TeacherProfile } from '@/types';
 
 export default function AdminDashboard() {
   const router = useRouter();
-  const [stats, setStats] = useState<any>(null);
-  const [applications, setApplications] = useState<any[]>([]);
-  const [ambassadors, setAmbassadors] = useState<any[]>([]);
-  const [vettingQueue, setVettingQueue] = useState<TeacherProfile[]>([]);
-  const [disputes, setDisputes] = useState<any[]>([]);
-  const [welfareAnalytics, setWelfareAnalytics] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [isAuthorized, setIsAuthorized] = useState(false);
+  const overviewQuery = useApiQuery<any>(['admin', 'overview'], isAuthorized ? '/api/admin/overview' : null);
+  const applicationsQuery = useApiQuery<any[]>(['admin', 'rent-applications'], isAuthorized ? '/api/admin/rent-applications' : null);
+  const ambassadorsQuery = useApiQuery<any[]>(['admin', 'ambassadors'], isAuthorized ? '/api/admin/ambassadors' : null);
+  const vettingQuery = useApiQuery<TeacherProfile[]>(['admin', 'vetting'], isAuthorized ? '/api/admin/vetting' : null);
+  const disputesQuery = useApiQuery<any[]>(['admin', 'disputes'], isAuthorized ? '/api/admin/disputes' : null);
+  const welfareQuery = useApiQuery<any>(['admin', 'welfare-analytics'], isAuthorized ? '/api/admin/welfare-analytics' : null);
+  const applicationStatusMutation = useApiMutation<unknown, { id: string | number; status: string }>({
+    method: 'post',
+    url: ({ id }) => `/api/admin/rent-applications/${id}`,
+    data: ({ status }) => ({ status }),
+    invalidate: [['admin', 'rent-applications'], ['admin', 'overview']],
+  });
+  const vettingMutation = useApiMutation<{ message?: string }, { teacherId: string | number; action: string }>({
+    method: 'post',
+    url: ({ teacherId }) => `/api/admin/vetting/${teacherId}`,
+    data: ({ action }) => ({ action }),
+    invalidate: [['admin', 'vetting'], ['admin', 'overview']],
+  });
+  const disputeMutation = useApiMutation<unknown, { disputeId: string | number; status: string }>({
+    method: 'patch',
+    url: ({ disputeId }) => `/api/admin/disputes/${disputeId}`,
+    data: ({ status }) => ({ status }),
+    invalidate: [['admin', 'disputes']],
+  });
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -24,37 +41,19 @@ export default function AdminDashboard() {
       return;
     }
     setIsAuthorized(true);
-    loadData();
   }, [router]);
 
-  const loadData = async () => {
-    try {
-      const [overviewRes, rentRes, ambRes, vetRes, discRes, welfareRes] = await Promise.all([
-        api.get('/api/admin/overview'),
-        api.get('/api/admin/rent-applications'),
-        api.get('/api/admin/ambassadors'),
-        api.get('/api/admin/vetting'),
-        api.get('/api/admin/disputes'),
-        api.get('/api/admin/welfare-analytics'),
-      ]);
+  const queryError = overviewQuery.error || applicationsQuery.error || ambassadorsQuery.error || vettingQuery.error || disputesQuery.error || welfareQuery.error;
 
-      setStats(overviewRes.data);
-      setApplications(rentRes.data);
-      setAmbassadors(ambRes.data);
-      setVettingQueue(vetRes.data);
-      setDisputes(discRes.data);
-      setWelfareAnalytics(welfareRes.data);
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Could not load admin dashboard');
-    } finally {
-      setLoading(false);
+  useEffect(() => {
+    if (queryError) {
+      setError((queryError as any)?.response?.data?.error || 'Could not load admin dashboard');
     }
-  };
+  }, [queryError]);
 
   const updateApplicationStatus = async (id: string | number, status: string) => {
     try {
-      await api.post(`/api/admin/rent-applications/${id}`, { status });
-      setApplications((prev) => prev.map((app) => (app.id === id ? { ...app, status } : app)));
+      await applicationStatusMutation.mutateAsync({ id, status });
     } catch (err: any) {
       alert(err.response?.data?.error || 'Could not update status');
     }
@@ -62,9 +61,8 @@ export default function AdminDashboard() {
 
   const processVettingAction = async (teacherId: string | number, action: string) => {
     try {
-      const response = await api.post(`/api/admin/vetting/${teacherId}`, { action });
-      setVettingQueue((prev) => prev.filter((t) => (t.id as any) !== teacherId));
-      alert(response.data.message);
+      const response = await vettingMutation.mutateAsync({ teacherId, action });
+      alert(response.message);
     } catch (err: any) {
       alert(err.response?.data?.error || 'Could not process vetting action');
     }
@@ -72,8 +70,7 @@ export default function AdminDashboard() {
 
   const resolveDispute = async (disputeId: string | number, status: string) => {
     try {
-      await api.patch(`/api/admin/disputes/${disputeId}`, { status });
-      setDisputes((prev) => prev.map((d) => (d.id === disputeId ? { ...d, status } : d)));
+      await disputeMutation.mutateAsync({ disputeId, status });
     } catch (err: any) {
       alert(err.response?.data?.error || 'Could not update dispute');
     }
@@ -87,7 +84,14 @@ export default function AdminDashboard() {
     );
   }
 
-  if (loading) return <p className="text-center py-8 text-[#001A72] font-bold animate-pulse">Loading admin data...</p>;
+  const loading = overviewQuery.isLoading || applicationsQuery.isLoading || ambassadorsQuery.isLoading || vettingQuery.isLoading || disputesQuery.isLoading || welfareQuery.isLoading;
+  const stats = overviewQuery.data;
+  const applications = applicationsQuery.data || [];
+  const ambassadors = ambassadorsQuery.data || [];
+  const vettingQueue = vettingQuery.data || [];
+  const disputes = disputesQuery.data || [];
+  const welfareAnalytics = welfareQuery.data;
+  if (loading || !stats) return <p className="text-center py-8 text-[#001A72] font-bold animate-pulse">Loading admin data...</p>;
 
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4">

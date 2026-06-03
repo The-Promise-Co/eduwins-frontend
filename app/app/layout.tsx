@@ -16,9 +16,8 @@ const PAGE_TITLES: Record<string, string> = {
   '/app/earnings': 'Earnings',
   '/app/progress': 'Progress Report',
   '/app/profile/settings': 'Edit Profile',
-  '/app/profile/settings/notifications': 'Notifications',
-  '/app/profile/settings/security': 'Security & Settings',
-  '/app/profile/settings/verification': 'Identity Verification',
+  '/app/profile/notifications': 'Notifications',
+  '/app/profile/security': 'Security & Settings',
   '/app/search': 'Search Teachers',
   '/app/vault': 'Digital Vault',
   '/app/vault/create': 'Create Vault Item',
@@ -30,6 +29,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/app/courses/create': 'Create Course',
   '/app/referrals': 'Referrals',
   '/app/assessments': 'Assessments',
+  '/app/children': 'My Children',
 };
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
@@ -45,6 +45,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     if (path.match(/^\/app\/courses\/[^/]+\/edit/)) return 'Edit Course';
     if (path.match(/^\/app\/courses\/[^/]+/)) return 'Course Details';
     if (path.match(/^\/app\/vault\/[^/]+/)) return 'Vault Item';
+    if (path.match(/^\/app\/children\/[^/]+/)) return 'Child Profile';
     return 'Dashboard';
   };
 
@@ -84,8 +85,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         onCloseMobile={() => setIsMobileMenuOpen(false)}
       />
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden m-0 md:m-2 rounded-none md:rounded-[1.4rem] bg-[#F4F5F7]">
-        <AppHeader 
-          title={pageTitle} 
+        <AppHeader
+          title={pageTitle}
           onToggleMobileMenu={() => setIsMobileMenuOpen(true)}
         />
         <main className="flex-1 overflow-y-auto p-4 md:p-6">

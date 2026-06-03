@@ -2,7 +2,7 @@
 
 import { useState, useEffect, ReactElement, ChangeEvent, FormEvent, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import api from '@/services/api';
+import { useApiMutation, useApiQuery } from '@/hooks/useApi';
 import { useUser } from '@/context/UserContext';
 import { TeacherProfile } from '@/types';
 import {
@@ -44,8 +44,6 @@ export default function ProfilePage(): ReactElement {
   const [user, setUser] = useState<TeacherProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Form states
-  const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -56,7 +54,6 @@ export default function ProfilePage(): ReactElement {
   });
 
   // Upload states
-  const [completion, setCompletion] = useState<ProfileCompletion | null>(null);
   const [uploading, setUploading] = useState<Record<string, boolean>>({});
 
   // Avatar Cropper States
@@ -64,6 +61,22 @@ export default function ProfilePage(): ReactElement {
   const [imageSrc, setImageSrc] = useState<string>('');
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const completionQuery = useApiQuery<ProfileCompletion>(
+    ['uploads', 'profile-completion'],
+    user?.role === 'teacher' ? '/uploads/profile-completion' : null
+  );
+  const updateProfileMutation = useApiMutation<unknown, any>({
+    method: 'put',
+    url: '/auth/profile',
+    data: (data) => data,
+    invalidate: [['auth', 'me'], ['uploads', 'profile-completion']],
+  });
+  const uploadDocumentMutation = useApiMutation<{ message?: string }, { endpoint: string; data: FormData }>({
+    method: 'post',
+    url: ({ endpoint }) => endpoint,
+    data: ({ data }) => data,
+    invalidate: [['auth', 'me'], ['uploads', 'profile-completion']],
+  });
 
   const init = async () => {
     const token = localStorage.getItem('token');
@@ -84,15 +97,6 @@ export default function ProfilePage(): ReactElement {
         bio: userData.bio || '',
         photo_url: userData.photo_url || userData.photoUrl || '',
       });
-
-      if (userData.role === 'teacher') {
-        try {
-          const res = await api.get('/uploads/profile-completion');
-          setCompletion(res.data);
-        } catch {
-          /* non-critical */
-        }
-      }
     } catch (err) {
       console.error(err);
       router.push('/login');
@@ -113,9 +117,8 @@ export default function ProfilePage(): ReactElement {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    setSaving(true);
     try {
-      await api.put('/auth/profile', formData);
+      await updateProfileMutation.mutateAsync(formData);
       const updated = { ...(user || {}), ...formData } as TeacherProfile;
       localStorage.setItem('user', JSON.stringify(updated));
       setUser(updated);
@@ -123,8 +126,6 @@ export default function ProfilePage(): ReactElement {
       toast.success('Profile updated successfully!');
     } catch (err: any) {
       toast.error(err.response?.data?.error || 'Failed to update profile.');
-    } finally {
-      setSaving(false);
     }
   };
 
@@ -170,7 +171,7 @@ export default function ProfilePage(): ReactElement {
       }
 
       // Step 2 - Update profile photo URL on the backend database
-      await api.put('/auth/profile', {
+      await updateProfileMutation.mutateAsync({
         firstName: formData.firstName,
         lastName: formData.lastName,
         bio: formData.bio,
@@ -184,9 +185,6 @@ export default function ProfilePage(): ReactElement {
 
       await refreshUser();
       toast.success('Headshot updated and verified successfully!');
-
-      const completionRes = await api.get('/uploads/profile-completion');
-      setCompletion(completionRes.data);
     } catch (err: any) {
       toast.error(err.message || err.response?.data?.error || 'Upload failed');
     } finally {
@@ -233,13 +231,13 @@ export default function ProfilePage(): ReactElement {
         credentials: '/uploads/credentials',
       };
       
-      const res = await api.post(endpointMap[uploadType], uploadData);
+      const res = await uploadDocumentMutation.mutateAsync({
+        endpoint: endpointMap[uploadType],
+        data: uploadData,
+      });
 
       await refreshUser();
-      toast.success(res.data.message || 'File uploaded successfully!');
-
-      const completionRes = await api.get('/uploads/profile-completion');
-      setCompletion(completionRes.data);
+      toast.success(res.message || 'File uploaded successfully!');
     } catch (err: any) {
       toast.error(err.response?.data?.error || 'Upload failed');
     } finally {
@@ -260,6 +258,8 @@ export default function ProfilePage(): ReactElement {
   }
 
   const isTeacher = user?.role === 'teacher';
+  const completion = completionQuery.data || null;
+  const saving = updateProfileMutation.isPending;
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto pb-12">

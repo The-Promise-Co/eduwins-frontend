@@ -1,45 +1,25 @@
 {
   "pages": {
-    "/app/layout": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/app/layout.js"
-    ],
     "/layout": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/css/app/layout.css",
       "static/chunks/app/layout.js"
     ],
-    "/app/profile/settings/page": [
+    "/app/children/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/app/profile/settings/page.js"
+      "static/chunks/app/app/children/page.js"
     ],
-    "/app/profile/settings/layout": [
+    "/app/layout": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/app/profile/settings/layout.js"
+      "static/chunks/app/app/layout.js"
     ],
-    "/app/profile/settings/notifications/page": [
+    "/app/children/[id]/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/app/profile/settings/notifications/page.js"
-    ],
-    "/app/profile/layout": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/app/profile/layout.js"
-    ],
-    "/app/profile/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/app/profile/page.js"
-    ],
-    "/app/profile/settings/security/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/app/profile/settings/security/page.js"
+      "static/chunks/app/app/children/[id]/page.js"
     ]
   }
 }

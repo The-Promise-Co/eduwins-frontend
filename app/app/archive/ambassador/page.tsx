@@ -1,37 +1,28 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import api from '@/services/api';
+import { useState } from 'react';
+import { useApiMutation, useApiQuery } from '@/hooks/useApi';
 import {
   Wallet,
   BookOpen,
 } from 'lucide-react';
 
 export default function AmbassadorPage() {
-  const [data, setData] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const ambassadorQuery = useApiQuery<any>(['ambassadors', 'me'], '/api/ambassadors/me', { retry: false });
+  const applyMutation = useApiMutation<unknown, void>({
+    method: 'post',
+    url: '/api/ambassadors/apply',
+    invalidate: [['ambassadors', 'me']],
+  });
 
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const res = await api.get('/api/ambassadors/me');
-        setData(res.data);
-      } catch (err: any) {
-        setError(err.response?.data?.error || 'Unable to load ambassador data');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    load();
-  }, []);
+  const data = ambassadorQuery.data || null;
+  const loading = ambassadorQuery.isLoading || ambassadorQuery.isPending;
 
   const apply = async () => {
     try {
-      await api.post('/api/ambassadors/apply');
+      await applyMutation.mutateAsync();
       alert('Ambassador application sent!');
-      window.location.reload();
     } catch (err: any) {
       alert(err.response?.data?.error || 'Unable to apply');
     }
@@ -53,9 +44,9 @@ export default function AmbassadorPage() {
           </p>
         )}
 
-        {error && (
+        {(error || ambassadorQuery.isError) && (
           <div className="bg-red-100 text-red-700 p-3 mb-4 rounded border border-red-200">
-            {error}
+            {error || (ambassadorQuery.error as any)?.response?.data?.error || 'Unable to load ambassador data'}
           </div>
         )}
 

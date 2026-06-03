@@ -3,7 +3,7 @@
 import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import api from '@/services/api';
+import { useApiMutation } from '@/hooks/useApi';
 import { useUser } from '@/context/UserContext';
 import {
   BookOpen,
@@ -25,7 +25,6 @@ import { LEVELS } from '@/types/course';
 export default function CreateCoursePage() {
   const router = useRouter();
   const { user } = useUser();
-  const [saving, setSaving] = useState(false);
   const [subjectSearch, setSubjectSearch] = useState('');
   const [subjectOpen, setSubjectOpen] = useState(false);
   const subjectRef = useRef<HTMLDivElement>(null);
@@ -59,6 +58,18 @@ export default function CreateCoursePage() {
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
 
   const { data: subjects, isLoading: loadingSubjects } = useSubjects();
+  const createCourseMutation = useApiMutation<{ id: string }, any>({
+    method: 'post',
+    url: '/courses',
+    data: (data) => data,
+    invalidate: [['courses']],
+  });
+  const updateCourseMutation = useApiMutation<unknown, { courseId: string; data: any }>({
+    method: 'put',
+    url: ({ courseId }) => `/courses/${courseId}`,
+    data: ({ data }) => data,
+    invalidate: [['courses']],
+  });
 
   if (user?.role !== 'teacher') {
     return (
@@ -85,8 +96,6 @@ export default function CreateCoursePage() {
     if (!form.is_free && !form.price) { toast.error('Please enter a price or mark as free.'); return; }
     if (!thumbnailFile && !form.thumbnail_url) { toast.error('Please select a course thumbnail.'); return; }
 
-    setSaving(true);
-
     try {
       const payload = {
         ...form,
@@ -97,20 +106,22 @@ export default function CreateCoursePage() {
         tags: form.tags.split(',').map((t) => t.trim()).filter(Boolean),
       };
 
-      const res = await api.post('/courses', payload);
-      const courseId = res.data.id;
+      const res = await createCourseMutation.mutateAsync(payload);
+      const courseId = res.id;
 
       // Upload thumbnail now if one was selected, grouped under the course ID folder
       if (thumbnailFile) {
         const uploaded = await uploadFile(thumbnailFile, `courses/${courseId}`);
         if (!uploaded) {
           toast.error('Failed to upload thumbnail. Please try again.');
-          setSaving(false);
           return;
         }
         // Update the course with the uploaded thumbnail URL
-        await api.put(`/courses/${courseId}`, {
+        await updateCourseMutation.mutateAsync({
+          courseId,
+          data: {
           thumbnail_url: uploaded,
+          },
         });
       }
 
@@ -119,10 +130,10 @@ export default function CreateCoursePage() {
     } catch (err: any) {
       console.error(err);
       toast.error(err.response?.data?.error || 'Failed to create course.');
-    } finally {
-      setSaving(false);
     }
   };
+
+  const saving = createCourseMutation.isPending || updateCourseMutation.isPending || isUploading;
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">

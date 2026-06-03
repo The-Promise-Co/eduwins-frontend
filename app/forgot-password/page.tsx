@@ -2,16 +2,20 @@
 
 import { useState, Suspense } from 'react';
 import Link from 'next/link';
-import api from '@/services/api';
+import { useApiMutation } from '@/hooks/useApi';
 import { Mail, CheckCircle2, ArrowLeft } from 'lucide-react';
 import AuthLayout from '@/components/AuthLayout';
 import Button from '@/components/Button';
 
 function ForgotPasswordContent() {
   const [email, setEmail] = useState('');
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const forgotPasswordMutation = useApiMutation<unknown, { email: string }>({
+    method: 'post',
+    url: '/auth/forgot-password',
+    data: (data) => data,
+  });
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -23,13 +27,10 @@ function ForgotPasswordContent() {
     }
 
     try {
-      setLoading(true);
-      await api.post('/auth/forgot-password', { email });
+      await forgotPasswordMutation.mutateAsync({ email });
       setSubmitted(true);
     } catch (err: any) {
       setError(err.response?.data?.error || 'Something went wrong. Please try again.');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -120,7 +121,7 @@ function ForgotPasswordContent() {
         <Button
           id="forgot-password-submit"
           type="submit"
-          isLoading={loading}
+          isLoading={forgotPasswordMutation.isPending}
           loadingText="Sending Reset Link..."
         >
           Send Reset Link

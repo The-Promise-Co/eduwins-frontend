@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import api from '@/services/api';
 import { 
   GraduationCap, 
   MessageSquare, 
@@ -21,8 +20,6 @@ export default function ChatPage() {
   // Fetch messages (mock for demo)
   const fetchMessages = async () => {
     try {
-      // const res = await api.get('/chat/messages');
-      // setMessages(res.data);
     } catch (err) {
       console.error('Error fetching messages:', err);
     }

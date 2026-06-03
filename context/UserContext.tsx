@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
-import api from '@/services/api';
+import { useApiQuery } from '@/hooks/useApi';
 import { TeacherProfile } from '@/types';
 
 interface UserContextType {
@@ -20,7 +20,13 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<TeacherProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [shouldFetchMe, setShouldFetchMe] = useState(false);
   const router = useRouter();
+  const meQuery = useApiQuery<TeacherProfile>(
+    ['auth', 'me'],
+    shouldFetchMe ? '/auth/me' : null,
+    { enabled: shouldFetchMe, retry: false }
+  );
 
   useEffect(() => {
     const initAuth = async () => {
@@ -32,12 +38,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
           const parsedUser = JSON.parse(userJson);
           setUser(parsedUser);
           setIsAuthenticated(true);
-          
-          // Fetch fresh user data in background
-          const res = await api.get('/auth/me');
-          const freshUser = res.data;
-          setUser(freshUser);
-          localStorage.setItem('user', JSON.stringify(freshUser));
+          setShouldFetchMe(true);
         } catch (error) {
           console.error('Failed to initialize auth:', error);
           // If it's a 401, the api interceptor will handle redirect
@@ -53,11 +54,25 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     initAuth();
   }, []);
 
+  useEffect(() => {
+    if (meQuery.data) {
+      setUser(meQuery.data);
+      localStorage.setItem('user', JSON.stringify(meQuery.data));
+    }
+  }, [meQuery.data]);
+
+  useEffect(() => {
+    if ((meQuery.error as any)?.response?.status === 401) {
+      logout();
+    }
+  }, [meQuery.error]);
+
   const login = (userData: TeacherProfile, token: string) => {
     localStorage.setItem('token', token);
     localStorage.setItem('user', JSON.stringify(userData));
     setUser(userData);
     setIsAuthenticated(true);
+    setShouldFetchMe(true);
   };
 
   const logout = () => {
@@ -65,15 +80,17 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     localStorage.removeItem('user');
     setUser(null);
     setIsAuthenticated(false);
+    setShouldFetchMe(false);
     router.push('/login');
   };
 
   const refreshUser = async () => {
     try {
-      const res = await api.get('/auth/me');
-      const freshUser = res.data;
-      setUser(freshUser);
-      localStorage.setItem('user', JSON.stringify(freshUser));
+      const result = await meQuery.refetch();
+      if (result.data) {
+        setUser(result.data);
+        localStorage.setItem('user', JSON.stringify(result.data));
+      }
     } catch (error) {
       console.error('Failed to refresh user:', error);
     }

@@ -18,7 +18,7 @@ import {
   Zap,
   ShieldCheck
 } from 'lucide-react';
-import api from '@/services/api';
+import { useApiMutation, useApiQuery } from '@/hooks/useApi';
 import DashboardNavigation from '@/components/DashboardNavigation';
 import { User } from '@/types';
 
@@ -67,13 +67,11 @@ interface WithdrawalForm {
 
 export default function WithdrawalPage(): ReactElement {
   const [activeTab, setActiveTab] = useState<string>('balance'); // balance, withdraw, history
-  const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
   const [success, setSuccess] = useState<string>('');
   const [user, setUser] = useState<User | null>(null);
 
   // Balance section state
-  const [balanceData, setBalanceData] = useState<BalanceData | null>(null);
   const [showBalance, setShowBalance] = useState<boolean>(false);
 
   // Withdrawal form state
@@ -84,13 +82,28 @@ export default function WithdrawalPage(): ReactElement {
     accountName: '',
     narration: '',
   });
-  const [banks, setBanks] = useState<Bank[]>([]);
   const [selectedBank, setSelectedBank] = useState<string>('');
 
   // History state
-  const [withdrawalHistory, setWithdrawalHistory] = useState<Withdrawal[]>([]);
   const [filterStatus, setFilterStatus] = useState<string>('');
-  const [historyStats, setHistoryStats] = useState<HistoryStats | null>(null);
+  const historyParams = filterStatus ? `?status=${encodeURIComponent(filterStatus)}` : '';
+  const balanceQuery = useApiQuery<BalanceData>(['withdrawals', 'available-balance'], '/withdrawals/available-balance');
+  const banksQuery = useApiQuery<{ banks?: Bank[] }>(['withdrawals', 'banks'], '/withdrawals/banks/list');
+  const historyQuery = useApiQuery<{ withdrawals?: Withdrawal[]; stats?: HistoryStats }>(
+    ['withdrawals', 'history', filterStatus],
+    activeTab === 'history' ? `/withdrawals/history${historyParams}` : null
+  );
+  const initiateWithdrawalMutation = useApiMutation<{ message?: string }, any>({
+    method: 'post',
+    url: '/withdrawals/initiate',
+    data: (data) => data,
+    invalidate: [['withdrawals', 'available-balance'], ['withdrawals', 'history', filterStatus]],
+  });
+  const cancelWithdrawalMutation = useApiMutation<{ message?: string }, string>({
+    method: 'delete',
+    url: (withdrawalId) => `/withdrawals/${withdrawalId}/cancel`,
+    invalidate: [['withdrawals', 'available-balance'], ['withdrawals', 'history', filterStatus]],
+  });
 
   // Fetch available balance on mount
   useEffect(() => {
@@ -100,57 +113,7 @@ export default function WithdrawalPage(): ReactElement {
         setUser(JSON.parse(userData));
       }
     }
-    fetchAvailableBalance();
-    fetchBanks();
   }, []);
-
-  // Fetch balance whenever tab changes to balance
-  useEffect(() => {
-    if (activeTab === 'balance') {
-      fetchAvailableBalance();
-    } else if (activeTab === 'history') {
-      fetchWithdrawalHistory();
-    }
-  }, [activeTab]);
-
-  const fetchAvailableBalance = async () => {
-    try {
-      setLoading(true);
-      const response = await api.get('/withdrawals/available-balance');
-      setBalanceData(response.data);
-      setError('');
-    } catch (err) {
-      setError('Failed to fetch balance information');
-      console.error('Fetch balance error:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchBanks = async () => {
-    try {
-      const response = await api.get('/withdrawals/banks/list');
-      setBanks(response.data.banks || []);
-    } catch (err) {
-      console.error('Fetch banks error:', err);
-    }
-  };
-
-  const fetchWithdrawalHistory = async (status: string = '') => {
-    try {
-      setLoading(true);
-      const params = status ? { status } : {};
-      const response = await api.get('/withdrawals/history', { params });
-      setWithdrawalHistory(response.data.withdrawals || []);
-      setHistoryStats(response.data.stats || null);
-      setError('');
-    } catch (err) {
-      setError('Failed to fetch withdrawal history');
-      console.error('Fetch history error:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleWithdrawalFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -196,8 +159,7 @@ export default function WithdrawalPage(): ReactElement {
         }
       }
 
-      setLoading(true);
-      const response = await api.post('/withdrawals/initiate', {
+      const response = await initiateWithdrawalMutation.mutateAsync({
         amount,
         bankCode: withdrawalForm.bankCode,
         accountNumber: withdrawalForm.accountNumber,
@@ -205,7 +167,7 @@ export default function WithdrawalPage(): ReactElement {
         narration: withdrawalForm.narration,
       });
 
-      setSuccess(response.data.message);
+      setSuccess(response.message || 'Withdrawal request submitted');
       setWithdrawalForm({
         amount: '',
         bankCode: '',
@@ -217,15 +179,12 @@ export default function WithdrawalPage(): ReactElement {
 
       // Refresh balance and switch to history
       setTimeout(() => {
-        fetchAvailableBalance();
         setActiveTab('history');
         setSuccess('');
       }, 3000);
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to initiate withdrawal');
       console.error('Withdrawal error:', err);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -235,19 +194,25 @@ export default function WithdrawalPage(): ReactElement {
     }
 
     try {
-      setLoading(true);
-      const response = await api.delete(`/withdrawals/${withdrawalId}/cancel`);
-      setSuccess(response.data.message);
-      fetchWithdrawalHistory(filterStatus);
-      fetchAvailableBalance();
+      const response = await cancelWithdrawalMutation.mutateAsync(withdrawalId);
+      setSuccess(response.message || 'Withdrawal cancelled');
       setTimeout(() => setSuccess(''), 3000);
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to cancel withdrawal');
       console.error('Cancel withdrawal error:', err);
-    } finally {
-      setLoading(false);
     }
   };
+
+  const balanceData = balanceQuery.data || null;
+  const banks = banksQuery.data?.banks || [];
+  const withdrawalHistory = historyQuery.data?.withdrawals || [];
+  const historyStats = historyQuery.data?.stats || null;
+  const loading =
+    balanceQuery.isFetching ||
+    banksQuery.isFetching ||
+    historyQuery.isFetching ||
+    initiateWithdrawalMutation.isPending ||
+    cancelWithdrawalMutation.isPending;
 
   const getStatusBadge = (status: Withdrawal['status']) => {
     const statusConfig: Record<Withdrawal['status'], { bg: string, text: string, icon: LucideIcon }> = {
@@ -535,10 +500,7 @@ export default function WithdrawalPage(): ReactElement {
                   {['', 'pending', 'completed', 'failed'].map(status => (
                     <button
                       key={status}
-                      onClick={() => {
-                        setFilterStatus(status);
-                        fetchWithdrawalHistory(status);
-                      }}
+                      onClick={() => setFilterStatus(status)}
                       className={`px-3 py-1 rounded-lg text-xs font-bold transition ${filterStatus === status ? 'bg-[#001A72] text-white' : 'bg-white text-gray-500 border border-gray-200 hover:bg-gray-100'
                         }`}
                     >

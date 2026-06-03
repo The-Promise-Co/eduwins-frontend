@@ -2,7 +2,7 @@
 
 import { useState, useEffect, ReactElement } from 'react';
 import { useRouter } from 'next/navigation';
-import api from '@/services/api';
+import { useApiMutation, useApiQuery } from '@/hooks/useApi';
 import DashboardNavigation from '@/components/DashboardNavigation';
 import { User } from '@/types';
 
@@ -29,14 +29,23 @@ interface Message {
 export default function WelfareFundPage(): ReactElement {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [welfareFund, setWelfareFund] = useState<WelfareFund | null>(null);
   const [withdrawAmount, setWithdrawAmount] = useState<string>('');
   const [showWithdrawForm, setShowWithdrawForm] = useState<boolean>(false);
   const [message, setMessage] = useState<Message>({ type: '', text: '' });
+  const welfareQuery = useApiQuery<WelfareFund>(
+    ['welfare-fund', 'archive', user?.id],
+    user ? `/payments/welfare-fund/${user.id}` : null,
+    { retry: false }
+  );
+  const withdrawMutation = useApiMutation<unknown, { amount: number }>({
+    method: 'post',
+    url: () => `/payments/welfare-fund/${user!.id}/withdraw`,
+    data: (data) => data,
+    invalidate: [['welfare-fund', 'archive', user?.id]],
+  });
 
   useEffect(() => {
-    const init = async () => {
+    const init = () => {
       if (typeof window !== 'undefined') {
         const token = localStorage.getItem('token');
         const userJson = localStorage.getItem('user');
@@ -46,38 +55,12 @@ export default function WelfareFundPage(): ReactElement {
           return;
         }
 
-        try {
-          const userData = JSON.parse(userJson);
-          if (userData.role !== 'teacher') {
-            router.push('/dashboard');
-            return;
-          }
-          setUser(userData);
-
-          // Fetch welfare fund data
-          try {
-            const response = await api.get(`/payments/welfare-fund/${userData.id}`);
-            setWelfareFund(response.data);
-          } catch (innerErr: any) {
-            if (innerErr.response?.status === 404) {
-              // Create local empty welfare record for UI when no db record yet
-              setWelfareFund({
-                teacherId: userData.id,
-                total_accumulated: 0,
-                available_balance: 0,
-                locked_balance: 0,
-                contributions: [],
-              });
-            } else {
-              throw innerErr;
-            }
-          }
-        } catch (err) {
-          console.error('Error:', err);
-          router.push('/login');
-        } finally {
-          setLoading(false);
+        const userData = JSON.parse(userJson);
+        if (userData.role !== 'teacher') {
+          router.push('/dashboard');
+          return;
         }
+        setUser(userData);
       }
     };
 
@@ -101,9 +84,7 @@ export default function WelfareFundPage(): ReactElement {
 
     try {
       if (user) {
-        await api.post(`/payments/welfare-fund/${user.id}/withdraw`, {
-          amount: amount,
-        });
+        await withdrawMutation.mutateAsync({ amount });
 
         setMessage({
           type: 'success',
@@ -111,16 +92,24 @@ export default function WelfareFundPage(): ReactElement {
         });
         setWithdrawAmount('');
         setShowWithdrawForm(false);
-
-        // Refresh welfare fund data
-        const updatedResponse = await api.get(`/payments/welfare-fund/${user.id}`);
-        setWelfareFund(updatedResponse.data);
       }
     } catch (err: any) {
       const errorMsg = err.response?.data?.error || 'Withdrawal failed';
       setMessage({ type: 'error', text: errorMsg });
     }
   };
+
+  const emptyWelfareFund: WelfareFund | null = user ? {
+    teacherId: user.id,
+    total_accumulated: 0,
+    available_balance: 0,
+    locked_balance: 0,
+    contributions: [],
+  } : null;
+  const welfareFund = welfareQuery.error && (welfareQuery.error as any).response?.status === 404
+    ? emptyWelfareFund
+    : welfareQuery.data || null;
+  const loading = !user || welfareQuery.isLoading || welfareQuery.isPending;
 
   if (loading) {
     return (

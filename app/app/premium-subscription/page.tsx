@@ -2,7 +2,7 @@
 
 import { useState, useEffect, ReactElement } from 'react';
 import { useRouter } from 'next/navigation';
-import api from '@/services/api';
+import { useApiMutation, useApiQuery } from '@/hooks/useApi';
 import { useUser } from '@/context/UserContext';
 import {
   Gem,
@@ -106,10 +106,19 @@ const FAQS = [
 export default function PremiumSubscriptionPage(): ReactElement {
   const router = useRouter();
   const { user } = useUser();
-  const [subscription, setSubscription] = useState<Subscription | null>(null);
-  const [subscribing, setSubscribing] = useState<string | null>(null);
+  const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [message, setMessage] = useState<{ type: 'success' | 'error' | ''; text: string }>({ type: '', text: '' });
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const subscriptionQuery = useApiQuery<Subscription>(
+    ['premium', 'subscription-status'],
+    user?.role === 'teacher' ? '/premium/subscription/status' : null
+  );
+  const subscribeMutation = useApiMutation<unknown, { plan: string }>({
+    method: 'post',
+    url: '/premium/subscribe',
+    data: (data) => data,
+    invalidate: [['premium', 'subscription-status']],
+  });
 
   useEffect(() => {
     if (!user) return;
@@ -117,30 +126,24 @@ export default function PremiumSubscriptionPage(): ReactElement {
       router.replace('/app/dashboard');
       return;
     }
-
-    api.get('/premium/subscription/status')
-      .then((res) => setSubscription(res.data))
-      .catch((err) => console.error('Failed to load subscription:', err));
   }, [user, router]);
 
   const subscribeToPlan = async (planName: string) => {
-    setSubscribing(planName);
+    setSelectedPlan(planName);
     setMessage({ type: '', text: '' });
     try {
-      await api.post('/premium/subscribe', { plan: planName });
+      await subscribeMutation.mutateAsync({ plan: planName });
       setMessage({ type: 'success', text: `Successfully subscribed to ${planName} plan!` });
-
-      const statusRes = await api.get('/premium/subscription/status');
-      setSubscription(statusRes.data);
 
       setTimeout(() => router.push('/app/premium-content'), 1500);
     } catch (err: any) {
       setMessage({ type: 'error', text: err.response?.data?.error || 'Subscription failed' });
     } finally {
-      setSubscribing(null);
+      setSelectedPlan(null);
     }
   };
 
+  const subscription = subscriptionQuery.data;
   const isSubscribed = subscription?.subscriptionActive;
   const currentPlan = subscription?.currentPlan;
   const daysRemaining = subscription?.daysRemaining;
@@ -185,7 +188,7 @@ export default function PremiumSubscriptionPage(): ReactElement {
       <div className="grid md:grid-cols-3 gap-6">
         {PLANS.map((plan) => {
           const isCurrent = isSubscribed && currentPlan === plan.name;
-          const isProcessing = subscribing === plan.name;
+          const isProcessing = subscribeMutation.isPending && selectedPlan === plan.name;
           return (
             <div
               key={plan.name}

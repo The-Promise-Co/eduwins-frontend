@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import api from '@/services/api';
+import { useApiQuery } from '@/hooks/useApi';
 import { useUser } from '@/context/UserContext';
 import {
   Search,
@@ -34,9 +34,6 @@ const toSentenceCase = (s: string) => {
 
 export default function CoursesPage() {
   const { user } = useUser();
-  const [courses, setCourses] = useState<Course[]>([]);
-  const [meta, setMeta] = useState({ total: 0, page: 1, limit: 12, totalPages: 1 });
-  const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSubject, setSelectedSubject] = useState('All');
@@ -54,27 +51,16 @@ export default function CoursesPage() {
   );
 
   const isTeacher = user?.role === 'teacher';
-
-  useEffect(() => {
-    const fetchCourses = async () => {
-      try {
-        setLoading(true);
-        const baseUrl = isTeacher && user?.id ? `/courses/teacher/${user.id}` : '/courses';
-        const url = `${baseUrl}?page=${page}&limit=12`;
-        const res = await api.get(url);
-        
-        // The API now returns { data, meta }
-        setCourses(res.data.data || []);
-        setMeta(res.data.meta || { total: 0, page: 1, limit: 12, totalPages: 1 });
-      } catch (err) {
-        console.error('Error fetching courses:', err);
-        setCourses([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchCourses();
-  }, [isTeacher, user?.id, page]);
+  const baseUrl = isTeacher && user?.id ? `/courses/teacher/${user.id}` : '/courses';
+  const defaultMeta = { total: 0, page: 1, limit: 12, totalPages: 1 };
+  const coursesQuery = useApiQuery<{ data?: Course[]; meta?: typeof defaultMeta }>(
+    ['courses', isTeacher ? 'teacher' : 'all', user?.id, page],
+    `${baseUrl}?page=${page}&limit=12`,
+    { enabled: !isTeacher || !!user?.id }
+  );
+  const courses = coursesQuery.data?.data || [];
+  const meta = coursesQuery.data?.meta || defaultMeta;
+  const loading = coursesQuery.isLoading || coursesQuery.isPending;
 
   const filtered = courses.filter((c) => {
     const matchSearch =
@@ -308,4 +294,3 @@ export default function CoursesPage() {
     </div>
   );
 }
-

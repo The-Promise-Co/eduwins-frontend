@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, ReactElement } from 'react';
-import api from '@/services/api';
+import { ReactElement } from 'react';
+import { useApiQuery } from '@/hooks/useApi';
 import NavBar from '@/components/NavBar';
 import { ProgressReport } from '@/types';
 import { 
@@ -13,24 +13,12 @@ import {
 } from 'lucide-react';
 
 export default function ProgressReportsPage(): ReactElement {
-  const [reports, setReports] = useState<ProgressReport[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string>('');
-
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const res = await api.get('/progress-reports/my');
-        setReports(res.data);
-      } catch (err: any) {
-        setError(err.response?.data?.error || 'Unable to load progress reports');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    load();
-  }, []);
+  const reportsQuery = useApiQuery<ProgressReport[]>(['progress-reports', 'my'], '/progress-reports/my', { retry: false });
+  const reports = reportsQuery.data || [];
+  const loading = reportsQuery.isLoading || reportsQuery.isPending;
+  const error = reportsQuery.isError
+    ? (reportsQuery.error as any)?.response?.data?.error || 'Unable to load progress reports'
+    : '';
 
   if (loading) {
     return (

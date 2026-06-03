@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import axios from 'axios';
 import api from '../services/api';
+import { useMutation } from '@tanstack/react-query';
 
 interface R2SignResponse {
   uploadUrl: string;
@@ -9,19 +10,10 @@ interface R2SignResponse {
 }
 
 export const useR2 = () => {
-  const [isUploading, setIsUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
-
-  const uploadFile = async (
-    file: File,
-    folder = 'eduwins',
-  ): Promise<string | null> => {
-    setIsUploading(true);
-    setProgress(0);
-    setError(null);
-
-    try {
+  const uploadMutation = useMutation<string | null, unknown, { file: File; folder?: string }>({
+    mutationFn: async ({ file, folder = 'eduwins' }) => {
       // Step 1 — Get presigned upload URL from backend
       const { data } = await api.post<R2SignResponse>('/uploads/sign', {
         filename: file.name,
@@ -51,15 +43,28 @@ export const useR2 = () => {
       });
 
       return publicUrl;
-    } catch (err: any) {
+    },
+    onMutate: () => {
+      setProgress(0);
+      setError(null);
+    },
+    onError: (err: any) => {
       console.error('R2 upload error:', err);
       const msg = err.response?.data?.error || err.message || 'Upload failed';
       setError(msg);
+    },
+  });
+
+  const uploadFile = async (
+    file: File,
+    folder = 'eduwins',
+  ): Promise<string | null> => {
+    try {
+      return await uploadMutation.mutateAsync({ file, folder });
+    } catch {
       return null;
-    } finally {
-      setIsUploading(false);
     }
   };
 
-  return { uploadFile, isUploading, progress, error, setError };
+  return { uploadFile, isUploading: uploadMutation.isPending, progress, error, setError };
 };

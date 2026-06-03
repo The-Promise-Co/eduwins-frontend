@@ -3,29 +3,33 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import api from '@/services/api';
+import { useApiMutation, useApiQuery } from '@/hooks/useApi';
 import { Lock, Eye, EyeOff, CheckCircle2, XCircle, ArrowLeft } from 'lucide-react';
 import AuthLayout from '@/components/AuthLayout';
 import Button from '@/components/Button';
-
-type TokenState = 'loading' | 'valid' | 'invalid';
 
 function ResetPasswordContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
 
-  const [tokenState, setTokenState] = useState<TokenState>('loading');
-  const [tokenError, setTokenError] = useState('');
-
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
-  const [loading, setLoading] = useState(false);
   const [formError, setFormError] = useState('');
   const [success, setSuccess] = useState(false);
+  const validateTokenQuery = useApiQuery<unknown>(
+    ['auth', 'reset-token', token],
+    token ? `/auth/validate-reset-token?token=${encodeURIComponent(token)}` : null,
+    { retry: false }
+  );
+  const resetPasswordMutation = useApiMutation<unknown, { token: string; newPassword: string }>({
+    method: 'post',
+    url: '/auth/reset-password',
+    data: (data) => data,
+  });
 
   /* ── Token validation on mount ── */
   useEffect(() => {
@@ -34,19 +38,6 @@ function ResetPasswordContent() {
       return;
     }
 
-    const validate = async () => {
-      try {
-        await api.get(`/auth/validate-reset-token?token=${encodeURIComponent(token)}`);
-        setTokenState('valid');
-      } catch (err: any) {
-        setTokenError(
-          err.response?.data?.error || 'Invalid or expired reset link.'
-        );
-        setTokenState('invalid');
-      }
-    };
-
-    validate();
   }, [token, router]);
 
   /* ── Submit new password ── */
@@ -63,22 +54,21 @@ function ResetPasswordContent() {
       return;
     }
 
+    if (!token) return;
+
     try {
-      setLoading(true);
-      await api.post('/auth/reset-password', { token, newPassword });
+      await resetPasswordMutation.mutateAsync({ token, newPassword });
       setSuccess(true);
       setTimeout(() => router.push('/login?reset=1'), 2500);
     } catch (err: any) {
       setFormError(
         err.response?.data?.error || 'Something went wrong. Please try again.'
       );
-    } finally {
-      setLoading(false);
     }
   };
 
   /* ─────────────── Loading ─────────────── */
-  if (tokenState === 'loading') {
+  if (validateTokenQuery.isLoading || validateTokenQuery.isPending) {
     return (
       <div className="flex flex-col items-center gap-3 py-8">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
@@ -88,7 +78,7 @@ function ResetPasswordContent() {
   }
 
   /* ─────────────── Invalid token ─────────────── */
-  if (tokenState === 'invalid') {
+  if (validateTokenQuery.isError) {
     return (
       <div className="text-center w-full">
         <div className="flex items-center justify-center mb-6">
@@ -99,7 +89,7 @@ function ResetPasswordContent() {
 
         <h1 className="text-3xl font-extrabold text-gray-900 mb-2">Link Invalid or Expired</h1>
         <p className="text-gray-500 text-sm mb-8 leading-relaxed">
-          {tokenError || 'This password reset link is no longer valid. Please request a new one.'}
+          {(validateTokenQuery.error as any)?.response?.data?.error || 'This password reset link is no longer valid. Please request a new one.'}
         </p>
 
         <Button
@@ -228,7 +218,7 @@ function ResetPasswordContent() {
         <Button
           id="reset-password-submit"
           type="submit"
-          isLoading={loading}
+          isLoading={resetPasswordMutation.isPending}
           loadingText="Resetting Password..."
         >
           Reset Password

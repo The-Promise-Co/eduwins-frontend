@@ -2,7 +2,7 @@
 
 import { useState, useEffect, ReactElement } from 'react';
 import { useRouter } from 'next/navigation';
-import api from '@/services/api';
+import { useApiMutation, useApiQuery } from '@/hooks/useApi';
 import { useUser } from '@/context/UserContext';
 import { User } from '@/types';
 import {
@@ -42,16 +42,24 @@ const MOCK_CONTRIBUTIONS: Contribution[] = [
 export default function WelfareFundPage(): ReactElement {
   const router = useRouter();
   const { user } = useUser();
-  const [welfareFund, setWelfareFund] = useState<WelfareFund | null>(null);
-  const [loading, setLoading] = useState(true);
   const [withdrawAmount, setWithdrawAmount] = useState('');
   const [showWithdrawForm, setShowWithdrawForm] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error' | ''; text: string }>({
     type: '',
     text: '',
   });
-  const [submitting, setSubmitting] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
+  const welfareQuery = useApiQuery<WelfareFund>(
+    ['welfare-fund', user?.id],
+    user?.role === 'teacher' && user?.id ? `/payments/welfare-fund/${user.id}` : null,
+    { retry: false }
+  );
+  const withdrawMutation = useApiMutation<unknown, { amount: number }>({
+    method: 'post',
+    url: () => `/payments/welfare-fund/${user!.id}/withdraw`,
+    data: (data) => data,
+    invalidate: [['welfare-fund', user?.id]],
+  });
 
   useEffect(() => {
     if (!user) return;
@@ -60,29 +68,6 @@ export default function WelfareFundPage(): ReactElement {
       router.replace('/app/dashboard');
       return;
     }
-
-    const fetchWelfareFund = async () => {
-      try {
-        const response = await api.get(`/payments/welfare-fund/${user.id}`);
-        setWelfareFund(response.data);
-      } catch (err: any) {
-        if (err.response?.status === 404) {
-          setWelfareFund({
-            teacherId: user.id,
-            total_accumulated: 0,
-            available_balance: 0,
-            locked_balance: 0,
-            contributions: [],
-          });
-        } else {
-          console.error('Error fetching welfare fund:', err);
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchWelfareFund();
   }, [user, router]);
 
   const handleWithdraw = async (e: React.FormEvent) => {
@@ -101,30 +86,35 @@ export default function WelfareFundPage(): ReactElement {
       return;
     }
 
-    setSubmitting(true);
     try {
-      await api.post(`/payments/welfare-fund/${user!.id}/withdraw`, { amount });
+      await withdrawMutation.mutateAsync({ amount });
       setMessage({
         type: 'success',
         text: `Withdrawal request of ₦${amount.toLocaleString()} submitted successfully!`,
       });
       setWithdrawAmount('');
       setShowWithdrawForm(false);
-
-      const updated = await api.get(`/payments/welfare-fund/${user!.id}`);
-      setWelfareFund(updated.data);
     } catch (err: any) {
       setMessage({
         type: 'error',
         text: err.response?.data?.error || 'Withdrawal failed',
       });
-    } finally {
-      setSubmitting(false);
     }
   };
 
+  const emptyWelfareFund: WelfareFund | null = user?.id ? {
+    teacherId: user.id,
+    total_accumulated: 0,
+    available_balance: 0,
+    locked_balance: 0,
+    contributions: [],
+  } : null;
+  const welfareFund = welfareQuery.error && (welfareQuery.error as any).response?.status === 404
+    ? emptyWelfareFund
+    : welfareQuery.data || null;
   const contributions =
     welfareFund?.contributions?.length ? welfareFund.contributions : MOCK_CONTRIBUTIONS;
+  const loading = welfareQuery.isLoading || welfareQuery.isPending;
 
   if (loading) {
     return (
@@ -299,10 +289,10 @@ export default function WelfareFundPage(): ReactElement {
 
             <button
               type="submit"
-              disabled={submitting}
+              disabled={withdrawMutation.isPending}
               className="w-full bg-[#001A72] text-white py-3 rounded-xl text-sm font-bold hover:bg-[#001A72]/90 transition disabled:opacity-60"
             >
-              {submitting ? 'Submitting…' : 'Submit Withdrawal Request'}
+              {withdrawMutation.isPending ? 'Submitting…' : 'Submit Withdrawal Request'}
             </button>
           </form>
         )}

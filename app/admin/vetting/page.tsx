@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, ReactElement } from 'react';
-import api from '@/services/api';
+import { useState, ReactElement } from 'react';
+import { useApiMutation, useApiQuery } from '@/hooks/useApi';
 import NavBar from '../../../components/NavBar';
 import { TeacherProfile } from '@/types';
 import { 
@@ -37,44 +37,46 @@ interface AdminBooking {
 
 export default function AdminVettingDashboard(): ReactElement {
   const [activeTab, setActiveTab] = useState<string>('vetting');
-  const [teachers, setTeachers] = useState<TeacherProfile[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [bookings, setBookings] = useState<AdminBooking[]>([]);
-  const [stats, setStats] = useState<AdminStats>({
+  const fallbackStats: AdminStats = {
     totalTeachers: 0,
     totalParents: 0,
     totalEarnings: 0,
     welfarePooled: 0
-  });
-
-  useEffect(() => {
-    fetchData();
-  }, [activeTab]);
-
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      if (activeTab === 'vetting') {
-        const response = await api.get('/admin/teachers-pending');
-        setTeachers(response.data || []);
-      } else if (activeTab === 'escrow') {
-        const response = await api.get('/admin/bookings-pending');
-        setBookings(response.data || []);
-      } else if (activeTab === 'stats') {
-        const response = await api.get('/admin/stats');
-        setStats(response.data || { totalTeachers: 0, totalParents: 0, totalEarnings: 0, welfarePooled: 0 });
-      }
-    } catch (err: any) {
-      console.error('Failed to fetch data:', err);
-    } finally {
-      setLoading(false);
-    }
   };
+  const teachersQuery = useApiQuery<TeacherProfile[]>(
+    ['admin', 'teachers-pending'],
+    '/admin/teachers-pending',
+    { enabled: activeTab === 'vetting' }
+  );
+  const bookingsQuery = useApiQuery<AdminBooking[]>(
+    ['admin', 'bookings-pending'],
+    '/admin/bookings-pending',
+    { enabled: activeTab === 'escrow' }
+  );
+  const statsQuery = useApiQuery<AdminStats>(
+    ['admin', 'stats'],
+    '/admin/stats',
+    { enabled: activeTab === 'stats' }
+  );
+  const approveTeacherMutation = useApiMutation<unknown, string>({
+    method: 'put',
+    url: (teacherId) => `/admin/teachers/${teacherId}/approve`,
+    invalidate: [['admin', 'teachers-pending']],
+  });
+  const rejectTeacherMutation = useApiMutation<unknown, string>({
+    method: 'put',
+    url: (teacherId) => `/admin/teachers/${teacherId}/reject`,
+    invalidate: [['admin', 'teachers-pending']],
+  });
+  const releaseFundsMutation = useApiMutation<unknown, string>({
+    method: 'put',
+    url: (bookingId) => `/admin/bookings/${bookingId}/release-funds`,
+    invalidate: [['admin', 'bookings-pending'], ['admin', 'stats']],
+  });
 
   const handleApproveTeacher = async (teacherId: string) => {
     try {
-      await api.put(`/admin/teachers/${teacherId}/approve`);
-      fetchData();
+      await approveTeacherMutation.mutateAsync(teacherId);
     } catch (err: any) {
       alert('Failed to approve teacher');
     }
@@ -82,8 +84,7 @@ export default function AdminVettingDashboard(): ReactElement {
 
   const handleRejectTeacher = async (teacherId: string) => {
     try {
-      await api.put(`/admin/teachers/${teacherId}/reject`);
-      fetchData();
+      await rejectTeacherMutation.mutateAsync(teacherId);
     } catch (err: any) {
       alert('Failed to reject teacher');
     }
@@ -91,13 +92,20 @@ export default function AdminVettingDashboard(): ReactElement {
 
   const handleReleaseFunds = async (bookingId: string) => {
     try {
-      await api.put(`/admin/bookings/${bookingId}/release-funds`);
+      await releaseFundsMutation.mutateAsync(bookingId);
       alert('Funds released successfully!');
-      fetchData();
     } catch (err: any) {
       alert('Failed to release funds');
     }
   };
+
+  const teachers = teachersQuery.data || [];
+  const bookings = bookingsQuery.data || [];
+  const stats = statsQuery.data || fallbackStats;
+  const loading =
+    (activeTab === 'vetting' && teachersQuery.isLoading) ||
+    (activeTab === 'escrow' && bookingsQuery.isLoading) ||
+    (activeTab === 'stats' && statsQuery.isLoading);
 
   return (
     <div className="min-h-screen bg-gray-50">

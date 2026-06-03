@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import api from '@/services/api';
+import { useApiMutation, useApiQuery } from '@/hooks/useApi';
 import { useUser } from '@/context/UserContext';
 import {
   ArrowLeft,
@@ -67,64 +67,46 @@ export default function CourseDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const { user } = useUser();
-  const [course, setCourse] = useState<Course | null>(null);
-  const [modules, setModules] = useState<any[]>([]);
-  const [analytics, setAnalytics] = useState<AnalyticSnapshot[]>([]);
-  const [students, setStudents] = useState<StudentEnrolled[]>([]);
-  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<TabId>('overview');
   const [expandedModules, setExpandedModules] = useState<Record<number, boolean>>({ 0: true });
-  const [enrolling, setEnrolling] = useState(false);
   const [enrollSuccess, setEnrollSuccess] = useState(false);
   const [enrollError, setEnrollError] = useState<string | null>(null);
 
   const isTeacher = user?.role === 'teacher';
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [courseRes, analyticsRes, studentsRes] = await Promise.all([
-          api.get(`/courses/${id}`),
-          api.get(`/courses/${id}/analytics`).catch(() => ({ data: [] })),
-          isTeacher ? api.get(`/courses/${id}/students`).catch(() => ({ data: [] })) : Promise.resolve({ data: [] }),
-        ]);
-        
-        const courseData = courseRes.data;
-        setCourse(courseData);
-        setModules(courseData.modules || []);
-        setAnalytics(analyticsRes.data || []);
-        setStudents(studentsRes.data || []);
-      } catch (err) {
-        console.error('Error fetching course details:', err);
-        setCourse(null);
-        setModules([]);
-        setAnalytics([]);
-        setStudents([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, [id, isTeacher]);
+  const courseQuery = useApiQuery<Course>(['courses', id], id ? `/courses/${id}` : null, { retry: false });
+  const analyticsQuery = useApiQuery<AnalyticSnapshot[]>(['courses', id, 'analytics'], id ? `/courses/${id}/analytics` : null, { retry: false });
+  const studentsQuery = useApiQuery<StudentEnrolled[]>(['courses', id, 'students'], isTeacher && id ? `/courses/${id}/students` : null, { retry: false });
+  const enrollMutation = useApiMutation<unknown, void>({
+    method: 'post',
+    url: `/courses/${id}/enroll`,
+    invalidate: [['courses', id]],
+  });
+  const updateStatusMutation = useApiMutation<unknown, string>({
+    method: 'put',
+    url: `/courses/${id}`,
+    data: (status) => ({ status }),
+    invalidate: [['courses', id], ['courses']],
+  });
+  const deleteCourseMutation = useApiMutation<unknown, void>({
+    method: 'delete',
+    url: `/courses/${id}`,
+    invalidate: [['courses']],
+  });
 
   const handleEnroll = async () => {
-    setEnrolling(true);
     setEnrollError(null);
     try {
-      await api.post(`/courses/${id}/enroll`);
+      await enrollMutation.mutateAsync();
       setEnrollSuccess(true);
     } catch (err: any) {
       console.error(err);
       setEnrollError(err.response?.data?.error || 'Failed to enroll in this course. Please try again.');
-    } finally {
-      setEnrolling(false);
     }
   };
 
   const handleStatusChange = async (newStatus: string) => {
     try {
-      await api.put(`/courses/${id}`, { status: newStatus });
-      setCourse((p) => p ? { ...p, status: newStatus as any } : p);
+      await updateStatusMutation.mutateAsync(newStatus);
     } catch (err: any) {
       console.error('Failed to change course status:', err);
       alert(err.response?.data?.error || 'Failed to update course status.');
@@ -134,13 +116,19 @@ export default function CourseDetailPage() {
   const handleDelete = async () => {
     if (!confirm('Are you sure you want to delete this course? This action cannot be undone.')) return;
     try {
-      await api.delete(`/courses/${id}`);
+      await deleteCourseMutation.mutateAsync();
       router.push('/app/courses');
     } catch (err: any) {
       console.error('Failed to delete course:', err);
       alert(err.response?.data?.error || 'Failed to delete course.');
     }
   };
+
+  const course = courseQuery.data || null;
+  const modules = course?.modules || [];
+  const analytics = analyticsQuery.isError ? [] : analyticsQuery.data || [];
+  const students = studentsQuery.isError ? [] : studentsQuery.data || [];
+  const loading = courseQuery.isLoading || courseQuery.isPending;
 
   if (loading) {
     return (
@@ -294,10 +282,10 @@ export default function CourseDetailPage() {
                 <div className="space-y-2">
                   <button
                     onClick={handleEnroll}
-                    disabled={enrolling}
+                    disabled={enrollMutation.isPending}
                     className="w-full bg-[#FFB81C] text-[#001A72] py-3 rounded-xl font-black text-sm hover:bg-[#FFB81C]/90 transition disabled:opacity-60"
                   >
-                    {enrolling ? 'Processing…' : course.is_free ? 'Enroll for Free' : 'Enroll Now'}
+                    {enrollMutation.isPending ? 'Processing…' : course.is_free ? 'Enroll for Free' : 'Enroll Now'}
                   </button>
                   {enrollError && (
                     <p className="text-[10px] text-red-300 text-center font-medium mt-1">

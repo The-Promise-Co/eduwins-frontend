@@ -2,37 +2,45 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import api from '../services/api';
+import { useApiQuery } from '@/hooks/useApi';
 
 export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [hasStoredAuth, setHasStoredAuth] = useState(false);
+  const meQuery = useApiQuery<any>(
+    ['auth', 'me', 'protected-route'],
+    hasStoredAuth ? '/auth/me' : null,
+    { enabled: hasStoredAuth, retry: false }
+  );
 
   useEffect(() => {
-    const checkAuth = async () => {
-      const token = localStorage.getItem('token');
-      const userJson = localStorage.getItem('user');
+    const token = localStorage.getItem('token');
+    const userJson = localStorage.getItem('user');
 
-      if (!token || !userJson) {
-        router.replace('/login');
-        return;
-      }
+    if (!token || !userJson) {
+      router.replace('/login');
+      return;
+    }
 
-      try {
-        // Validate token with backend and update user profile
-        const meRes = await api.get('/auth/me');
-        localStorage.setItem('user', JSON.stringify(meRes.data));
-        setIsAuthenticated(true);
-      } catch (err) {
-        console.error('Authentication check failed:', err);
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        router.replace('/login');
-      }
-    };
-
-    checkAuth();
+    setHasStoredAuth(true);
   }, [router]);
+
+  useEffect(() => {
+    if (meQuery.data) {
+      localStorage.setItem('user', JSON.stringify(meQuery.data));
+      setIsAuthenticated(true);
+    }
+  }, [meQuery.data]);
+
+  useEffect(() => {
+    if (meQuery.isError) {
+      console.error('Authentication check failed:', meQuery.error);
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      router.replace('/login');
+    }
+  }, [meQuery.error, meQuery.isError, router]);
 
   if (!isAuthenticated) {
     return (

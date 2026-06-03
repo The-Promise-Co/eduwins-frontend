@@ -3,7 +3,7 @@
 import { useState, useEffect, ChangeEvent, FormEvent, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import api from '@/services/api';
+import { useApiMutation } from '@/hooks/useApi';
 import { useUser } from '@/context/UserContext';
 import { User, Mail, Phone, Lock, Eye, EyeOff, CheckCircle2, Hash, Users, BookOpen } from 'lucide-react';
 import AuthLayout from '@/components/AuthLayout';
@@ -23,11 +23,15 @@ function RegisterContent() {
     confirmPassword: '',
     role: 'parent',
   });
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const registerMutation = useApiMutation<any, any>({
+    method: 'post',
+    url: '/auth/register',
+    data: (data) => data,
+  });
 
   useEffect(() => {
     const code = searchParams.get('ref') || searchParams.get('referral');
@@ -60,8 +64,7 @@ function RegisterContent() {
     }
 
     try {
-      setLoading(true);
-      const response = await api.post('/auth/register', {
+      const data = await registerMutation.mutateAsync({
         firstName: formData.firstName,
         lastName: formData.lastName,
         email: formData.email,
@@ -71,12 +74,12 @@ function RegisterContent() {
         referralCode: referralCode || undefined,
       });
 
-      if (response.data?.token) {
-        login(response.data.user, response.data.token);
+      if (data?.token) {
+        login(data.user, data.token);
         setSuccess('Account created! Redirecting to your dashboard…');
         setTimeout(() => router.push('/app/dashboard'), 1200);
-      } else if (response.data?.verificationToken) {
-        sessionStorage.setItem('verificationToken', response.data.verificationToken);
+      } else if (data?.verificationToken) {
+        sessionStorage.setItem('verificationToken', data.verificationToken);
         setSuccess('Registration successful! Redirecting to verification...');
         setTimeout(() => router.push('/verify-otp'), 1000);
       } else {
@@ -86,8 +89,6 @@ function RegisterContent() {
     } catch (err: any) {
       const serverError = err.response?.data?.error || err.response?.data?.message || err.message;
       setError(`${serverError}`);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -287,7 +288,7 @@ function RegisterContent() {
         {/* Submit */}
         <Button
           type="submit"
-          isLoading={loading}
+          isLoading={registerMutation.isPending}
           loadingText="Creating Account..."
           className="mt-4"
         >

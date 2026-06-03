@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, Suspense } from 'react';
+import { useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import {
   Search,
@@ -16,7 +16,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import Link from 'next/link';
-import api from '../../../services/api';
+import { useApiQuery } from '@/hooks/useApi';
 import { TeacherProfile } from '@/types';
 
 /* ─── colour helpers for avatar gradients ─── */
@@ -147,40 +147,30 @@ function SearchContent() {
     lga: '',
     maxRate: '',
   });
-  const [teachers, setTeachers] = useState<(Partial<TeacherProfile> & { [k: string]: any })[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [submittedFilters, setSubmittedFilters] = useState(filters);
   const [showFilters, setShowFilters] = useState(false);
-
-  const fetchTeachers = useCallback(async () => {
-    try {
-      setLoading(true);
-      const params = new URLSearchParams(
-        Object.fromEntries(Object.entries(filters).filter(([_, v]) => v))
-      ).toString();
-      const res = await api.get(`/teachers/search?${params}`);
-      setTeachers(res.data || []);
-    } catch {
-      /* demo fallback */
-      setTeachers([
-        { id: '1', full_name: 'Mr. Okonkwo', baseHourlyRate: 500, subject: 'Mathematics', location: 'Lagos Island', rating: 4.8, students: 45 },
-        { id: '2', full_name: 'Mrs. Adeyemi', baseHourlyRate: 400, subject: 'English Language', location: 'Lekki', rating: 4.9, students: 32 },
-        { id: '3', full_name: 'Dr. Chukwu', baseHourlyRate: 800, subject: 'Physics & Chemistry', location: 'Victoria Island', rating: 4.7, students: 28 },
-        { id: '4', full_name: 'Miss Inyene', baseHourlyRate: 550, subject: 'Biology & Health', location: 'Ikeja', rating: 4.8, students: 38 },
-        { id: '5', full_name: 'Mr. Afolabi', baseHourlyRate: 450, subject: 'History & Civics', location: 'Ikoyi', rating: 4.9, students: 52 },
-        { id: '6', full_name: 'Dr. Nwosu', baseHourlyRate: 700, subject: 'Chemistry', location: 'Surulere', rating: 4.6, students: 22 },
-      ]);
-    } finally {
-      setLoading(false);
-    }
-  }, [filters]);
-
-  useEffect(() => {
-    fetchTeachers();
-  }, []); // run once on mount; user explicitly searches via button
+  const params = new URLSearchParams(
+    Object.fromEntries(Object.entries(submittedFilters).filter(([_, v]) => v))
+  ).toString();
+  const teachersQuery = useApiQuery<(Partial<TeacherProfile> & { [k: string]: any })[]>(
+    ['teachers', 'search', submittedFilters],
+    `/teachers/search?${params}`,
+    { retry: false }
+  );
+  const fallbackTeachers = [
+    { id: '1', full_name: 'Mr. Okonkwo', baseHourlyRate: 500, subject: 'Mathematics', location: 'Lagos Island', rating: 4.8, students: 45 },
+    { id: '2', full_name: 'Mrs. Adeyemi', baseHourlyRate: 400, subject: 'English Language', location: 'Lekki', rating: 4.9, students: 32 },
+    { id: '3', full_name: 'Dr. Chukwu', baseHourlyRate: 800, subject: 'Physics & Chemistry', location: 'Victoria Island', rating: 4.7, students: 28 },
+    { id: '4', full_name: 'Miss Inyene', baseHourlyRate: 550, subject: 'Biology & Health', location: 'Ikeja', rating: 4.8, students: 38 },
+    { id: '5', full_name: 'Mr. Afolabi', baseHourlyRate: 450, subject: 'History & Civics', location: 'Ikoyi', rating: 4.9, students: 52 },
+    { id: '6', full_name: 'Dr. Nwosu', baseHourlyRate: 700, subject: 'Chemistry', location: 'Surulere', rating: 4.6, students: 22 },
+  ];
+  const teachers = teachersQuery.isError ? fallbackTeachers : teachersQuery.data || [];
+  const loading = teachersQuery.isLoading || teachersQuery.isFetching;
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    fetchTeachers();
+    setSubmittedFilters(filters);
   };
 
   const clearFilter = (key: 'subject' | 'lga' | 'maxRate') =>

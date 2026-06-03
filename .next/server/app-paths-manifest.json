@@ -1,6 +1,4 @@
 {
-  "/app/profile/page": "app/app/profile/page.js",
-  "/app/profile/settings/page": "app/app/profile/settings/page.js",
-  "/app/profile/settings/notifications/page": "app/app/profile/settings/notifications/page.js",
-  "/app/profile/settings/security/page": "app/app/profile/settings/security/page.js"
+  "/app/children/[id]/page": "app/app/children/[id]/page.js",
+  "/app/children/page": "app/app/children/page.js"
 }

@@ -12,6 +12,7 @@ export interface User {
   location?: string;
   avatarUrl?: string;
   name?: string;
+  twoFactorEnabled?: boolean;
 }
 
 export interface TeacherProfile extends User {

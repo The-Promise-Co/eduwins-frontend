@@ -4,7 +4,7 @@ import Link from 'next/link';
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   isLoading?: boolean;
   loadingText?: string;
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost';
+  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
   fullWidth?: boolean;
   href?: string;
 }
@@ -27,6 +27,7 @@ const Button: React.FC<ButtonProps> = ({
     secondary: "bg-gray-100 hover:bg-gray-200 text-gray-900 focus:ring-gray-400",
     outline: "bg-transparent border border-gray-200 hover:bg-gray-50 text-gray-700 focus:ring-gray-300",
     ghost: "bg-transparent hover:bg-gray-50 text-gray-600 focus:ring-gray-200 shadow-none mt-0",
+    danger: "bg-red-600 hover:bg-red-700 text-white focus:ring-red-500",
   };
 
   const widthStyle = fullWidth ? "w-full" : "px-6";

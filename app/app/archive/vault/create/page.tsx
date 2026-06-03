@@ -2,7 +2,7 @@
 
 import { useState, useEffect, ReactElement, ChangeEvent, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import api from '@/services/api';
+import { useApiMutation } from '@/hooks/useApi';
 import DashboardNavigation from '@/components/DashboardNavigation';
 import { User } from '@/types';
 
@@ -28,7 +28,6 @@ export default function CreateVaultItemPage(): ReactElement {
     file_url: '',
     preview_url: ''
   });
-  const [loading, setLoading] = useState<boolean>(false);
   const [appLoading, setAppLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>('');
   const [success, setSuccess] = useState<string>('');
@@ -40,6 +39,12 @@ export default function CreateVaultItemPage(): ReactElement {
     }
     setAppLoading(false);
   }, []);
+  const createVaultMutation = useApiMutation<unknown, VaultFormData>({
+    method: 'post',
+    url: '/vault',
+    data: (data) => data,
+    invalidate: [['vault']],
+  });
 
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -65,8 +70,7 @@ export default function CreateVaultItemPage(): ReactElement {
     }
 
     try {
-      setLoading(true);
-      await api.post('/vault', formData);
+      await createVaultMutation.mutateAsync(formData);
 
       setSuccess('Content successfully added to the Elite Digital Vault! Redirecting...');
       setTimeout(() => {
@@ -74,10 +78,10 @@ export default function CreateVaultItemPage(): ReactElement {
       }, 2000);
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to publish content');
-    } finally {
-      setLoading(false);
     }
   };
+
+  const loading = createVaultMutation.isPending;
 
   if (appLoading) {
     return (

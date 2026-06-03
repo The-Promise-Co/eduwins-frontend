@@ -1,5 +1,5 @@
 import { useState, ChangeEvent, ReactElement } from 'react';
-import api from '../services/api';
+import { useApiMutation } from '@/hooks/useApi';
 
 interface PhotoUploadModalProps {
   isOpen: boolean;
@@ -10,8 +10,13 @@ interface PhotoUploadModalProps {
 export default function PhotoUploadModal({ isOpen, onClose, onSuccess }: PhotoUploadModalProps): ReactElement | null {
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | ArrayBuffer | null>(null);
-  const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
+  const uploadPhotoMutation = useApiMutation<{ photoUrl: string }, FormData>({
+    method: 'post',
+    url: '/teachers/upload-photo',
+    data: (data) => data,
+    config: { headers: { 'Content-Type': 'multipart/form-data' } },
+  });
 
   const handleFileSelect = (e: ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -46,25 +51,20 @@ export default function PhotoUploadModal({ isOpen, onClose, onSuccess }: PhotoUp
       return;
     }
 
-    setLoading(true);
     setError('');
 
     const formData = new FormData();
     formData.append('photo', file);
 
     try {
-      const response = await api.post('/teachers/upload-photo', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
+      const response = await uploadPhotoMutation.mutateAsync(formData);
 
       setFile(null);
       setPreview(null);
-      onSuccess(response.data.photoUrl);
+      onSuccess(response.photoUrl);
       onClose();
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to upload photo. Please try again.');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -119,10 +119,10 @@ export default function PhotoUploadModal({ isOpen, onClose, onSuccess }: PhotoUp
           </button>
           <button
             onClick={handleUpload}
-            disabled={!file || loading}
+            disabled={!file || uploadPhotoMutation.isPending}
             className="flex-1 bg-[#001A72] text-white py-2 rounded-lg font-semibold hover:bg-[#001A72]/90 disabled:opacity-50 transition"
           >
-            {loading ? 'Uploading...' : 'Upload'}
+            {uploadPhotoMutation.isPending ? 'Uploading...' : 'Upload'}
           </button>
         </div>
       </div>

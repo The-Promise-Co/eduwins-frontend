@@ -2,7 +2,7 @@
 
 import { useState, useEffect, ReactElement } from 'react';
 import { useRouter } from 'next/navigation';
-import api from '@/services/api';
+import { useApiMutation, useApiQuery } from '@/hooks/useApi';
 import DashboardNavigation from '@/components/DashboardNavigation';
 import { User } from '@/types';
 
@@ -31,13 +31,21 @@ interface Message {
 export default function PremiumSubscriptionPage(): ReactElement {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [subscription, setSubscription] = useState<SubscriptionStatus | null>(null);
   const [subscribing, setSubscribing] = useState<string | null>(null);
   const [message, setMessage] = useState<Message>({ type: '', text: '' });
+  const subscriptionQuery = useApiQuery<SubscriptionStatus>(
+    ['premium', 'subscription-status', 'archive'],
+    user ? '/premium/subscription/status' : null
+  );
+  const subscribeMutation = useApiMutation<unknown, { plan: string }>({
+    method: 'post',
+    url: '/premium/subscribe',
+    data: (data) => data,
+    invalidate: [['premium', 'subscription-status', 'archive']],
+  });
 
   useEffect(() => {
-    const init = async () => {
+    const init = () => {
       if (typeof window !== 'undefined') {
         const token = localStorage.getItem('token');
         const userJson = localStorage.getItem('user');
@@ -47,22 +55,12 @@ export default function PremiumSubscriptionPage(): ReactElement {
           return;
         }
 
-        try {
-          const userData = JSON.parse(userJson);
-          if (userData.role !== 'teacher') {
-            router.push('/dashboard');
-            return;
-          }
-          setUser(userData);
-
-          // Get subscription status
-          const response = await api.get('/premium/subscription/status');
-          setSubscription(response.data);
-        } catch (err) {
-          console.error('Error:', err);
-        } finally {
-          setLoading(false);
+        const userData = JSON.parse(userJson);
+        if (userData.role !== 'teacher') {
+          router.push('/dashboard');
+          return;
         }
+        setUser(userData);
       }
     };
 
@@ -74,7 +72,7 @@ export default function PremiumSubscriptionPage(): ReactElement {
     setMessage({ type: '', text: '' });
 
     try {
-      await api.post('/premium/subscribe', { plan });
+      await subscribeMutation.mutateAsync({ plan });
 
       setMessage({
         type: 'success',
@@ -87,11 +85,6 @@ export default function PremiumSubscriptionPage(): ReactElement {
         localStorage.setItem('user', JSON.stringify(updatedUser));
         setUser(updatedUser);
       }
-
-      // Refresh subscription status
-      const statusResponse = await api.get('/premium/subscription/status');
-      setSubscription(statusResponse.data);
-
       setTimeout(() => {
         router.push('/premium-content');
       }, 2000);
@@ -103,7 +96,7 @@ export default function PremiumSubscriptionPage(): ReactElement {
     }
   };
 
-  if (loading) {
+  if (!user || subscriptionQuery.isLoading || subscriptionQuery.isPending) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
@@ -166,9 +159,9 @@ export default function PremiumSubscriptionPage(): ReactElement {
     },
   ];
 
-  const isSubscribed = subscription?.subscriptionActive;
-  const currentPlan = subscription?.currentPlan;
-  const daysRemaining = subscription?.daysRemaining;
+  const isSubscribed = subscriptionQuery.data?.subscriptionActive;
+  const currentPlan = subscriptionQuery.data?.currentPlan;
+  const daysRemaining = subscriptionQuery.data?.daysRemaining;
 
   return (
     <div className="min-h-screen bg-gray-50">

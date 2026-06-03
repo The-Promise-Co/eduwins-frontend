@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import api from '@/services/api';
 import { useUser } from '@/context/UserContext';
 import { User, Booking } from '@/types';
+import { useChildren } from '@/hooks/useChildren';
+import { usePendingLessons, useConfirmLesson } from '@/hooks/useLessons';
 import {
   Search,
   Calendar,
@@ -108,40 +109,25 @@ const FEATURE_CARDS: FeatureCard[] = [
 ];
 
 export default function DashboardPage() {
-  const { user, loading } = useUser();
-  const [children, setChildren] = useState<User[]>([]);
-  const [pendingLessons, setPendingLessons] = useState<Booking[]>([]);
+  const { user, loading: userLoading } = useUser();
+
+  const { data: children = [], isLoading: childrenLoading } = useChildren(user?.role);
+  const { data: pendingLessons = [], isLoading: lessonsLoading } = usePendingLessons(user?.role);
+  const confirmLessonMutation = useConfirmLesson();
+
   const [otpInput, setOtpInput] = useState<Record<string, string>>({});
   const [confirmMessage, setConfirmMessage] = useState('');
   const [confirmError, setConfirmError] = useState('');
   const [profileBannerVisible, setProfileBannerVisible] = useState(false);
 
   useEffect(() => {
-    if (!loading && user?.role === 'parent') {
-      const fetchParentData = async () => {
-        try {
-          const [childrenRes, pendingRes] = await Promise.all([
-            api.get('/lessons/parent/children'),
-            api.get('/lessons/parent/pending'),
-          ]);
-          setChildren(childrenRes.data.children || []);
-          setPendingLessons(pendingRes.data.lessons || []);
-        } catch (err) {
-          console.error('Unable to load parent dashboard data:', err);
-        }
-      };
-      fetchParentData();
-    }
-  }, [loading, user]);
-
-  useEffect(() => {
-    if (!loading && user?.id) {
+    if (!userLoading && user?.id) {
       const dismissed = localStorage.getItem(`profileSetupDismissed_${user.id}`);
       if (!dismissed) {
         setProfileBannerVisible(true);
       }
     }
-  }, [loading, user]);
+  }, [userLoading, user]);
 
   const handleApproveLesson = async (lessonId: any) => {
     setConfirmMessage('');
@@ -151,14 +137,19 @@ export default function DashboardPage() {
       setConfirmError('OTP is required to confirm this lesson.');
       return;
     }
-    try {
-      await api.post(`/lessons/${lessonId}/confirm`, { otp });
-      setConfirmMessage('Lesson confirmed successfully!');
-      setPendingLessons(prev => prev.filter(item => (item.id as any) !== lessonId && item.lesson_id !== lessonId));
-      setOtpInput(prev => ({ ...prev, [lessonId]: '' }));
-    } catch (err: any) {
-      setConfirmError(err.response?.data?.error || 'Unable to confirm lesson.');
-    }
+    
+    confirmLessonMutation.mutate(
+      { lessonId, otp },
+      {
+        onSuccess: () => {
+          setConfirmMessage('Lesson confirmed successfully!');
+          setOtpInput((prev) => ({ ...prev, [lessonId]: '' }));
+        },
+        onError: (err: any) => {
+          setConfirmError(err.response?.data?.error || 'Unable to confirm lesson.');
+        },
+      }
+    );
   };
 
   const handleDismissProfileBanner = () => {
@@ -167,6 +158,8 @@ export default function DashboardPage() {
     }
     setProfileBannerVisible(false);
   };
+
+  const loading = userLoading || (user?.role === 'parent' && (childrenLoading || lessonsLoading));
 
   if (loading) {
     return (
@@ -199,7 +192,7 @@ export default function DashboardPage() {
           </div>
           <div className="flex items-center gap-3 shrink-0">
             <Link
-              href="/app/settings"
+              href="/app/profile"
               className="text-xs font-semibold bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-xl transition whitespace-nowrap"
             >
               Set up profile
@@ -251,7 +244,9 @@ export default function DashboardPage() {
             <StatCard label="Referral Code" value={user?.referralCode || 'N/A'} icon={Users} bg="bg-[#001A72]/5" color="text-[#001A72]" />
             <StatCard label="Referred Users" value={String(user?.referralCount || 0)} icon={Users} bg="bg-[#FFB81C]/10" color="text-[#001A72]" />
             <StatCard label="Referral Income" value={`₦${((user?.referralCount || 0) * 1000).toLocaleString()}`} icon={Wallet} bg="bg-emerald-50" color="text-emerald-600" />
-            <StatCard label="Children Linked" value={String(children.length)} icon={Users} bg="bg-purple-50" color="text-purple-600" />
+            <Link href="/app/children" className="block hover:-translate-y-0.5 transition-transform">
+              <StatCard label="Children Linked" value={String(children.length)} icon={Users} bg="bg-purple-50" color="text-purple-600" />
+            </Link>
           </>
         )}
       </div>

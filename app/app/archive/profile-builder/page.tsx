@@ -2,7 +2,7 @@
 
 import { useState, useEffect, ReactElement, ChangeEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import api from '@/services/api';
+import { useApiMutation, useApiQuery } from '@/hooks/useApi';
 import DashboardNavigation from '@/components/DashboardNavigation';
 import { User } from '@/types';
 
@@ -26,13 +26,21 @@ interface Message {
 export default function ProfileBuilderPage(): ReactElement {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [completion, setCompletion] = useState<ProfileCompletion | null>(null);
   const [uploading, setUploading] = useState<Record<string, boolean>>({});
   const [message, setMessage] = useState<Message>({ type: '', text: '' });
+  const completionQuery = useApiQuery<ProfileCompletion>(
+    ['uploads', 'profile-completion', 'archive'],
+    user ? '/uploads/profile-completion' : null
+  );
+  const uploadMutation = useApiMutation<{ message?: string; user?: Partial<User> }, { endpoint: string; data: FormData }>({
+    method: 'post',
+    url: ({ endpoint }) => endpoint,
+    data: ({ data }) => data,
+    invalidate: [['uploads', 'profile-completion', 'archive']],
+  });
 
   useEffect(() => {
-    const init = async () => {
+    const init = () => {
       if (typeof window !== 'undefined') {
         const token = localStorage.getItem('token');
         const userJson = localStorage.getItem('user');
@@ -42,22 +50,12 @@ export default function ProfileBuilderPage(): ReactElement {
           return;
         }
 
-        try {
-          const userData = JSON.parse(userJson);
-          if (userData.role !== 'teacher') {
-            router.push('/dashboard');
-            return;
-          }
-          setUser(userData);
-
-          // Get profile completion status
-          const response = await api.get('/uploads/profile-completion');
-          setCompletion(response.data);
-        } catch (err) {
-          console.error('Error:', err);
-        } finally {
-          setLoading(false);
+        const userData = JSON.parse(userJson);
+        if (userData.role !== 'teacher') {
+          router.push('/dashboard');
+          return;
         }
+        setUser(userData);
       }
     };
 
@@ -75,33 +73,30 @@ export default function ProfileBuilderPage(): ReactElement {
       const formData = new FormData();
       formData.append(uploadType, file);
 
-      let response;
+      let endpoint;
       switch (uploadType) {
         case 'headshot':
-          response = await api.post('/uploads/headshot', formData);
+          endpoint = '/uploads/headshot';
           break;
         case 'videoIntro':
-          response = await api.post('/uploads/video-intro', formData);
+          endpoint = '/uploads/video-intro';
           break;
         case 'credentials':
-          response = await api.post('/uploads/credentials', formData);
+          endpoint = '/uploads/credentials';
           break;
         default:
           return;
       }
+      const response = await uploadMutation.mutateAsync({ endpoint, data: formData });
 
       setMessage({
         type: 'success',
-        text: response.data.message,
+        text: response.message || 'Upload successful',
       });
-
-      // Refresh completion status
-      const completionResponse = await api.get('/uploads/profile-completion');
-      setCompletion(completionResponse.data);
 
       // Refresh user data in localStorage
       if (user) {
-        const updatedUser = { ...user, ...response.data.user };
+        const updatedUser = { ...user, ...response.user };
         localStorage.setItem('user', JSON.stringify(updatedUser));
         setUser(updatedUser);
       }
@@ -112,6 +107,9 @@ export default function ProfileBuilderPage(): ReactElement {
       setUploading({ ...uploading, [uploadType]: false });
     }
   };
+
+  const completion = completionQuery.data || null;
+  const loading = !user || completionQuery.isLoading || completionQuery.isPending;
 
   if (loading) {
     return (

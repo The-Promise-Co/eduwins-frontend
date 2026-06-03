@@ -3,20 +3,31 @@
 import { useState, FormEvent, Suspense, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import api from '../../services/api';
+import { useApiMutation } from '@/hooks/useApi';
 import { useUser } from '../../context/UserContext';
 import AuthSlider from '../../components/AuthSlider';
 import Button from '../../components/Button';
 
 function VerifyOtpContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { login } = useUser();
   const [otp, setOtp] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [resending, setResending] = useState(false);
+  
+  const is2FA = searchParams.get('mode') === '2fa' || (typeof window !== 'undefined' && sessionStorage.getItem('is2FA') === 'true');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [countdown, setCountdown] = useState(60);
+  const resendOtpMutation = useApiMutation<unknown, { token: string }>({
+    method: 'post',
+    url: '/auth/resend-otp',
+    data: ({ token }) => ({ token }),
+  });
+  const verifyOtpMutation = useApiMutation<any, { token: string; otp: string; is2FA: boolean }>({
+    method: 'post',
+    url: ({ is2FA }) => (is2FA ? '/auth/verify-2fa' : '/auth/verify-email'),
+    data: ({ token, otp }) => ({ token, otp }),
+  });
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -40,14 +51,11 @@ function VerifyOtpContent() {
     }
 
     try {
-      setResending(true);
-      await api.post('/auth/resend-otp', { token: tokenFromStorage });
+      await resendOtpMutation.mutateAsync({ token: tokenFromStorage });
       setSuccess('A new OTP has been sent to your email.');
       setCountdown(60);
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to resend OTP. Please try again.');
-    } finally {
-      setResending(false);
     }
   };
 
@@ -62,27 +70,27 @@ function VerifyOtpContent() {
     }
 
     try {
-      setLoading(true);
       const tokenFromStorage = sessionStorage.getItem('verificationToken');
 
       if (!tokenFromStorage) {
-        setError('Verification session expired or invalid. Please try registering again.');
-        setLoading(false);
+        setError(is2FA ? 'Login session expired. Please try signing in again.' : 'Verification session expired or invalid. Please try registering again.');
         return;
       }
 
-      const response = await api.post('/auth/verify-email', {
+      const response = await verifyOtpMutation.mutateAsync({
         token: tokenFromStorage,
         otp: otp,
+        is2FA,
       });
 
-      const token = response.data.token;
-      const user = response.data.user;
+      const token = response.token;
+      const user = response.user;
 
       login(user, token);
 
       // Clean up session storage
       sessionStorage.removeItem('verificationToken');
+      sessionStorage.removeItem('is2FA');
 
       setSuccess('OTP verified! Redirecting to dashboard...');
       setTimeout(() => {
@@ -91,8 +99,6 @@ function VerifyOtpContent() {
     } catch (err: any) {
       const serverError = err.response?.data?.error || err.response?.data?.message || 'OTP verification failed. Please try again.';
       setError(serverError);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -109,9 +115,11 @@ function VerifyOtpContent() {
 
         {/* Main Content Center */}
         <div className="flex flex-col flex-grow items-center justify-center w-full max-w-[400px] mx-auto pb-12">
-          <h1 className="text-3xl font-extrabold text-gray-900 mb-2">Verify OTP</h1>
+          <h1 className="text-3xl font-extrabold text-gray-900 mb-2">
+            {is2FA ? 'Two-Factor Verification' : 'Verify OTP'}
+          </h1>
           <p className="text-gray-500 text-sm mb-8">
-            Please enter the OTP sent to your email
+            {is2FA ? 'Please enter the 2FA verification code sent to your email' : 'Please enter the OTP sent to your email'}
           </p>
 
           {error && (
@@ -140,7 +148,7 @@ function VerifyOtpContent() {
 
             <Button
               type="submit"
-              isLoading={loading}
+              isLoading={verifyOtpMutation.isPending}
               loadingText="Verifying..."
             >
               Verify OTP
@@ -150,19 +158,19 @@ function VerifyOtpContent() {
               type="button"
               variant="ghost"
               onClick={handleResendOtp}
-              isLoading={resending}
+              isLoading={resendOtpMutation.isPending}
               loadingText="Resending..."
-              disabled={loading || countdown > 0}
+              disabled={verifyOtpMutation.isPending || countdown > 0}
               className="text-primary font-medium py-2 text-sm hover:underline shadow-none"
             >
               {countdown > 0 ? `Resend OTP in ${countdown}s` : 'Resend OTP'}
             </Button>
 
             <Link
-              href="/register"
+              href={is2FA ? '/login' : '/register'}
               className="block w-full text-center text-gray-500 font-medium py-3 text-sm hover:text-gray-800 transition"
             >
-              ← Back to Registration
+              {is2FA ? '← Back to Sign In' : '← Back to Registration'}
             </Link>
           </form>
         </div>

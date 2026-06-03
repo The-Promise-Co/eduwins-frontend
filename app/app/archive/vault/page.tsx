@@ -2,67 +2,60 @@
 
 import { useState, useEffect, ChangeEvent, FormEvent } from 'react';
 import Link from 'next/link';
-import api from '@/services/api';
+import { useApiMutation, useApiQuery } from '@/hooks/useApi';
 import { User, VaultItem } from '@/types';
 
 export default function DigitalVaultPage() {
-  const [items, setItems] = useState<VaultItem[]>([]);
-  const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
     subject: '',
     minPrice: '',
     maxPrice: ''
   });
+  const [submittedFilters, setSubmittedFilters] = useState(filters);
   const [user, setUser] = useState<User | null>(null);
+  const params = new URLSearchParams();
+  if (submittedFilters.subject) params.append('subject', submittedFilters.subject);
+  if (submittedFilters.minPrice) params.append('min_price', submittedFilters.minPrice);
+  if (submittedFilters.maxPrice) params.append('max_price', submittedFilters.maxPrice);
+  const vaultQuery = useApiQuery<VaultItem[]>(['vault', submittedFilters], `/vault?${params}`, { retry: false });
+  const purchaseMutation = useApiMutation<unknown, string | number>({
+    method: 'post',
+    url: (itemId) => `/vault/${itemId}/purchase`,
+    invalidate: [['vault']],
+  });
 
   useEffect(() => {
     const userData = localStorage.getItem('user');
     if (userData) {
       setUser(JSON.parse(userData));
     }
-    fetchItems();
   }, []);
-
-  const fetchItems = async () => {
-    try {
-      const params = new URLSearchParams();
-      if (filters.subject) params.append('subject', filters.subject);
-      if (filters.minPrice) params.append('min_price', filters.minPrice);
-      if (filters.maxPrice) params.append('max_price', filters.maxPrice);
-
-      const response = await api.get(`/vault?${params}`);
-      setItems(response.data);
-    } catch (err) {
-      console.error('Failed to fetch vault items:', err);
-      // Mock data for demo if API fails
-      setItems([
-        {
-          id: 1,
-          title: 'Complete Mathematics Lesson Notes (Grade 7-9)',
-          description: 'Detailed lesson notes covering algebra, geometry, and statistics for junior secondary students.',
-          content_type: 'PDF',
-          teacher_name: 'Mr. Okonkwo',
-          price: 2500,
-          subject: 'Mathematics',
-          rating_avg: 4.8,
-          total_sessions: 124
-        },
-        {
-          id: 2,
-          title: 'Physics Practical Video Guide',
-          description: 'A step-by-step video guide for WAEC/NECO physics practicals including light and electricity experiments.',
-          content_type: 'Video',
-          teacher_name: 'Dr. Chukwu',
-          price: 3500,
-          subject: 'Physics',
-          rating_avg: 4.9,
-          total_sessions: 89
-        }
-      ]);
-    } finally {
-      setLoading(false);
+  const fallbackItems = [
+    {
+      id: 1,
+      title: 'Complete Mathematics Lesson Notes (Grade 7-9)',
+      description: 'Detailed lesson notes covering algebra, geometry, and statistics for junior secondary students.',
+      content_type: 'PDF',
+      teacher_name: 'Mr. Okonkwo',
+      price: 2500,
+      subject: 'Mathematics',
+      rating_avg: 4.8,
+      total_sessions: 124
+    },
+    {
+      id: 2,
+      title: 'Physics Practical Video Guide',
+      description: 'A step-by-step video guide for WAEC/NECO physics practicals including light and electricity experiments.',
+      content_type: 'Video',
+      teacher_name: 'Dr. Chukwu',
+      price: 3500,
+      subject: 'Physics',
+      rating_avg: 4.9,
+      total_sessions: 89
     }
-  };
+  ];
+  const items = vaultQuery.isError ? fallbackItems : vaultQuery.data || [];
+  const loading = vaultQuery.isLoading || vaultQuery.isPending;
 
   const handleFilterChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -71,15 +64,13 @@ export default function DigitalVaultPage() {
 
   const handleFilterSubmit = (e: FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    fetchItems();
+    setSubmittedFilters(filters);
   };
 
   const handlePurchase = async (itemId: string | number) => {
     try {
-      await api.post(`/vault/${itemId}/purchase`);
+      await purchaseMutation.mutateAsync(itemId);
       alert('Purchase successful! Check your purchases for download link.');
-      fetchItems();
     } catch (err: any) {
       alert(err.response?.data?.error || 'Purchase failed');
     }

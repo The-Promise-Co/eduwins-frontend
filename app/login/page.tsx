@@ -3,7 +3,7 @@
 import { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import api from '@/services/api';
+import { useApiMutation } from '@/hooks/useApi';
 import { useUser } from '@/context/UserContext';
 import { Mail, CheckCircle2, Lock, Eye, EyeOff } from 'lucide-react';
 import AuthLayout from '@/components/AuthLayout';
@@ -13,7 +13,6 @@ function LoginContent() {
   const searchParams = useSearchParams();
   const { login } = useUser();
   const [formData, setFormData] = useState({ email: '', password: '' });
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(
     searchParams.get('reset') === '1'
@@ -21,6 +20,11 @@ function LoginContent() {
       : ''
   );
   const [showPassword, setShowPassword] = useState(false);
+  const loginMutation = useApiMutation<any, typeof formData>({
+    method: 'post',
+    url: '/auth/login',
+    data: (data) => data,
+  });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -38,13 +42,20 @@ function LoginContent() {
     }
 
     try {
-      setLoading(true);
-      const response = await api.post('/auth/login', {
+      const data = await loginMutation.mutateAsync({
         email: formData.email,
         password: formData.password,
       });
 
-      login(response.data.user, response.data.token);
+      if (data.requires2FA) {
+        sessionStorage.setItem('verificationToken', data.verificationToken);
+        sessionStorage.setItem('is2FA', 'true');
+        setSuccess('Two-factor verification required. Redirecting to verification...');
+        setTimeout(() => router.push('/verify-otp?mode=2fa'), 1000);
+        return;
+      }
+
+      login(data.user, data.token);
       router.push('/app/dashboard');
     } catch (err: any) {
       console.log(err);
@@ -55,8 +66,6 @@ function LoginContent() {
       } else {
         setError(err.response?.data?.error || 'Login failed. Please try again.');
       }
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -145,10 +154,10 @@ function LoginContent() {
         {/* Submit */}
         <button
           type="submit"
-          disabled={loading}
+          disabled={loginMutation.isPending}
           className="w-full bg-primary hover:bg-primary/90 text-white font-semibold py-3.5 rounded-xl transition disabled:opacity-70 flex items-center justify-center gap-2 mt-2 shadow-sm"
         >
-          {loading ? (
+          {loginMutation.isPending ? (
             <>
               <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />

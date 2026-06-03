@@ -4,7 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useUser } from '@/context/UserContext';
-import { User, Shield, Bell, Globe } from 'lucide-react';
+import { User, Shield, Bell } from 'lucide-react';
 
 export default function ProfileLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -12,9 +12,9 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
 
   const tabs = [
     { label: 'Profile Details', href: '/app/profile', icon: User },
-    { label: 'Notifications', href: '/app/profile/settings/notifications', icon: Bell },
-    { label: 'Language & Region', href: '/app/profile/settings/security', icon: Globe },
-    { label: 'Security & Account', href: '/app/profile/settings', icon: Shield },
+    { label: 'Notifications', href: '/app/profile/notifications', icon: Bell },
+    { label: 'Security & Account', href: '/app/profile/security', icon: Shield },
+    // { label: 'Security & Account', href: '/app/profile/settings', icon: Shield },
   ];
 
   return (
@@ -34,11 +34,10 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
                 <Link
                   key={tab.href}
                   href={tab.href}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-200 select-none ${
-                    isActive
-                      ? 'bg-[#001A72] text-white shadow-md shadow-[#001A72]/10 translate-x-1'
-                      : 'text-gray-500 hover:text-[#001A72] hover:bg-gray-50'
-                  }`}
+                  className={`flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-200 select-none ${isActive
+                    ? 'bg-[#001A72] text-white shadow-md shadow-[#001A72]/10 translate-x-1'
+                    : 'text-gray-500 hover:text-[#001A72] hover:bg-gray-50'
+                    }`}
                 >
                   <Icon size={16} className={isActive ? 'text-[#FFB81C]' : 'text-gray-400'} />
                   {tab.label}
@@ -57,11 +56,10 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
               <Link
                 key={tab.href}
                 href={tab.href}
-                className={`flex items-center gap-2 px-5 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-300 shrink-0 select-none ${
-                  isActive
-                    ? 'bg-[#001A72] text-white shadow-md shadow-[#001A72]/10 scale-[1.02]'
-                    : 'text-gray-400 hover:text-[#001A72] hover:bg-gray-50'
-                }`}
+                className={`flex items-center gap-2 px-5 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-300 shrink-0 select-none ${isActive
+                  ? 'bg-[#001A72] text-white shadow-md shadow-[#001A72]/10 scale-[1.02]'
+                  : 'text-gray-400 hover:text-[#001A72] hover:bg-gray-50'
+                  }`}
               >
                 <Icon size={14} className={isActive ? 'text-[#FFB81C]' : 'text-gray-400'} />
                 {tab.label}

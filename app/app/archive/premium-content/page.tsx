@@ -2,7 +2,7 @@
 
 import { useState, useEffect, ReactElement, ChangeEvent, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import api from '@/services/api';
+import { useApiMutation, useApiQuery } from '@/hooks/useApi';
 import DashboardNavigation from '@/components/DashboardNavigation';
 import { User } from '@/types';
 import {
@@ -47,12 +47,22 @@ interface Message {
 export default function PremiumContentPage(): ReactElement {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [isPremium, setIsPremium] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<'videos' | 'materials'>('videos');
-  const [contentList, setContentList] = useState<PremiumContent[]>([]);
   const [message, setMessage] = useState<Message>({ type: '', text: '' });
-  const [uploading, setUploading] = useState<boolean>(false);
+  const statusQuery = useApiQuery<{ subscriptionActive: boolean }>(
+    ['premium', 'subscription-status', 'content-archive'],
+    user ? '/premium/subscription/status' : null
+  );
+  const contentQuery = useApiQuery<{ content?: PremiumContent[] }>(
+    ['premium', 'teacher-content'],
+    statusQuery.data?.subscriptionActive ? '/premium/teacher-content' : null
+  );
+  const uploadContentMutation = useApiMutation<unknown, { endpoint: string; data: FormData }>({
+    method: 'post',
+    url: ({ endpoint }) => endpoint,
+    data: ({ data }) => data,
+    invalidate: [['premium', 'teacher-content']],
+  });
 
   // Form states
   const [videoForm, setVideoForm] = useState<ContentForm>({
@@ -72,7 +82,7 @@ export default function PremiumContentPage(): ReactElement {
   });
 
   useEffect(() => {
-    const init = async () => {
+    const init = () => {
       if (typeof window !== 'undefined') {
         const token = localStorage.getItem('token');
         const userJson = localStorage.getItem('user');
@@ -82,46 +92,28 @@ export default function PremiumContentPage(): ReactElement {
           return;
         }
 
-        try {
-          const userData = JSON.parse(userJson);
-          if (userData.role !== 'teacher') {
-            router.push('/dashboard');
-            return;
-          }
-
-          setUser(userData);
-
-          // Check if premium
-          const statusResponse = await api.get('/premium/subscription/status');
-          if (statusResponse.data.subscriptionActive) {
-            setIsPremium(true);
-            loadContent();
-          } else {
-            setMessage({
-              type: 'warning',
-              text: 'You need an active Premium subscription to use this feature. Redirecting to plans...',
-            });
-            setTimeout(() => router.push('/premium-subscription'), 2500);
-          }
-        } catch (err) {
-          console.error('Error:', err);
-        } finally {
-          setLoading(false);
+        const userData = JSON.parse(userJson);
+        if (userData.role !== 'teacher') {
+          router.push('/dashboard');
+          return;
         }
+
+        setUser(userData);
       }
     };
 
     init();
   }, [router]);
 
-  const loadContent = async () => {
-    try {
-      const response = await api.get('/premium/teacher-content');
-      setContentList(response.data.content || []);
-    } catch (err) {
-      console.error('Error loading content:', err);
+  useEffect(() => {
+    if (statusQuery.data && !statusQuery.data.subscriptionActive) {
+      setMessage({
+        type: 'warning',
+        text: 'You need an active Premium subscription to use this feature. Redirecting to plans...',
+      });
+      setTimeout(() => router.push('/premium-subscription'), 2500);
     }
-  };
+  }, [router, statusQuery.data]);
 
   const handleVideoUpload = async (e: FormEvent) => {
     e.preventDefault();
@@ -142,7 +134,6 @@ export default function PremiumContentPage(): ReactElement {
       return;
     }
 
-    setUploading(true);
     const formData = new FormData();
     formData.append('subject', videoForm.subject);
     formData.append('title', videoForm.title);
@@ -151,15 +142,12 @@ export default function PremiumContentPage(): ReactElement {
     formData.append('videoFile', videoForm.file);
 
     try {
-      await api.post('/premium/subject-video', formData);
+      await uploadContentMutation.mutateAsync({ endpoint: '/premium/subject-video', data: formData });
       setMessage({ type: 'success', text: 'Subject video uploaded successfully!' });
       setVideoForm({ subject: '', title: '', description: '', price: '', file: null });
-      loadContent();
     } catch (err: any) {
       const errorMsg = err.response?.data?.error || 'Upload failed';
       setMessage({ type: 'error', text: errorMsg });
-    } finally {
-      setUploading(false);
     }
   };
 
@@ -183,7 +171,6 @@ export default function PremiumContentPage(): ReactElement {
       return;
     }
 
-    setUploading(true);
     const formData = new FormData();
     formData.append('subject', materialForm.subject);
     formData.append('title', materialForm.title);
@@ -192,17 +179,19 @@ export default function PremiumContentPage(): ReactElement {
     formData.append('materialFile', materialForm.file);
 
     try {
-      await api.post('/premium/teaching-material', formData);
+      await uploadContentMutation.mutateAsync({ endpoint: '/premium/teaching-material', data: formData });
       setMessage({ type: 'success', text: 'Teaching material uploaded successfully!' });
       setMaterialForm({ subject: '', title: '', description: '', price: '', file: null });
-      loadContent();
     } catch (err: any) {
       const errorMsg = err.response?.data?.error || 'Upload failed';
       setMessage({ type: 'error', text: errorMsg });
-    } finally {
-      setUploading(false);
     }
   };
+
+  const loading = !user || statusQuery.isLoading || statusQuery.isPending || (statusQuery.data?.subscriptionActive && (contentQuery.isLoading || contentQuery.isPending));
+  const isPremium = !!statusQuery.data?.subscriptionActive;
+  const contentList = contentQuery.data?.content || [];
+  const uploading = uploadContentMutation.isPending;
 
   if (loading) {
     return (
