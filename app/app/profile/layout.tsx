@@ -15,7 +15,9 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
     { label: 'Notifications', href: '/app/profile/notifications', icon: Bell },
     { label: 'Security & Account', href: '/app/profile/security', icon: Shield },
     // { label: 'Security & Account', href: '/app/profile/settings', icon: Shield },
+    //this is a test
   ];
+
 
   return (
     <div className="flex flex-col md:flex-row gap-6 max-w-6xl mx-auto pb-12">
