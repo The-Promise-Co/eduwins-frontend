@@ -225,7 +225,7 @@ export default function PremiumSubscriptionPage(): ReactElement {
                 ) : (
                   <button
                     onClick={() => subscribeToPlan(plan.name)}
-                    disabled={!!subscribing}
+                    disabled
                     className={`w-full py-3 rounded-xl text-sm font-bold mb-6 transition flex items-center justify-center gap-2 disabled:opacity-60 ${plan.popular
                       ? 'bg-[#FFB81C] text-[#001A72] hover:bg-[#FFB81C]/90'
                       : 'bg-[#001A72] text-white hover:bg-[#001A72]/90'

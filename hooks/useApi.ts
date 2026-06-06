@@ -63,8 +63,8 @@ export function useApiMutation<TData = unknown, TVariables = void>(
       return response.data;
     },
     ...options,
-    onSuccess: async (data, variables, context) => {
-      await options?.onSuccess?.(data, variables, context);
+    onSuccess: async (data, variables, context, mutation) => {
+      await options?.onSuccess?.(data, variables, context, mutation);
 
       if (mutationConfig.invalidate) {
         await Promise.all(
