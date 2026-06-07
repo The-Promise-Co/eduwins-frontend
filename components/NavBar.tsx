@@ -148,6 +148,10 @@ export default function NavBar() {
                 Find a Tutor
               </Link>
 
+              <Link href="/courses" className="px-3 py-2 rounded-lg text-sm font-semibold text-gray-700 hover:text-[#001A72] hover:bg-[#001A72]/5 transition">
+                Courses
+              </Link>
+
               {/* Contact dropdown */}
               <div className="relative group">
                 <button className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold text-gray-700 hover:text-[#001A72] hover:bg-[#001A72]/5 transition">
@@ -244,6 +248,7 @@ export default function NavBar() {
             <div className="max-w-7xl mx-auto px-4 py-4 space-y-1">
               <Link href="/" onClick={() => setMobileOpen(false)} className="block px-3 py-2.5 rounded-xl text-sm font-semibold text-gray-700 hover:bg-[#001A72]/5 hover:text-[#001A72]">Home</Link>
               <Link href="/search" onClick={() => setMobileOpen(false)} className="block px-3 py-2.5 rounded-xl text-sm font-semibold text-gray-700 hover:bg-[#001A72]/5 hover:text-[#001A72]">Find a Tutor</Link>
+              <Link href="/courses" onClick={() => setMobileOpen(false)} className="block px-3 py-2.5 rounded-xl text-sm font-semibold text-gray-700 hover:bg-[#001A72]/5 hover:text-[#001A72]">Courses</Link>
 
               {/* Mobile subjects */}
               <div className="px-3 pt-3 pb-2">

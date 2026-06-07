@@ -171,12 +171,12 @@ export default function CourseCard({ course, isTeacher }: CourseCardProps) {
         </div>
       </div>
 
-      {/* CTA Row (Student Only) */}
+      {/* CTA Row (Non-Teacher) */}
       {!isTeacher && (
         <div className="px-5 pb-4">
           <Link href={`/app/courses/${course.id}`} className="flex items-center justify-between text-[#001A72]">
             <span className="text-xs font-bold group-hover:underline">
-              Enroll now
+              View course
             </span>
             <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" />
           </Link>

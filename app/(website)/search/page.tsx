@@ -152,20 +152,20 @@ function SearchContent() {
   const params = new URLSearchParams(
     Object.fromEntries(Object.entries(submittedFilters).filter(([_, v]) => v))
   ).toString();
-  const teachersQuery = useApiQuery<(Partial<TeacherProfile> & { [k: string]: any })[]>(
+  const teachersQuery = useApiQuery<{ data?: (Partial<TeacherProfile> & { [k: string]: any })[]; meta?: any }>(
     ['teachers', 'search', submittedFilters],
     `/teachers/search?${params}`,
     { retry: false }
   );
   const fallbackTeachers = [
-    { id: '1', full_name: 'Mr. Okonkwo', baseHourlyRate: 500, subject: 'Mathematics', location: 'Lagos Island', rating: 4.8, students: 45 },
-    { id: '2', full_name: 'Mrs. Adeyemi', baseHourlyRate: 400, subject: 'English Language', location: 'Lekki', rating: 4.9, students: 32 },
-    { id: '3', full_name: 'Dr. Chukwu', baseHourlyRate: 800, subject: 'Physics & Chemistry', location: 'Victoria Island', rating: 4.7, students: 28 },
-    { id: '4', full_name: 'Miss Inyene', baseHourlyRate: 550, subject: 'Biology & Health', location: 'Ikeja', rating: 4.8, students: 38 },
-    { id: '5', full_name: 'Mr. Afolabi', baseHourlyRate: 450, subject: 'History & Civics', location: 'Ikoyi', rating: 4.9, students: 52 },
-    { id: '6', full_name: 'Dr. Nwosu', baseHourlyRate: 700, subject: 'Chemistry', location: 'Surulere', rating: 4.6, students: 22 },
+    { id: '1', full_name: 'Mr. Okonkwo', baseHourlyRate: 500, subjects: ['Mathematics'], location: 'Lagos Island', rating: 4.8, students: 45 },
+    { id: '2', full_name: 'Mrs. Adeyemi', baseHourlyRate: 400, subjects: ['English Language'], location: 'Lekki', rating: 4.9, students: 32 },
+    { id: '3', full_name: 'Dr. Chukwu', baseHourlyRate: 800, subjects: ['Physics', 'Chemistry'], location: 'Victoria Island', rating: 4.7, students: 28 },
+    { id: '4', full_name: 'Miss Inyene', baseHourlyRate: 550, subjects: ['Biology', 'Health'], location: 'Ikeja', rating: 4.8, students: 38 },
+    { id: '5', full_name: 'Mr. Afolabi', baseHourlyRate: 450, subjects: ['History', 'Civics'], location: 'Ikoyi', rating: 4.9, students: 52 },
+    { id: '6', full_name: 'Dr. Nwosu', baseHourlyRate: 700, subjects: ['Chemistry'], location: 'Surulere', rating: 4.6, students: 22 },
   ];
-  const teachers = teachersQuery.isError ? fallbackTeachers : teachersQuery.data || [];
+  const teachers = teachersQuery.isError ? fallbackTeachers : teachersQuery.data?.data || [];
   const loading = teachersQuery.isLoading || teachersQuery.isFetching;
 
   const handleSearch = (e: React.FormEvent) => {

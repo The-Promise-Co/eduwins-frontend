@@ -51,12 +51,17 @@ export default function CoursesPage() {
   );
 
   const isTeacher = user?.role === 'teacher';
-  const baseUrl = isTeacher && user?.id ? `/courses/teacher/${user.id}` : '/courses';
+  const isParent = user?.role === 'parent';
+  const baseUrl = isTeacher && user?.id
+    ? `/courses/teacher/${user.id}`
+    : isParent && user?.id
+      ? `/courses/enrolled`
+      : '/courses';
   const defaultMeta = { total: 0, page: 1, limit: 12, totalPages: 1 };
   const coursesQuery = useApiQuery<{ data?: Course[]; meta?: typeof defaultMeta }>(
-    ['courses', isTeacher ? 'teacher' : 'all', user?.id, page],
+    ['courses', isTeacher ? 'teacher' : isParent ? 'enrolled' : 'all', user?.id, page],
     `${baseUrl}?page=${page}&limit=12`,
-    { enabled: !isTeacher || !!user?.id }
+    { enabled: isTeacher ? !!user?.id : isParent ? !!user?.id : true }
   );
   const courses = coursesQuery.data?.data || [];
   const meta = coursesQuery.data?.meta || defaultMeta;
@@ -91,7 +96,7 @@ export default function CoursesPage() {
     <div className="space-y-6 max-w-7xl mx-auto">
       <PageHeader
         title="Courses"
-        subtitle={isTeacher ? 'Manage and track your created courses' : 'Explore available courses'}
+        subtitle={isTeacher ? 'Manage and track your created courses' : isParent ? 'Courses you have purchased' : 'Explore available courses'}
         rightElement={
           isTeacher && (
             <Link
@@ -244,8 +249,12 @@ export default function CoursesPage() {
       {filtered.length === 0 ? (
         <div className="text-center py-20 bg-white rounded-2xl border-2 border-dashed border-gray-200">
           <div className="text-5xl mb-4">📚</div>
-          <p className="text-gray-500 font-semibold">No courses found</p>
-          <p className="text-gray-400 text-sm mt-1">Try adjusting your search or filters</p>
+          <p className="text-gray-500 font-semibold">{courses.length === 0 && isParent ? 'No purchased courses yet' : 'No courses found'}</p>
+          <p className="text-gray-400 text-sm mt-1">
+            {courses.length === 0 && isParent
+              ? 'Courses you purchase will appear here'
+              : 'Try adjusting your search or filters'}
+          </p>
           {isTeacher && (
             <Link
               href="/app/courses/create"

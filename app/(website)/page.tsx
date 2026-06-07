@@ -111,6 +111,16 @@ export default function HomePage(): ReactElement {
               </Link>
             </div>
 
+            {/* Course button row */}
+            <div className="mt-3">
+              <Link
+                href="/courses"
+                className="inline-flex items-center gap-2 bg-white/10 border border-white/20 text-white font-semibold px-5 py-2.5 rounded-2xl hover:bg-white/20 transition text-sm"
+              >
+                <BookOpen size={15} /> Browse Courses
+              </Link>
+            </div>
+
             {/* trust chips */}
             <div className="flex flex-wrap items-center justify-center gap-4 mt-8 text-sm text-white/60">
               <span className="flex items-center gap-1.5"><CheckCircle2 size={14} className="text-[#FFB81C]" /> 250+ Verified Tutors</span>
