@@ -24,6 +24,7 @@ import StatCard from '@/misc/components/StatCard';
 import CourseCard from '@/misc/components/CourseCard';
 import { useSubjects } from './misc/api';
 import { Course, LEVELS } from '@/misc/types/course';
+import type { PaginatedResponse } from '@/misc/types/courses';
 
 const MOCK_COURSES: Course[] = [];
 
@@ -59,7 +60,7 @@ export default function CoursesPage() {
       ? `/courses/enrolled`
       : '/courses';
   const defaultMeta = { total: 0, page: 1, limit: 12, totalPages: 1 };
-  const coursesQuery = useQuery({
+  const coursesQuery = useQuery<PaginatedResponse<Course>>({
     queryKey: ['courses', isTeacher ? 'teacher' : isParent ? 'enrolled' : 'all', user?.id, page],
     queryFn: async () => {
       const response = await api.get(`${baseUrl}?page=${page}&limit=12`);

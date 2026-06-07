@@ -2,7 +2,7 @@
 
 import { useState, ReactElement } from 'react';
 import { useTeachersPending, useBookingsPending, useAdminStats, useApproveTeacher, useRejectTeacher, useReleaseBookingFunds } from '@/misc/hooks/api/admin';
-import NavBar from '../@/misc/components/NavBar';
+import NavBar from '@/misc/components/NavBar';
 import { TeacherProfile } from '@/misc/types';
 import {
   ShieldCheck,

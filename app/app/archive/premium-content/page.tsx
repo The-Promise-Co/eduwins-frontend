@@ -59,7 +59,7 @@ export default function PremiumContentPage(): ReactElement {
     },
     enabled: !!user,
   });
-  const contentQuery = useQuery({
+  const contentQuery = useQuery<{ content: PremiumContent[] }>({
     queryKey: ['premium', 'teacher-content'],
     queryFn: async () => {
       const response = await api.get('/premium/teacher-content');
