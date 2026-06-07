@@ -2,17 +2,22 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useApiQuery } from '@/hooks/useApi';
+import { useQuery } from '@tanstack/react-query';
+import api from '@/misc/services/api';
 
 export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [hasStoredAuth, setHasStoredAuth] = useState(false);
-  const meQuery = useApiQuery<any>(
-    ['auth', 'me', 'protected-route'],
-    hasStoredAuth ? '/auth/me' : null,
-    { enabled: hasStoredAuth, retry: false }
-  );
+  const meQuery = useQuery({
+    queryKey: ['auth', 'me', 'protected-route'],
+    queryFn: async () => {
+      const response = await api.get('/auth/me');
+      return response.data;
+    },
+    enabled: hasStoredAuth,
+    retry: false,
+  });
 
   useEffect(() => {
     const token = localStorage.getItem('token');

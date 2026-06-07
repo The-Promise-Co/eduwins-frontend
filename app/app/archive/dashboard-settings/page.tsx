@@ -2,8 +2,8 @@
 
 import { useState, useEffect, ReactElement, ChangeEvent, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import DashboardNavigation from '@/components/DashboardNavigation';
-import { User } from '@/types';
+import DashboardNavigation from '@/misc/components/DashboardNavigation';
+import { User } from '@/misc/types';
 
 interface Settings {
   notifications: boolean;
@@ -133,8 +133,8 @@ export default function SettingsPage(): ReactElement {
 
           {message.text && (
             <div className={`mb-10 p-5 rounded-2xl border-2 animate-in fade-in duration-500 shadow-sm ${message.type === 'success'
-                ? 'bg-green-50 text-green-700 border-green-100'
-                : 'bg-red-50 text-red-700 border-red-100'
+              ? 'bg-green-50 text-green-700 border-green-100'
+              : 'bg-red-50 text-red-700 border-red-100'
               }`}>
               <p className="font-black flex items-center gap-3">
                 {message.type === 'success' ? '✅' : '⚠️'} {message.text}
@@ -272,8 +272,8 @@ export default function SettingsPage(): ReactElement {
                 <button
                   onClick={() => handleSettingChange('twoFactorEnabled')}
                   className={`px-8 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition shadow-lg ${settings.twoFactorEnabled
-                      ? 'bg-green-500 text-white shadow-green-100'
-                      : 'bg-gray-200 text-gray-400 shadow-none'
+                    ? 'bg-green-500 text-white shadow-green-100'
+                    : 'bg-gray-200 text-gray-400 shadow-none'
                     }`}
                 >
                   {settings.twoFactorEnabled ? 'Active' : 'Enable 2FA'}

@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useUser } from '@/context/UserContext';
+import { useUser } from '@/misc/context/UserContext';
 import { User, Shield, Bell } from 'lucide-react';
 
 export default function ProfileLayout({ children }: { children: React.ReactNode }) {

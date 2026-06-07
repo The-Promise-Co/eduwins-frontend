@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useUser } from '@/context/UserContext';
-import { User, Booking } from '@/types';
-import { useChildren } from '@/hooks/useChildren';
-import { usePendingLessons, useConfirmLesson } from '@/hooks/useLessons';
+import { useUser } from '@/misc/context/UserContext';
+import { User, Booking } from '@/misc/types';
+import { useChildren } from '@/misc/hooks/useChildren';
+import { usePendingLessons, useConfirmLesson } from '@/misc/hooks/useLessons';
 import {
   Search,
   Calendar,
@@ -27,8 +27,8 @@ import {
   UserCircle,
   HeartPulse
 } from 'lucide-react';
-import StatCard from '@/components/StatCard';
-import PageHeader from '@/components/PageHeader';
+import StatCard from '@/misc/components/StatCard';
+import PageHeader from '@/misc/components/PageHeader';
 
 interface FeatureCard {
   icon: LucideIcon;
@@ -137,7 +137,7 @@ export default function DashboardPage() {
       setConfirmError('OTP is required to confirm this lesson.');
       return;
     }
-    
+
     confirmLessonMutation.mutate(
       { lessonId, otp },
       {

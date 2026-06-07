@@ -2,10 +2,10 @@
 
 import { useState, useEffect, ReactElement, ChangeEvent, FormEvent } from 'react';
 import { Shield, Trash2, KeyRound, Smartphone, AlertTriangle } from 'lucide-react';
-import PageHeader from '@/components/PageHeader';
-import Button from '@/components/Button';
-import { useApiMutation } from '@/hooks/useApi';
-import { useUser } from '@/context/UserContext';
+import PageHeader from '@/misc/components/PageHeader';
+import Button from '@/misc/components/Button';
+import { useToggle2FA } from '@/misc/hooks/api/auth';
+import { useUser } from '@/misc/context/UserContext';
 import { toast } from 'sonner';
 
 interface GeneralSettings {
@@ -22,10 +22,7 @@ interface PasswordForm {
 
 export default function SecuritySettingsPage(): ReactElement {
   const { user, refreshUser } = useUser();
-  const toggle2FAMutation = useApiMutation<{ message?: string }, void>({
-    method: 'post',
-    url: '/auth/2fa/toggle',
-  });
+  const toggle2FAMutation = useToggle2FA();
 
   const [settings, setSettings] = useState<GeneralSettings>({
     timezone: 'Africa/Lagos',
@@ -125,11 +122,10 @@ export default function SecuritySettingsPage(): ReactElement {
 
       {/* Dynamic Alerts */}
       {message.text && (
-        <div className={`p-4 rounded-xl text-xs font-bold border transition-all duration-300 animate-in fade-in slide-in-from-top-2 ${
-          message.type === 'success'
-            ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
-            : 'bg-red-50 text-red-700 border-red-100'
-        }`}>
+        <div className={`p-4 rounded-xl text-xs font-bold border transition-all duration-300 animate-in fade-in slide-in-from-top-2 ${message.type === 'success'
+          ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
+          : 'bg-red-50 text-red-700 border-red-100'
+          }`}>
           {message.text}
         </div>
       )}
@@ -143,7 +139,7 @@ export default function SecuritySettingsPage(): ReactElement {
               <KeyRound size={14} className="text-[#001A72]" />
               <p className="text-[10px] font-black uppercase tracking-widest text-[#001A72]">Change account password</p>
             </div>
-            
+
             <form onSubmit={handleUpdatePassword} className="space-y-4">
               <div>
                 <label className={LABEL}>Current Password</label>
@@ -201,13 +197,11 @@ export default function SecuritySettingsPage(): ReactElement {
             <button
               onClick={toggle2FA}
               disabled={toggle2FAMutation.isPending}
-              className={`px-5 py-2.5 rounded-xl font-black text-[9px] uppercase tracking-widest transition-all select-none duration-300 shrink-0 ${
-                toggle2FAMutation.isPending ? 'opacity-50 cursor-not-allowed' : ''
-              } ${
-                settings.twoFactorEnabled
+              className={`px-5 py-2.5 rounded-xl font-black text-[9px] uppercase tracking-widest transition-all select-none duration-300 shrink-0 ${toggle2FAMutation.isPending ? 'opacity-50 cursor-not-allowed' : ''
+                } ${settings.twoFactorEnabled
                   ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/10'
                   : 'bg-gray-200 text-gray-500 hover:bg-gray-300'
-              }`}
+                }`}
             >
               {toggle2FAMutation.isPending ? 'Updating...' : settings.twoFactorEnabled ? 'Enabled' : 'Enable 2FA'}
             </button>

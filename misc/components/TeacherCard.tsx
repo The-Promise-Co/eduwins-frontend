@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { Star, Banknote, MapPin, CheckCircle2 } from 'lucide-react';
-import { TeacherProfile } from '@/types';
+import { TeacherProfile } from '@/misc/types';
 
 const GRADIENT_COLORS = [
   'from-blue-600 to-blue-800',

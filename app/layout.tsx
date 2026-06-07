@@ -7,8 +7,8 @@ import '@fontsource/dm-sans/700.css';
 import { Metadata } from 'next';
 import React, { Suspense } from 'react';
 
-import { UserProvider } from '@/context/UserContext';
-import QueryProvider from '@/context/QueryProvider';
+import { UserProvider } from '@/misc/context/UserContext';
+import QueryProvider from '@/misc/context/QueryProvider';
 import { Toaster } from 'sonner';
 
 export const metadata: Metadata = {

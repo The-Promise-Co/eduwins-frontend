@@ -2,7 +2,7 @@
 
 import { UseFormRegister, UseFormSetValue } from 'react-hook-form';
 import { X, Video, FileText, Upload, Loader2 } from 'lucide-react';
-import Editor from '@/components/Editor';
+import Editor from '@/misc/components/Editor';
 
 export type LessonDraft = {
   title: string;

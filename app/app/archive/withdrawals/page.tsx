@@ -1,14 +1,14 @@
 'use client';
 
 import React, { useState, useEffect, ReactElement } from 'react';
-import { 
-  AlertCircle, 
-  CheckCircle, 
-  Clock, 
-  XCircle, 
-  Plus, 
-  Eye, 
-  EyeOff, 
+import {
+  AlertCircle,
+  CheckCircle,
+  Clock,
+  XCircle,
+  Plus,
+  Eye,
+  EyeOff,
   LucideIcon,
   Wallet,
   Building2,
@@ -18,9 +18,9 @@ import {
   Zap,
   ShieldCheck
 } from 'lucide-react';
-import { useApiMutation, useApiQuery } from '@/hooks/useApi';
-import DashboardNavigation from '@/components/DashboardNavigation';
-import { User } from '@/types';
+import { useAvailableBalance, useBanks, useWithdrawalHistory, useInitiateWithdrawal, useCancelWithdrawal } from '@/misc/hooks/api/withdrawals';
+import DashboardNavigation from '@/misc/components/DashboardNavigation';
+import { User } from '@/misc/types';
 
 interface BalanceData {
   availableBalance: number;
@@ -87,23 +87,11 @@ export default function WithdrawalPage(): ReactElement {
   // History state
   const [filterStatus, setFilterStatus] = useState<string>('');
   const historyParams = filterStatus ? `?status=${encodeURIComponent(filterStatus)}` : '';
-  const balanceQuery = useApiQuery<BalanceData>(['withdrawals', 'available-balance'], '/withdrawals/available-balance');
-  const banksQuery = useApiQuery<{ banks?: Bank[] }>(['withdrawals', 'banks'], '/withdrawals/banks/list');
-  const historyQuery = useApiQuery<{ withdrawals?: Withdrawal[]; stats?: HistoryStats }>(
-    ['withdrawals', 'history', filterStatus],
-    activeTab === 'history' ? `/withdrawals/history${historyParams}` : null
-  );
-  const initiateWithdrawalMutation = useApiMutation<{ message?: string }, any>({
-    method: 'post',
-    url: '/withdrawals/initiate',
-    data: (data) => data,
-    invalidate: [['withdrawals', 'available-balance'], ['withdrawals', 'history', filterStatus]],
-  });
-  const cancelWithdrawalMutation = useApiMutation<{ message?: string }, string>({
-    method: 'delete',
-    url: (withdrawalId) => `/withdrawals/${withdrawalId}/cancel`,
-    invalidate: [['withdrawals', 'available-balance'], ['withdrawals', 'history', filterStatus]],
-  });
+  const balanceQuery = useAvailableBalance();
+  const banksQuery = useBanks();
+  const historyQuery = useWithdrawalHistory(filterStatus);
+  const initiateWithdrawalMutation = useInitiateWithdrawal();
+  const cancelWithdrawalMutation = useCancelWithdrawal();
 
   // Fetch available balance on mount
   useEffect(() => {
@@ -272,8 +260,8 @@ export default function WithdrawalPage(): ReactElement {
           <button
             onClick={() => setActiveTab('balance')}
             className={`px-6 py-3 rounded-lg font-bold transition flex-1 ${activeTab === 'balance'
-                ? 'bg-[#001A72] text-white'
-                : 'bg-transparent text-[#001A72] hover:bg-gray-50'
+              ? 'bg-[#001A72] text-white'
+              : 'bg-transparent text-[#001A72] hover:bg-gray-50'
               }`}
           >
             Available Balance
@@ -281,8 +269,8 @@ export default function WithdrawalPage(): ReactElement {
           <button
             onClick={() => setActiveTab('withdraw')}
             className={`px-6 py-3 rounded-lg font-bold transition flex-1 ${activeTab === 'withdraw'
-                ? 'bg-[#001A72] text-white'
-                : 'bg-transparent text-[#001A72] hover:bg-gray-50'
+              ? 'bg-[#001A72] text-white'
+              : 'bg-transparent text-[#001A72] hover:bg-gray-50'
               }`}
           >
             <Plus size={18} className="inline mr-2" />
@@ -291,8 +279,8 @@ export default function WithdrawalPage(): ReactElement {
           <button
             onClick={() => setActiveTab('history')}
             className={`px-6 py-3 rounded-lg font-bold transition flex-1 ${activeTab === 'history'
-                ? 'bg-[#001A72] text-white'
-                : 'bg-transparent text-[#001A72] hover:bg-gray-50'
+              ? 'bg-[#001A72] text-white'
+              : 'bg-transparent text-[#001A72] hover:bg-gray-50'
               }`}
           >
             Withdrawal History

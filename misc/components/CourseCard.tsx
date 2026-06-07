@@ -1,16 +1,16 @@
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import { 
-  Layers, 
-  Clock, 
-  Users, 
-  Star, 
-  ChevronRight, 
+import {
+  Layers,
+  Clock,
+  Users,
+  Star,
+  ChevronRight,
   Pencil,
   Eye,
   MoreVertical
 } from 'lucide-react';
-import { Course } from '@/types/course';
+import { Course } from '@/misc/types/course';
 
 const LEVEL_COLORS: Record<string, string> = {
   beginner: 'bg-green-50 text-green-700 border-green-200',
@@ -55,9 +55,9 @@ export default function CourseCard({ course, isTeacher }: CourseCardProps) {
       <Link href={`/app/courses/${course.id}`} className="block">
         {course.thumbnail_url ? (
           <div className="h-32 w-full relative">
-            <img 
-              src={course.thumbnail_url} 
-              alt={course.title} 
+            <img
+              src={course.thumbnail_url}
+              alt={course.title}
               className="w-full h-full object-cover"
             />
             <div className="absolute inset-0 bg-black/5" />
@@ -70,7 +70,7 @@ export default function CourseCard({ course, isTeacher }: CourseCardProps) {
       {/* Ellipsis Menu (Teacher Only) */}
       {isTeacher && (
         <div className="absolute top-2 right-2 z-10" ref={menuRef}>
-          <button 
+          <button
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
@@ -80,17 +80,17 @@ export default function CourseCard({ course, isTeacher }: CourseCardProps) {
           >
             <MoreVertical size={16} />
           </button>
-          
+
           {showMenu && (
             <div className="absolute right-0 mt-1 w-32 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden py-1 z-20">
-              <Link 
+              <Link
                 href={`/app/courses/${course.id}/edit`}
                 className="flex items-center gap-2 px-3 py-2 text-xs font-bold text-gray-700 hover:bg-gray-50 transition"
                 onClick={() => setShowMenu(false)}
               >
                 <Pencil size={12} /> Edit Course
               </Link>
-              <Link 
+              <Link
                 href={`/app/courses/${course.id}`}
                 className="flex items-center gap-2 px-3 py-2 text-xs font-bold text-gray-700 hover:bg-gray-50 transition"
                 onClick={() => setShowMenu(false)}

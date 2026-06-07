@@ -16,8 +16,8 @@ import {
   Sparkles,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useApiQuery } from '@/hooks/useApi';
-import { TeacherProfile } from '@/types';
+import { useTeacherSearch } from '@/misc/hooks/api/teachers';
+import { TeacherProfile } from '@/misc/types';
 
 /* ─── colour helpers for avatar gradients ─── */
 const GRADIENT_COLORS = [
@@ -152,11 +152,7 @@ function SearchContent() {
   const params = new URLSearchParams(
     Object.fromEntries(Object.entries(submittedFilters).filter(([_, v]) => v))
   ).toString();
-  const teachersQuery = useApiQuery<{ data?: (Partial<TeacherProfile> & { [k: string]: any })[]; meta?: any }>(
-    ['teachers', 'search', submittedFilters],
-    `/teachers/search?${params}`,
-    { retry: false }
-  );
+  const teachersQuery = useTeacherSearch(params);
   const fallbackTeachers = [
     { id: '1', full_name: 'Mr. Okonkwo', baseHourlyRate: 500, subjects: ['Mathematics'], location: 'Lagos Island', rating: 4.8, students: 45 },
     { id: '2', full_name: 'Mrs. Adeyemi', baseHourlyRate: 400, subjects: ['English Language'], location: 'Lekki', rating: 4.9, students: 32 },
@@ -165,7 +161,7 @@ function SearchContent() {
     { id: '5', full_name: 'Mr. Afolabi', baseHourlyRate: 450, subjects: ['History', 'Civics'], location: 'Ikoyi', rating: 4.9, students: 52 },
     { id: '6', full_name: 'Dr. Nwosu', baseHourlyRate: 700, subjects: ['Chemistry'], location: 'Surulere', rating: 4.6, students: 22 },
   ];
-  const teachers = teachersQuery.isError ? fallbackTeachers : teachersQuery.data?.data || [];
+  const teachers = (teachersQuery.isError ? fallbackTeachers : teachersQuery.data?.data || []) as ResultCardProps['teacher'][];
   const loading = teachersQuery.isLoading || teachersQuery.isFetching;
 
   const handleSearch = (e: React.FormEvent) => {

@@ -2,8 +2,10 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useApiMutation, useApiQuery } from '@/hooks/useApi';
-import { Booking } from '@/types';
+import { useBooking } from '@/misc/hooks/api/bookings';
+import { useMutation } from '@tanstack/react-query';
+import api from '@/misc/services/api';
+import { Booking } from '@/misc/types';
 
 function PaymentContent() {
   const router = useRouter();
@@ -12,15 +14,12 @@ function PaymentContent() {
 
   const [error, setError] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('card');
-  const bookingQuery = useApiQuery<Booking>(
-    ['bookings', bookingId],
-    bookingId ? `/bookings/${bookingId}` : null,
-    { retry: false }
-  );
-  const initializePaymentMutation = useApiMutation<{ authorizationUrl: string }, any>({
-    method: 'post',
-    url: '/paystack/initialize',
-    data: (data) => data,
+  const bookingQuery = useBooking(bookingId || undefined);
+  const initializePaymentMutation = useMutation({
+    mutationFn: async (data: any) => {
+      const response = await api.post('/paystack/initialize', data);
+      return response.data;
+    },
   });
 
   useEffect(() => {

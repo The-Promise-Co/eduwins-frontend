@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useApiMutation, useApiQuery } from '@/hooks/useApi';
+import { useAmbassadorMe, useApplyAmbassador } from '@/misc/hooks/api/ambassadors';
 import {
   Wallet,
   BookOpen,
@@ -9,12 +9,8 @@ import {
 
 export default function AmbassadorPage() {
   const [error, setError] = useState('');
-  const ambassadorQuery = useApiQuery<any>(['ambassadors', 'me'], '/api/ambassadors/me', { retry: false });
-  const applyMutation = useApiMutation<unknown, void>({
-    method: 'post',
-    url: '/api/ambassadors/apply',
-    invalidate: [['ambassadors', 'me']],
-  });
+  const ambassadorQuery = useAmbassadorMe();
+  const applyMutation = useApplyAmbassador();
 
   const data = ambassadorQuery.data || null;
   const loading = ambassadorQuery.isLoading || ambassadorQuery.isPending;

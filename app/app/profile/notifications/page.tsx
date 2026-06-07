@@ -2,8 +2,8 @@
 
 import { useState, ReactElement } from 'react';
 import { Bell, Mail, Smartphone, Check, Clock, MessageSquare, Calendar } from 'lucide-react';
-import Button from '@/components/Button';
-import PageHeader from '@/components/PageHeader';
+import Button from '@/misc/components/Button';
+import PageHeader from '@/misc/components/PageHeader';
 
 interface NotificationsSettings {
   notifications: boolean;
@@ -150,14 +150,12 @@ function Toggle({ label, sub, active, onClick, icon }: ToggleProps) {
       <button
         type="button"
         onClick={onClick}
-        className={`w-11 h-6 rounded-full relative transition-colors duration-300 shrink-0 select-none ${
-          active ? 'bg-[#FFB81C]' : 'bg-gray-200 hover:bg-gray-300'
-        }`}
+        className={`w-11 h-6 rounded-full relative transition-colors duration-300 shrink-0 select-none ${active ? 'bg-[#FFB81C]' : 'bg-gray-200 hover:bg-gray-300'
+          }`}
       >
         <div
-          className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform duration-300 ${
-            active ? 'translate-x-5' : 'translate-x-0.5'
-          }`}
+          className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform duration-300 ${active ? 'translate-x-5' : 'translate-x-0.5'
+            }`}
         />
       </button>
     </div>

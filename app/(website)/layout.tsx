@@ -1,7 +1,7 @@
 import React from 'react';
-import NavBar from '../../components/NavBar';
-import Footer from '../../components/Footer';
-import BackToTop from '../../components/BackToTop';
+import NavBar from '@/misc/components/NavBar';
+import Footer from '@/misc/components/Footer';
+import BackToTop from '@/misc/components/BackToTop';
 
 export default function WebsiteLayout({
   children,

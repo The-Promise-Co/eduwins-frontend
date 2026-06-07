@@ -3,8 +3,8 @@
 import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useApiMutation, useApiQuery } from '@/hooks/useApi';
-import { useUser } from '@/context/UserContext';
+import { useCourseDetail, useCourseAnalytics, useCourseStudents, useEnrollCourse, useUpdateCourse, useDeleteCourse } from '@/misc/hooks/api/courses';
+import { useUser } from '@/misc/context/UserContext';
 import {
   ArrowLeft,
   BookOpen,
@@ -29,8 +29,8 @@ import {
   ChevronUp,
   UserCheck,
 } from 'lucide-react';
-import Section from '@/components/Section';
-import { Course } from '@/types/course';
+import Section from '@/misc/components/Section';
+import { Course } from '@/misc/types/course';
 
 interface AnalyticSnapshot {
   week: string;
@@ -73,25 +73,12 @@ export default function CourseDetailPage() {
   const [enrollError, setEnrollError] = useState<string | null>(null);
 
   const isTeacher = user?.role === 'teacher';
-  const courseQuery = useApiQuery<Course>(['courses', id], id ? `/courses/${id}` : null, { retry: false });
-  const analyticsQuery = useApiQuery<AnalyticSnapshot[]>(['courses', id, 'analytics'], id ? `/courses/${id}/analytics` : null, { retry: false });
-  const studentsQuery = useApiQuery<StudentEnrolled[]>(['courses', id, 'students'], isTeacher && id ? `/courses/${id}/students` : null, { retry: false });
-  const enrollMutation = useApiMutation<unknown, void>({
-    method: 'post',
-    url: `/courses/${id}/enroll`,
-    invalidate: [['courses', id]],
-  });
-  const updateStatusMutation = useApiMutation<unknown, string>({
-    method: 'put',
-    url: `/courses/${id}`,
-    data: (status) => ({ status }),
-    invalidate: [['courses', id], ['courses']],
-  });
-  const deleteCourseMutation = useApiMutation<unknown, void>({
-    method: 'delete',
-    url: `/courses/${id}`,
-    invalidate: [['courses']],
-  });
+  const courseQuery = useCourseDetail(id);
+  const analyticsQuery = useCourseAnalytics(id);
+  const studentsQuery = useCourseStudents(isTeacher ? id : undefined);
+  const enrollMutation = useEnrollCourse(id);
+  const updateStatusMutation = useUpdateCourse(id);
+  const deleteCourseMutation = useDeleteCourse(id);
 
   const handleEnroll = async () => {
     setEnrollError(null);
@@ -106,7 +93,7 @@ export default function CourseDetailPage() {
 
   const handleStatusChange = async (newStatus: string) => {
     try {
-      await updateStatusMutation.mutateAsync(newStatus);
+      await updateStatusMutation.mutateAsync({ status: newStatus });
     } catch (err: any) {
       console.error('Failed to change course status:', err);
       alert(err.response?.data?.error || 'Failed to update course status.');

@@ -2,9 +2,9 @@
 
 import { useState, useEffect, ReactElement, ChangeEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import { useApiMutation, useApiQuery } from '@/hooks/useApi';
-import DashboardNavigation from '@/components/DashboardNavigation';
-import { User } from '@/types';
+import { useProfileCompletion, useUploadFile } from '@/misc/hooks/api/uploads';
+import DashboardNavigation from '@/misc/components/DashboardNavigation';
+import { User } from '@/misc/types';
 
 interface ProfileCompletion {
   completionPercentage: number;
@@ -28,16 +28,8 @@ export default function ProfileBuilderPage(): ReactElement {
   const [user, setUser] = useState<User | null>(null);
   const [uploading, setUploading] = useState<Record<string, boolean>>({});
   const [message, setMessage] = useState<Message>({ type: '', text: '' });
-  const completionQuery = useApiQuery<ProfileCompletion>(
-    ['uploads', 'profile-completion', 'archive'],
-    user ? '/uploads/profile-completion' : null
-  );
-  const uploadMutation = useApiMutation<{ message?: string; user?: Partial<User> }, { endpoint: string; data: FormData }>({
-    method: 'post',
-    url: ({ endpoint }) => endpoint,
-    data: ({ data }) => data,
-    invalidate: [['uploads', 'profile-completion', 'archive']],
-  });
+  const completionQuery = useProfileCompletion();
+  const uploadMutation = useUploadFile();
 
   useEffect(() => {
     const init = () => {
@@ -137,8 +129,8 @@ export default function ProfileBuilderPage(): ReactElement {
 
           {message.text && (
             <div className={`mb-8 p-4 rounded-xl border-2 animate-in fade-in duration-500 ${message.type === 'success'
-                ? 'bg-green-50 text-green-700 border-green-100'
-                : 'bg-red-50 text-red-700 border-red-100'
+              ? 'bg-green-50 text-green-700 border-green-100'
+              : 'bg-red-50 text-red-700 border-red-100'
               }`}>
               <p className="font-bold flex items-center gap-2">
                 {message.type === 'success' ? '✅' : '❌'} {message.text}

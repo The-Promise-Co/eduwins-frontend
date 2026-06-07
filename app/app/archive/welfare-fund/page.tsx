@@ -2,9 +2,9 @@
 
 import { useState, useEffect, ReactElement } from 'react';
 import { useRouter } from 'next/navigation';
-import { useApiMutation, useApiQuery } from '@/hooks/useApi';
-import DashboardNavigation from '@/components/DashboardNavigation';
-import { User } from '@/types';
+import { useWelfareFund, useWithdrawWelfare } from '@/misc/hooks/api/welfare';
+import DashboardNavigation from '@/misc/components/DashboardNavigation';
+import { User } from '@/misc/types';
 
 interface WelfareFund {
   teacherId: string;
@@ -32,17 +32,8 @@ export default function WelfareFundPage(): ReactElement {
   const [withdrawAmount, setWithdrawAmount] = useState<string>('');
   const [showWithdrawForm, setShowWithdrawForm] = useState<boolean>(false);
   const [message, setMessage] = useState<Message>({ type: '', text: '' });
-  const welfareQuery = useApiQuery<WelfareFund>(
-    ['welfare-fund', 'archive', user?.id],
-    user ? `/payments/welfare-fund/${user.id}` : null,
-    { retry: false }
-  );
-  const withdrawMutation = useApiMutation<unknown, { amount: number }>({
-    method: 'post',
-    url: () => `/payments/welfare-fund/${user!.id}/withdraw`,
-    data: (data) => data,
-    invalidate: [['welfare-fund', 'archive', user?.id]],
-  });
+  const welfareQuery = useWelfareFund(user?.id);
+  const withdrawMutation = useWithdrawWelfare(user!.id);
 
   useEffect(() => {
     const init = () => {

@@ -15,7 +15,7 @@ import {
   Play,
   Sparkles,
 } from 'lucide-react';
-import TutorCard from '@/components/TutorCard';
+import TutorCard from '@/misc/components/TutorCard';
 
 const SUBJECTS = [
   { label: 'Mathematics', icon: '📐' },

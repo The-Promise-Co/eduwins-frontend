@@ -1,15 +1,15 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { 
-  GraduationCap, 
-  MessageSquare, 
-  AlertTriangle, 
+import {
+  GraduationCap,
+  MessageSquare,
+  AlertTriangle,
   Send,
   ArrowLeft
 } from 'lucide-react';
-import PageHeader from '@/components/PageHeader';
-import Button from '@/components/Button';
+import PageHeader from '@/misc/components/PageHeader';
+import Button from '@/misc/components/Button';
 
 export default function ChatPage() {
   const [messages, setMessages] = useState<any[]>([]);
@@ -61,7 +61,7 @@ export default function ChatPage() {
 
   return (
     <div className="h-full flex flex-col space-y-6 max-w-4xl mx-auto pb-6">
-      <PageHeader 
+      <PageHeader
         title={conversationTitle}
         subtitle="Online"
         rightElement={
@@ -85,13 +85,12 @@ export default function ChatPage() {
             <div className="space-y-4">
               {messages.map((msg) => (
                 <div key={msg.id} className={`flex ${msg.sender_id === 1 ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-[80%] px-4 py-2.5 rounded-2xl text-sm ${
-                    msg.sender_id === 1
+                  <div className={`max-w-[80%] px-4 py-2.5 rounded-2xl text-sm ${msg.sender_id === 1
                       ? 'bg-[#001A72] text-white rounded-tr-none'
                       : msg.is_flagged
                         ? 'bg-amber-50 text-amber-900 border border-amber-200 rounded-tl-none'
                         : 'bg-gray-100 text-gray-900 rounded-tl-none'
-                  }`}>
+                    }`}>
                     <p>{msg.content}</p>
                     {msg.is_flagged && (
                       <p className="text-[10px] mt-1 font-black uppercase tracking-widest flex items-center gap-1 text-amber-600">

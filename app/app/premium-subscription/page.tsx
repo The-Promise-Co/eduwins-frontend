@@ -2,8 +2,8 @@
 
 import { useState, useEffect, ReactElement } from 'react';
 import { useRouter } from 'next/navigation';
-import { useApiMutation, useApiQuery } from '@/hooks/useApi';
-import { useUser } from '@/context/UserContext';
+import { useSubscriptionStatus, useSubscribe } from '@/misc/hooks/api/premium';
+import { useUser } from '@/misc/context/UserContext';
 import {
   Gem,
   CheckCircle2,
@@ -13,7 +13,7 @@ import {
   ShieldCheck,
   Sparkles,
 } from 'lucide-react';
-import PageHeader from '@/components/PageHeader';
+import PageHeader from '@/misc/components/PageHeader';
 
 interface Plan {
   name: string;
@@ -109,16 +109,8 @@ export default function PremiumSubscriptionPage(): ReactElement {
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [message, setMessage] = useState<{ type: 'success' | 'error' | ''; text: string }>({ type: '', text: '' });
   const [openFaq, setOpenFaq] = useState<number | null>(null);
-  const subscriptionQuery = useApiQuery<Subscription>(
-    ['premium', 'subscription-status'],
-    user?.role === 'teacher' ? '/premium/subscription/status' : null
-  );
-  const subscribeMutation = useApiMutation<unknown, { plan: string }>({
-    method: 'post',
-    url: '/premium/subscribe',
-    data: (data) => data,
-    invalidate: [['premium', 'subscription-status']],
-  });
+  const subscriptionQuery = useSubscriptionStatus();
+  const subscribeMutation = useSubscribe();
 
   useEffect(() => {
     if (!user) return;

@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import api from '@/services/api';
-import { Booking } from '@/types';
+import api from '@/misc/services/api';
+import { Booking } from '@/misc/types';
 
 export const usePendingLessons = (role?: string) => {
   return useQuery<Booking[]>({

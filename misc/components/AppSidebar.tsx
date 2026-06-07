@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useUser } from '@/context/UserContext';
+import { useUser } from '@/misc/context/UserContext';
 import {
   Home,
   UserCog,

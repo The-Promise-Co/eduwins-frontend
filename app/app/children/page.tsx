@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useUser } from '@/context/UserContext';
+import { useUser } from '@/misc/context/UserContext';
 import {
   UserPlus,
   Baby,
@@ -11,10 +11,10 @@ import {
   Phone,
   Trash2,
 } from 'lucide-react';
-import PageHeader from '@/components/PageHeader';
-import Modal from '@/components/Modal';
-import Button from '@/components/Button';
-import ChildCard from '@/components/ChildCard';
+import PageHeader from '@/misc/components/PageHeader';
+import Modal from '@/misc/components/Modal';
+import Button from '@/misc/components/Button';
+import ChildCard from '@/misc/components/ChildCard';
 import { toast } from 'sonner';
 import {
   useChildren,
@@ -22,7 +22,7 @@ import {
   useUpdateChild,
   useDeleteChild,
   Child,
-} from '@/hooks/useChildren';
+} from '@/misc/hooks/useChildren';
 
 const GRADE_OPTIONS = [
   'Nursery 1', 'Nursery 2',

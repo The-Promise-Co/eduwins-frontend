@@ -3,10 +3,10 @@
 import { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { useApiMutation } from '@/hooks/useApi';
-import { useUser } from '@/context/UserContext';
+import { useLogin } from '@/misc/hooks/api/auth';
+import { useUser } from '@/misc/context/UserContext';
 import { Mail, CheckCircle2, Lock, Eye, EyeOff } from 'lucide-react';
-import AuthLayout from '@/components/AuthLayout';
+import AuthLayout from '@/misc/components/AuthLayout';
 
 function LoginContent() {
   const router = useRouter();
@@ -20,11 +20,7 @@ function LoginContent() {
       : ''
   );
   const [showPassword, setShowPassword] = useState(false);
-  const loginMutation = useApiMutation<any, typeof formData>({
-    method: 'post',
-    url: '/auth/login',
-    data: (data) => data,
-  });
+  const loginMutation = useLogin();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -56,7 +52,8 @@ function LoginContent() {
       }
 
       login(data.user, data.token);
-      router.push('/app/dashboard');
+      const redirectTo = searchParams.get('redirect') || '/app/dashboard';
+      router.push(redirectTo);
     } catch (err: any) {
       console.log(err);
       if (err.response?.status === 403 && err.response?.data?.requiresVerification) {

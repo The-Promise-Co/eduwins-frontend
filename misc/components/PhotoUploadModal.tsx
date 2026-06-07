@@ -1,5 +1,5 @@
 import { useState, ChangeEvent, ReactElement } from 'react';
-import { useApiMutation } from '@/hooks/useApi';
+import { useUploadPhoto } from '@/misc/hooks/api/teachers';
 
 interface PhotoUploadModalProps {
   isOpen: boolean;
@@ -11,12 +11,7 @@ export default function PhotoUploadModal({ isOpen, onClose, onSuccess }: PhotoUp
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | ArrayBuffer | null>(null);
   const [error, setError] = useState<string>('');
-  const uploadPhotoMutation = useApiMutation<{ photoUrl: string }, FormData>({
-    method: 'post',
-    url: '/teachers/upload-photo',
-    data: (data) => data,
-    config: { headers: { 'Content-Type': 'multipart/form-data' } },
-  });
+  const uploadPhotoMutation = useUploadPhoto();
 
   const handleFileSelect = (e: ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];

@@ -3,10 +3,10 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { useApiMutation, useApiQuery } from '@/hooks/useApi';
+import { useValidateResetToken, useResetPassword } from '@/misc/hooks/api/auth';
 import { Lock, Eye, EyeOff, CheckCircle2, XCircle, ArrowLeft } from 'lucide-react';
-import AuthLayout from '@/components/AuthLayout';
-import Button from '@/components/Button';
+import AuthLayout from '@/misc/components/AuthLayout';
+import Button from '@/misc/components/Button';
 
 function ResetPasswordContent() {
   const router = useRouter();
@@ -20,16 +20,8 @@ function ResetPasswordContent() {
 
   const [formError, setFormError] = useState('');
   const [success, setSuccess] = useState(false);
-  const validateTokenQuery = useApiQuery<unknown>(
-    ['auth', 'reset-token', token],
-    token ? `/auth/validate-reset-token?token=${encodeURIComponent(token)}` : null,
-    { retry: false }
-  );
-  const resetPasswordMutation = useApiMutation<unknown, { token: string; newPassword: string }>({
-    method: 'post',
-    url: '/auth/reset-password',
-    data: (data) => data,
-  });
+  const validateTokenQuery = useValidateResetToken(token);
+  const resetPasswordMutation = useResetPassword();
 
   /* ── Token validation on mount ── */
   useEffect(() => {

@@ -3,9 +3,9 @@
 import { useState, useEffect, ReactElement } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import api from '@/services/api';
-import DashboardNavigation from '@/components/DashboardNavigation';
-import { User } from '@/types';
+import api from '@/misc/services/api';
+import DashboardNavigation from '@/misc/components/DashboardNavigation';
+import { User } from '@/misc/types';
 import {
   Wallet,
   Building2,
@@ -16,8 +16,8 @@ import {
   Brain,
   Undo2
 } from 'lucide-react';
-import PageHeader from '@/components/PageHeader';
-import StatCard from '@/components/StatCard';
+import PageHeader from '@/misc/components/PageHeader';
+import StatCard from '@/misc/components/StatCard';
 
 interface HistoryEntry {
   date: string;
@@ -230,8 +230,8 @@ interface WelfareBoxProps {
 function WelfareBox({ label, value, sub, highlight }: WelfareBoxProps): ReactElement {
   return (
     <div className={`p-6 rounded-xl border ${highlight
-        ? 'bg-[#001A72] text-white border-[#001A72] shadow-lg'
-        : 'bg-[#001A72]/5 text-[#001A72] border-[#001A72]/10'
+      ? 'bg-[#001A72] text-white border-[#001A72] shadow-lg'
+      : 'bg-[#001A72]/5 text-[#001A72] border-[#001A72]/10'
       }`}>
       <p className={`text-[10px] font-black uppercase tracking-widest mb-1 ${highlight ? 'text-white/60' : 'text-[#001A72]/50'
         }`}>{label}</p>

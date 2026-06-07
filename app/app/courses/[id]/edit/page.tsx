@@ -12,8 +12,8 @@ import {
   AlertCircle,
   Layout,
 } from 'lucide-react';
-import PageHeader from '@/components/PageHeader';
-import { useR2 } from '@/hooks/useR2';
+import PageHeader from '@/misc/components/PageHeader';
+import { useR2 } from '@/misc/hooks/useR2';
 import { toast } from 'sonner';
 import { useForm } from 'react-hook-form';
 import {

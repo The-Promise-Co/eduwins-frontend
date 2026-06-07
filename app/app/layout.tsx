@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { useUser } from '@/context/UserContext';
-import AppSidebar from '@/components/AppSidebar';
-import AppHeader from '@/components/AppHeader';
+import { useUser } from '@/misc/context/UserContext';
+import AppSidebar from '@/misc/components/AppSidebar';
+import AppHeader from '@/misc/components/AppHeader';
 
 const PAGE_TITLES: Record<string, string> = {
   '/app/dashboard': 'Home',

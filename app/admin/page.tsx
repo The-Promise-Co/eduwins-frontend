@@ -2,37 +2,26 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useApiMutation, useApiQuery } from '@/hooks/useApi';
-import { TeacherProfile } from '@/types';
+import {
+  useAdminOverview, useAdminRentApplications, useAdminAmbassadors,
+  useAdminVetting, useAdminDisputes, useAdminWelfareAnalytics,
+  useUpdateRentApplication, useUpdateVetting, useUpdateDispute
+} from '@/misc/hooks/api/admin';
+import { TeacherProfile } from '@/misc/types';
 
 export default function AdminDashboard() {
   const router = useRouter();
   const [error, setError] = useState('');
   const [isAuthorized, setIsAuthorized] = useState(false);
-  const overviewQuery = useApiQuery<any>(['admin', 'overview'], isAuthorized ? '/api/admin/overview' : null);
-  const applicationsQuery = useApiQuery<any[]>(['admin', 'rent-applications'], isAuthorized ? '/api/admin/rent-applications' : null);
-  const ambassadorsQuery = useApiQuery<any[]>(['admin', 'ambassadors'], isAuthorized ? '/api/admin/ambassadors' : null);
-  const vettingQuery = useApiQuery<TeacherProfile[]>(['admin', 'vetting'], isAuthorized ? '/api/admin/vetting' : null);
-  const disputesQuery = useApiQuery<any[]>(['admin', 'disputes'], isAuthorized ? '/api/admin/disputes' : null);
-  const welfareQuery = useApiQuery<any>(['admin', 'welfare-analytics'], isAuthorized ? '/api/admin/welfare-analytics' : null);
-  const applicationStatusMutation = useApiMutation<unknown, { id: string | number; status: string }>({
-    method: 'post',
-    url: ({ id }) => `/api/admin/rent-applications/${id}`,
-    data: ({ status }) => ({ status }),
-    invalidate: [['admin', 'rent-applications'], ['admin', 'overview']],
-  });
-  const vettingMutation = useApiMutation<{ message?: string }, { teacherId: string | number; action: string }>({
-    method: 'post',
-    url: ({ teacherId }) => `/api/admin/vetting/${teacherId}`,
-    data: ({ action }) => ({ action }),
-    invalidate: [['admin', 'vetting'], ['admin', 'overview']],
-  });
-  const disputeMutation = useApiMutation<unknown, { disputeId: string | number; status: string }>({
-    method: 'patch',
-    url: ({ disputeId }) => `/api/admin/disputes/${disputeId}`,
-    data: ({ status }) => ({ status }),
-    invalidate: [['admin', 'disputes']],
-  });
+  const overviewQuery = useAdminOverview();
+  const applicationsQuery = useAdminRentApplications();
+  const ambassadorsQuery = useAdminAmbassadors();
+  const vettingQuery = useAdminVetting();
+  const disputesQuery = useAdminDisputes();
+  const welfareQuery = useAdminWelfareAnalytics();
+  const applicationStatusMutation = useUpdateRentApplication();
+  const vettingMutation = useUpdateVetting();
+  const disputeMutation = useUpdateDispute();
 
   useEffect(() => {
     const token = localStorage.getItem('token');

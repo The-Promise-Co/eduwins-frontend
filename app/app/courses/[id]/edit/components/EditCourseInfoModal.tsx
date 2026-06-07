@@ -4,10 +4,10 @@ import { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { Search, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import ImageUpload from '@/components/ImageUpload';
-import Modal from '@/components/Modal';
+import ImageUpload from '@/misc/components/ImageUpload';
+import Modal from '@/misc/components/Modal';
 import { useSubjects } from '../../../misc/api';
-import { LEVELS } from '@/types/course';
+import { LEVELS } from '@/misc/types/course';
 
 interface EditCourseInfoModalProps {
   isOpen: boolean;

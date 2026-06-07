@@ -2,7 +2,7 @@
 
 import { ReactElement } from 'react';
 import { Calendar, Clock, BookOpen, Video, ChevronRight } from 'lucide-react';
-import PageHeader from '@/components/PageHeader';
+import PageHeader from '@/misc/components/PageHeader';
 
 const UPCOMING_SESSIONS = [
   {
@@ -64,11 +64,10 @@ export default function SchedulePage(): ReactElement {
             return (
               <div
                 key={day}
-                className={`flex flex-col items-center py-2.5 px-1 rounded-xl cursor-pointer transition ${
-                  isToday
+                className={`flex flex-col items-center py-2.5 px-1 rounded-xl cursor-pointer transition ${isToday
                     ? 'bg-[#001A72] text-white'
                     : 'hover:bg-gray-50 text-gray-600'
-                }`}
+                  }`}
               >
                 <span className={`text-[10px] font-black uppercase tracking-widest mb-1 ${isToday ? 'text-white/60' : 'text-gray-400'}`}>
                   {day}
@@ -117,11 +116,10 @@ export default function SchedulePage(): ReactElement {
                 </div>
               </div>
               <div className="flex items-center gap-2 shrink-0">
-                <span className={`text-[9px] font-bold uppercase px-2 py-0.5 rounded-full border ${
-                  session.status === 'confirmed'
+                <span className={`text-[9px] font-bold uppercase px-2 py-0.5 rounded-full border ${session.status === 'confirmed'
                     ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
                     : 'bg-amber-50 text-amber-700 border-amber-100'
-                }`}>
+                  }`}>
                   {session.status}
                 </span>
                 <button className="flex items-center gap-1.5 bg-[#001A72] text-white text-xs font-bold px-4 py-2 rounded-xl hover:bg-[#001A72]/90 transition">

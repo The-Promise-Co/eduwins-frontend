@@ -10,7 +10,7 @@ import {
   BarChart3,
   ClipboardList,
 } from 'lucide-react';
-import { Child } from '@/hooks/useChildren';
+import { Child } from '@/misc/hooks/useChildren';
 
 interface ChildCardProps {
   child: Child;
@@ -43,7 +43,7 @@ const ChildCard: React.FC<ChildCardProps> = ({ child, onEdit, onDelete }) => {
 
   return (
     <div className="group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 overflow-hidden flex flex-col justify-between">
-      
+
       {/* Clickable Card Body linking to detailed child dashboard */}
       <Link href={`/app/children/${child.id}`} className="block flex-grow cursor-pointer">
         {/* Card header */}

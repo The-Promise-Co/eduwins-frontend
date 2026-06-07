@@ -16,8 +16,8 @@ import {
   Loader2,
   Filter,
 } from 'lucide-react';
-import { useApiQuery } from '@/hooks/useApi';
-import { Course, LEVELS } from '@/types/course';
+import { usePublicCourses } from '@/misc/hooks/api/courses';
+import { Course, LEVELS } from '@/misc/types/course';
 
 const toSentenceCase = (s: string) => {
   const spaced = s.replace(/_/g, ' ');
@@ -30,10 +30,7 @@ function CoursesContent() {
   const [selectedLevel, setSelectedLevel] = useState('all');
 
   const defaultMeta = { total: 0, page: 1, limit: 12, totalPages: 1 };
-  const coursesQuery = useApiQuery<{ data?: Course[]; meta?: typeof defaultMeta }>(
-    ['public-courses', page],
-    `/courses?page=${page}&limit=12`
-  );
+  const coursesQuery = usePublicCourses(page);
   const courses = coursesQuery.data?.data || [];
   const meta = coursesQuery.data?.meta || defaultMeta;
   const loading = coursesQuery.isLoading || coursesQuery.isPending;
@@ -104,11 +101,10 @@ function CoursesContent() {
               <button
                 key={l}
                 onClick={() => setSelectedLevel(l)}
-                className={`px-3 py-1.5 rounded-full text-xs font-bold border transition ${
-                  selectedLevel === l
-                    ? 'bg-[#FFB81C] text-[#001A72] border-[#FFB81C]'
-                    : 'bg-white/10 text-white border-white/20 hover:bg-white/20'
-                }`}
+                className={`px-3 py-1.5 rounded-full text-xs font-bold border transition ${selectedLevel === l
+                  ? 'bg-[#FFB81C] text-[#001A72] border-[#FFB81C]'
+                  : 'bg-white/10 text-white border-white/20 hover:bg-white/20'
+                  }`}
               >
                 {l === 'all' ? 'All Levels' : toSentenceCase(l)}
               </button>
@@ -210,24 +206,51 @@ function CoursesContent() {
 function CourseCard({ course }: { course: Course }) {
   const lessonCount = course.lesson_count || 0;
   const subjectName = typeof course.subject === 'object' && course.subject ? course.subject.name : course.subject || '';
+  const hasThumbnail = !!course.thumbnail_url;
 
   return (
-    <div className="group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg transition-all duration-200 hover:-translate-y-0.5 overflow-hidden flex flex-col h-full">
-      {/* Color band */}
-      <div className="h-3 w-full bg-gradient-to-r from-[#001A72] to-[#0040c8]" />
-
-      <div className="p-5 flex-1 flex flex-col">
-        {/* Badges */}
-        <div className="flex items-center gap-2 mb-3 flex-wrap">
-          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full border bg-green-50 text-green-700 border-green-200 capitalize">
-            {(course.level || '').replace('_', ' ')}
-          </span>
-          {subjectName && (
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full border bg-[#001A72]/5 text-[#001A72] border-[#001A72]/20">
-              {subjectName}
+    <Link
+      href={`/courses/${course.id}`}
+      className="group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg transition-all duration-200 hover:-translate-y-0.5 overflow-hidden flex flex-col h-full cursor-pointer"
+    >
+      {/* Thumbnail or color band */}
+      {hasThumbnail ? (
+        <div className="relative h-40 overflow-hidden">
+          <img
+            src={course.thumbnail_url!}
+            alt={course.title}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+          <div className="absolute bottom-2 left-3 flex flex-wrap items-center gap-1.5">
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full border bg-white/20 backdrop-blur-sm text-white border-white/30 capitalize">
+              {(course.level || '').replace('_', ' ')}
             </span>
-          )}
+            {subjectName && (
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full border bg-white/20 backdrop-blur-sm text-white border-white/30">
+                {subjectName}
+              </span>
+            )}
+          </div>
         </div>
+      ) : (
+        <div className="h-3 w-full bg-gradient-to-r from-[#001A72] to-[#0040c8]" />
+      )}
+
+      <div className={`flex-1 flex flex-col ${hasThumbnail ? 'p-4' : 'p-5'}`}>
+        {/* Badges (only when no thumbnail) */}
+        {!hasThumbnail && (
+          <div className="flex items-center gap-2 mb-3 flex-wrap">
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full border bg-green-50 text-green-700 border-green-200 capitalize">
+              {(course.level || '').replace('_', ' ')}
+            </span>
+            {subjectName && (
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full border bg-[#001A72]/5 text-[#001A72] border-[#001A72]/20">
+                {subjectName}
+              </span>
+            )}
+          </div>
+        )}
 
         {/* Title & Description */}
         <h3 className="font-bold text-[#001A72] text-sm leading-snug mb-1.5 line-clamp-2 group-hover:text-[#0028a5] transition">
@@ -278,14 +301,10 @@ function CourseCard({ course }: { course: Course }) {
         </div>
       </div>
 
-      {/* CTA */}
-      <div className="px-5 pb-4">
-        <Link href={`/app/courses/${course.id}`} className="flex items-center justify-between text-[#001A72]">
-          <span className="text-xs font-bold group-hover:underline">View Course</span>
-          <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" />
-        </Link>
+      <div className={`${hasThumbnail ? 'px-4' : 'px-5'} pb-4 flex justify-end`}>
+        <ChevronRight size={14} className="text-[#001A72]/30 group-hover:text-[#001A72] group-hover:translate-x-1 transition-all" />
       </div>
-    </div>
+    </Link>
   );
 }
 

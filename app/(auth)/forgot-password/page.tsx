@@ -2,20 +2,16 @@
 
 import { useState, Suspense } from 'react';
 import Link from 'next/link';
-import { useApiMutation } from '@/hooks/useApi';
+import { useForgotPassword } from '@/misc/hooks/api/auth';
 import { Mail, CheckCircle2, ArrowLeft } from 'lucide-react';
-import AuthLayout from '@/components/AuthLayout';
-import Button from '@/components/Button';
+import AuthLayout from '@/misc/components/AuthLayout';
+import Button from '@/misc/components/Button';
 
 function ForgotPasswordContent() {
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
   const [submitted, setSubmitted] = useState(false);
-  const forgotPasswordMutation = useApiMutation<unknown, { email: string }>({
-    method: 'post',
-    url: '/auth/forgot-password',
-    data: (data) => data,
-  });
+  const forgotPasswordMutation = useForgotPassword();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();

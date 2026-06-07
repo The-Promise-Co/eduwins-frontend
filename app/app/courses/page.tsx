@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { useApiQuery } from '@/hooks/useApi';
-import { useUser } from '@/context/UserContext';
+import { useQuery } from '@tanstack/react-query';
+import api from '@/misc/services/api';
+import { useUser } from '@/misc/context/UserContext';
 import {
   Search,
   BookOpen,
@@ -18,11 +19,11 @@ import {
   Layers,
   Plus,
 } from 'lucide-react';
-import PageHeader from '@/components/PageHeader';
-import StatCard from '@/components/StatCard';
-import CourseCard from '@/components/CourseCard';
+import PageHeader from '@/misc/components/PageHeader';
+import StatCard from '@/misc/components/StatCard';
+import CourseCard from '@/misc/components/CourseCard';
 import { useSubjects } from './misc/api';
-import { Course, LEVELS } from '@/types/course';
+import { Course, LEVELS } from '@/misc/types/course';
 
 const MOCK_COURSES: Course[] = [];
 
@@ -58,11 +59,14 @@ export default function CoursesPage() {
       ? `/courses/enrolled`
       : '/courses';
   const defaultMeta = { total: 0, page: 1, limit: 12, totalPages: 1 };
-  const coursesQuery = useApiQuery<{ data?: Course[]; meta?: typeof defaultMeta }>(
-    ['courses', isTeacher ? 'teacher' : isParent ? 'enrolled' : 'all', user?.id, page],
-    `${baseUrl}?page=${page}&limit=12`,
-    { enabled: isTeacher ? !!user?.id : isParent ? !!user?.id : true }
-  );
+  const coursesQuery = useQuery({
+    queryKey: ['courses', isTeacher ? 'teacher' : isParent ? 'enrolled' : 'all', user?.id, page],
+    queryFn: async () => {
+      const response = await api.get(`${baseUrl}?page=${page}&limit=12`);
+      return response.data;
+    },
+    enabled: isTeacher ? !!user?.id : isParent ? !!user?.id : true,
+  });
   const courses = coursesQuery.data?.data || [];
   const meta = coursesQuery.data?.meta || defaultMeta;
   const loading = coursesQuery.isLoading || coursesQuery.isPending;
@@ -175,9 +179,8 @@ export default function CoursesPage() {
                           setSubjectSearch('');
                           setSubjectOpen(false);
                         }}
-                        className={`w-full text-left px-4 py-2.5 text-xs font-semibold transition hover:bg-gray-50 ${
-                          selectedSubject === s.name ? 'text-[#001A72] bg-[#001A72]/5' : 'text-gray-700'
-                        }`}
+                        className={`w-full text-left px-4 py-2.5 text-xs font-semibold transition hover:bg-gray-50 ${selectedSubject === s.name ? 'text-[#001A72] bg-[#001A72]/5' : 'text-gray-700'
+                          }`}
                       >
                         {s.name}
                       </button>
@@ -203,11 +206,10 @@ export default function CoursesPage() {
                   <button
                     key={l}
                     onClick={() => setSelectedLevel(l)}
-                    className={`px-3 py-1 rounded-full text-xs font-semibold border transition ${
-                      selectedLevel === l
-                        ? 'bg-[#001A72] text-white border-[#001A72]'
-                        : 'border-gray-200 text-gray-600 hover:border-[#001A72] hover:text-[#001A72]'
-                    }`}
+                    className={`px-3 py-1 rounded-full text-xs font-semibold border transition ${selectedLevel === l
+                      ? 'bg-[#001A72] text-white border-[#001A72]'
+                      : 'border-gray-200 text-gray-600 hover:border-[#001A72] hover:text-[#001A72]'
+                      }`}
                   >
                     {toSentenceCase(l)}
                   </button>
@@ -224,11 +226,10 @@ export default function CoursesPage() {
                     <button
                       key={s}
                       onClick={() => setSelectedStatus(s)}
-                      className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-xl border text-xs font-bold transition ${
-                        selectedStatus === s
-                          ? 'bg-[#001A72] text-white border-[#001A72]'
-                          : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
-                      }`}
+                      className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-xl border text-xs font-bold transition ${selectedStatus === s
+                        ? 'bg-[#001A72] text-white border-[#001A72]'
+                        : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                        }`}
                     >
                       {toSentenceCase(s)}
                     </button>
@@ -283,7 +284,7 @@ export default function CoursesPage() {
               >
                 <ChevronLeft size={16} /> Previous
               </button>
-              
+
               <div className="flex items-center gap-1">
                 <span className="text-sm font-bold text-[#001A72]">Page {page}</span>
                 <span className="text-sm text-gray-400">of {meta.totalPages}</span>

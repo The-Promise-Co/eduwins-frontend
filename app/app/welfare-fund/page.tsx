@@ -2,9 +2,9 @@
 
 import { useState, useEffect, ReactElement } from 'react';
 import { useRouter } from 'next/navigation';
-import { useApiMutation, useApiQuery } from '@/hooks/useApi';
-import { useUser } from '@/context/UserContext';
-import { User } from '@/types';
+import { useWelfareFund, useWithdrawWelfare } from '@/misc/hooks/api/welfare';
+import { useUser } from '@/misc/context/UserContext';
+import { User } from '@/misc/types';
 import {
   HeartPulse,
   Wallet,
@@ -14,8 +14,8 @@ import {
   ShieldCheck,
   Info,
 } from 'lucide-react';
-import PageHeader from '@/components/PageHeader';
-import StatCard from '@/components/StatCard';
+import PageHeader from '@/misc/components/PageHeader';
+import StatCard from '@/misc/components/StatCard';
 
 interface WelfareFund {
   teacherId: string;
@@ -49,17 +49,8 @@ export default function WelfareFundPage(): ReactElement {
     text: '',
   });
   const [showInfo, setShowInfo] = useState(false);
-  const welfareQuery = useApiQuery<WelfareFund>(
-    ['welfare-fund', user?.id],
-    user?.role === 'teacher' && user?.id ? `/payments/welfare-fund/${user.id}` : null,
-    { retry: false }
-  );
-  const withdrawMutation = useApiMutation<unknown, { amount: number }>({
-    method: 'post',
-    url: () => `/payments/welfare-fund/${user!.id}/withdraw`,
-    data: (data) => data,
-    invalidate: [['welfare-fund', user?.id]],
-  });
+  const welfareQuery = useWelfareFund(user?.id);
+  const withdrawMutation = useWithdrawWelfare(user!.id);
 
   useEffect(() => {
     if (!user) return;
@@ -142,11 +133,10 @@ export default function WelfareFundPage(): ReactElement {
       {/* Alert message */}
       {message.text && (
         <div
-          className={`p-4 rounded-xl text-sm font-medium border ${
-            message.type === 'success'
-              ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
-              : 'bg-red-50 text-red-700 border-red-100'
-          }`}
+          className={`p-4 rounded-xl text-sm font-medium border ${message.type === 'success'
+            ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
+            : 'bg-red-50 text-red-700 border-red-100'
+            }`}
         >
           {message.text}
         </div>

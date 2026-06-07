@@ -2,8 +2,8 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
-import { useApiQuery } from '@/hooks/useApi';
-import { TeacherProfile } from '@/types';
+import { useMe } from '@/misc/hooks/api/auth';
+import { TeacherProfile } from '@/misc/types';
 
 interface UserContextType {
   user: TeacherProfile | null;
@@ -22,11 +22,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [shouldFetchMe, setShouldFetchMe] = useState(false);
   const router = useRouter();
-  const meQuery = useApiQuery<TeacherProfile>(
-    ['auth', 'me'],
-    shouldFetchMe ? '/auth/me' : null,
-    { enabled: shouldFetchMe, retry: false }
-  );
+  const meQuery = useMe(shouldFetchMe, { retry: false });
 
   useEffect(() => {
     const initAuth = async () => {

@@ -1,19 +1,19 @@
 'use client';
 
 import { ReactElement } from 'react';
-import { useApiQuery } from '@/hooks/useApi';
-import NavBar from '@/components/NavBar';
-import { ProgressReport } from '@/types';
-import { 
-  BarChart3, 
-  AlertTriangle, 
-  FolderOpen, 
-  GraduationCap, 
-  Lightbulb 
+import { useMyProgressReports } from '@/misc/hooks/api/progress';
+import NavBar from '@/misc/components/NavBar';
+import { ProgressReport } from '@/misc/types';
+import {
+  BarChart3,
+  AlertTriangle,
+  FolderOpen,
+  GraduationCap,
+  Lightbulb
 } from 'lucide-react';
 
 export default function ProgressReportsPage(): ReactElement {
-  const reportsQuery = useApiQuery<ProgressReport[]>(['progress-reports', 'my'], '/progress-reports/my', { retry: false });
+  const reportsQuery = useMyProgressReports();
   const reports = reportsQuery.data || [];
   const loading = reportsQuery.isLoading || reportsQuery.isPending;
   const error = reportsQuery.isError

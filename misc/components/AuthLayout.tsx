@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import AuthSlider from '@/components/AuthSlider';
+import AuthSlider from '@/misc/components/AuthSlider';
 
 interface AuthLayoutProps {
   children: React.ReactNode;

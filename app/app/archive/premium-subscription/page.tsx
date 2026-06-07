@@ -2,9 +2,9 @@
 
 import { useState, useEffect, ReactElement } from 'react';
 import { useRouter } from 'next/navigation';
-import { useApiMutation, useApiQuery } from '@/hooks/useApi';
-import DashboardNavigation from '@/components/DashboardNavigation';
-import { User } from '@/types';
+import { useSubscriptionStatus, useSubscribe } from '@/misc/hooks/api/premium';
+import DashboardNavigation from '@/misc/components/DashboardNavigation';
+import { User } from '@/misc/types';
 
 interface SubscriptionStatus {
   subscriptionActive: boolean;
@@ -33,16 +33,8 @@ export default function PremiumSubscriptionPage(): ReactElement {
   const [user, setUser] = useState<User | null>(null);
   const [subscribing, setSubscribing] = useState<string | null>(null);
   const [message, setMessage] = useState<Message>({ type: '', text: '' });
-  const subscriptionQuery = useApiQuery<SubscriptionStatus>(
-    ['premium', 'subscription-status', 'archive'],
-    user ? '/premium/subscription/status' : null
-  );
-  const subscribeMutation = useApiMutation<unknown, { plan: string }>({
-    method: 'post',
-    url: '/premium/subscribe',
-    data: (data) => data,
-    invalidate: [['premium', 'subscription-status', 'archive']],
-  });
+  const subscriptionQuery = useSubscriptionStatus();
+  const subscribeMutation = useSubscribe();
 
   useEffect(() => {
     const init = () => {
@@ -178,8 +170,8 @@ export default function PremiumSubscriptionPage(): ReactElement {
 
           {message.text && (
             <div className={`mb-10 p-5 rounded-2xl border-2 animate-in fade-in slide-in-from-top-4 duration-500 ${message.type === 'success'
-                ? 'bg-green-50 text-green-700 border-green-100'
-                : 'bg-red-50 text-red-700 border-red-100'
+              ? 'bg-green-50 text-green-700 border-green-100'
+              : 'bg-red-50 text-red-700 border-red-100'
               }`}>
               <p className="font-black flex items-center justify-center gap-3">
                 {message.type === 'success' ? '🚀' : '❌'} {message.text}
@@ -230,10 +222,10 @@ export default function PremiumSubscriptionPage(): ReactElement {
                     onClick={() => subscribeToPlan(plan.name)}
                     disabled={subscribing === plan.name || (isSubscribed && currentPlan === plan.name)}
                     className={`w-full py-4 rounded-2xl font-black text-sm uppercase tracking-widest mb-8 transition shadow-lg ${isSubscribed && currentPlan === plan.name
-                        ? 'bg-gray-100 text-gray-400 cursor-default'
-                        : plan.popular
-                          ? 'bg-[#FFB81C] text-[#001A72] hover:bg-[#FFB81C]/90'
-                          : 'bg-[#001A72] text-white hover:bg-[#001A72]/90'
+                      ? 'bg-gray-100 text-gray-400 cursor-default'
+                      : plan.popular
+                        ? 'bg-[#FFB81C] text-[#001A72] hover:bg-[#FFB81C]/90'
+                        : 'bg-[#001A72] text-white hover:bg-[#001A72]/90'
                       }`}
                   >
                     {subscribing === plan.name ? 'Processing...' : contributesStatus(!!isSubscribed, currentPlan ?? null, plan.name)}

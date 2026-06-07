@@ -3,11 +3,11 @@
 import { useState, useEffect, ChangeEvent, FormEvent, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { useApiMutation } from '@/hooks/useApi';
-import { useUser } from '@/context/UserContext';
+import { useRegister } from '@/misc/hooks/api/auth';
+import { useUser } from '@/misc/context/UserContext';
 import { User, Mail, Phone, Lock, Eye, EyeOff, CheckCircle2, Hash, Users, BookOpen } from 'lucide-react';
-import AuthLayout from '@/components/AuthLayout';
-import Button from '@/components/Button';
+import AuthLayout from '@/misc/components/AuthLayout';
+import Button from '@/misc/components/Button';
 
 function RegisterContent() {
   const router = useRouter();
@@ -27,11 +27,7 @@ function RegisterContent() {
   const [success, setSuccess] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const registerMutation = useApiMutation<any, any>({
-    method: 'post',
-    url: '/auth/register',
-    data: (data) => data,
-  });
+  const registerMutation = useRegister();
 
   useEffect(() => {
     const code = searchParams.get('ref') || searchParams.get('referral');
@@ -74,7 +70,7 @@ function RegisterContent() {
         referralCode: referralCode || undefined,
       });
 
-      if (data?.token) {
+      if (data?.token && data?.user) {
         login(data.user, data.token);
         setSuccess('Account created! Redirecting to your dashboard…');
         setTimeout(() => router.push('/app/dashboard'), 1200);
@@ -193,11 +189,10 @@ function RegisterContent() {
         <div className="grid grid-cols-2 gap-3">
           <div
             onClick={() => setFormData((prev) => ({ ...prev, role: 'parent' }))}
-            className={`flex items-center gap-3 p-3.5 border-2 rounded-xl cursor-pointer transition-all ${
-              formData.role === 'parent'
-                ? 'border-primary bg-primary/5 shadow-sm shadow-primary/10'
-                : 'border-gray-200 hover:border-primary/30 hover:bg-gray-50 bg-white'
-            }`}
+            className={`flex items-center gap-3 p-3.5 border-2 rounded-xl cursor-pointer transition-all ${formData.role === 'parent'
+              ? 'border-primary bg-primary/5 shadow-sm shadow-primary/10'
+              : 'border-gray-200 hover:border-primary/30 hover:bg-gray-50 bg-white'
+              }`}
           >
             <Users className={`h-5 w-5 ${formData.role === 'parent' ? 'text-primary' : 'text-gray-400'}`} />
             <span className={`font-semibold text-sm ${formData.role === 'parent' ? 'text-primary' : 'text-gray-600'}`}>
@@ -207,11 +202,10 @@ function RegisterContent() {
 
           <div
             onClick={() => setFormData((prev) => ({ ...prev, role: 'teacher' }))}
-            className={`flex items-center gap-3 p-3.5 border-2 rounded-xl cursor-pointer transition-all ${
-              formData.role === 'teacher'
-                ? 'border-primary bg-primary/5 shadow-sm shadow-primary/10'
-                : 'border-gray-200 hover:border-primary/30 hover:bg-gray-50 bg-white'
-            }`}
+            className={`flex items-center gap-3 p-3.5 border-2 rounded-xl cursor-pointer transition-all ${formData.role === 'teacher'
+              ? 'border-primary bg-primary/5 shadow-sm shadow-primary/10'
+              : 'border-gray-200 hover:border-primary/30 hover:bg-gray-50 bg-white'
+              }`}
           >
             <BookOpen className={`h-5 w-5 ${formData.role === 'teacher' ? 'text-primary' : 'text-gray-400'}`} />
             <span className={`font-semibold text-sm ${formData.role === 'teacher' ? 'text-primary' : 'text-gray-600'}`}>

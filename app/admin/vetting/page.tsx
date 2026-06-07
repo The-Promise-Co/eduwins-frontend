@@ -1,17 +1,17 @@
 'use client';
 
 import { useState, ReactElement } from 'react';
-import { useApiMutation, useApiQuery } from '@/hooks/useApi';
-import NavBar from '../../../components/NavBar';
-import { TeacherProfile } from '@/types';
-import { 
-  ShieldCheck, 
-  GraduationCap, 
-  CreditCard, 
-  BarChart3, 
-  Home, 
-  TrendingUp, 
-  CheckCircle2, 
+import { useTeachersPending, useBookingsPending, useAdminStats, useApproveTeacher, useRejectTeacher, useReleaseBookingFunds } from '@/misc/hooks/api/admin';
+import NavBar from '../@/misc/components/NavBar';
+import { TeacherProfile } from '@/misc/types';
+import {
+  ShieldCheck,
+  GraduationCap,
+  CreditCard,
+  BarChart3,
+  Home,
+  TrendingUp,
+  CheckCircle2,
   FileText,
   AlertCircle,
   XCircle,
@@ -43,36 +43,12 @@ export default function AdminVettingDashboard(): ReactElement {
     totalEarnings: 0,
     welfarePooled: 0
   };
-  const teachersQuery = useApiQuery<TeacherProfile[]>(
-    ['admin', 'teachers-pending'],
-    '/admin/teachers-pending',
-    { enabled: activeTab === 'vetting' }
-  );
-  const bookingsQuery = useApiQuery<AdminBooking[]>(
-    ['admin', 'bookings-pending'],
-    '/admin/bookings-pending',
-    { enabled: activeTab === 'escrow' }
-  );
-  const statsQuery = useApiQuery<AdminStats>(
-    ['admin', 'stats'],
-    '/admin/stats',
-    { enabled: activeTab === 'stats' }
-  );
-  const approveTeacherMutation = useApiMutation<unknown, string>({
-    method: 'put',
-    url: (teacherId) => `/admin/teachers/${teacherId}/approve`,
-    invalidate: [['admin', 'teachers-pending']],
-  });
-  const rejectTeacherMutation = useApiMutation<unknown, string>({
-    method: 'put',
-    url: (teacherId) => `/admin/teachers/${teacherId}/reject`,
-    invalidate: [['admin', 'teachers-pending']],
-  });
-  const releaseFundsMutation = useApiMutation<unknown, string>({
-    method: 'put',
-    url: (bookingId) => `/admin/bookings/${bookingId}/release-funds`,
-    invalidate: [['admin', 'bookings-pending'], ['admin', 'stats']],
-  });
+  const teachersQuery = useTeachersPending();
+  const bookingsQuery = useBookingsPending();
+  const statsQuery = useAdminStats();
+  const approveTeacherMutation = useApproveTeacher();
+  const rejectTeacherMutation = useRejectTeacher();
+  const releaseFundsMutation = useReleaseBookingFunds();
 
   const handleApproveTeacher = async (teacherId: string) => {
     try {
@@ -228,8 +204,8 @@ export default function AdminVettingDashboard(): ReactElement {
                               <td className="px-8 py-6 text-sm text-gray-400 font-bold">{booking.totalSessions} Sessions</td>
                               <td className="px-8 py-6">
                                 <span className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 w-fit ${booking.status === 'completed'
-                                    ? 'bg-green-100 text-green-700'
-                                    : 'bg-orange-100 text-orange-700'
+                                  ? 'bg-green-100 text-green-700'
+                                  : 'bg-orange-100 text-orange-700'
                                   }`}>
                                   {booking.status === 'completed' ? <CheckCircle2 size={10} /> : <Clock size={10} />}
                                   {booking.status}

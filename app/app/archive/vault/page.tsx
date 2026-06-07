@@ -2,8 +2,8 @@
 
 import { useState, useEffect, ChangeEvent, FormEvent } from 'react';
 import Link from 'next/link';
-import { useApiMutation, useApiQuery } from '@/hooks/useApi';
-import { User, VaultItem } from '@/types';
+import { useVaultItems, usePurchaseVaultItem } from '@/misc/hooks/api/vault';
+import { User, VaultItem } from '@/misc/types';
 
 export default function DigitalVaultPage() {
   const [filters, setFilters] = useState({
@@ -17,12 +17,8 @@ export default function DigitalVaultPage() {
   if (submittedFilters.subject) params.append('subject', submittedFilters.subject);
   if (submittedFilters.minPrice) params.append('min_price', submittedFilters.minPrice);
   if (submittedFilters.maxPrice) params.append('max_price', submittedFilters.maxPrice);
-  const vaultQuery = useApiQuery<VaultItem[]>(['vault', submittedFilters], `/vault?${params}`, { retry: false });
-  const purchaseMutation = useApiMutation<unknown, string | number>({
-    method: 'post',
-    url: (itemId) => `/vault/${itemId}/purchase`,
-    invalidate: [['vault']],
-  });
+  const vaultQuery = useVaultItems(params.toString());
+  const purchaseMutation = usePurchaseVaultItem();
 
   useEffect(() => {
     const userData = localStorage.getItem('user');

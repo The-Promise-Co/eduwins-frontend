@@ -3,15 +3,15 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useUser } from '@/context/UserContext';
-import { 
-  Bell, 
-  ChevronDown, 
-  UserCog, 
-  Calendar, 
-  Wallet, 
-  Settings, 
-  LogOut 
+import { useUser } from '@/misc/context/UserContext';
+import {
+  Bell,
+  ChevronDown,
+  UserCog,
+  Calendar,
+  Wallet,
+  Settings,
+  LogOut
 } from 'lucide-react';
 
 interface AppHeaderProps {
@@ -40,7 +40,7 @@ export default function AppHeader({ title, onToggleMobileMenu }: AppHeaderProps)
       {/* Mobile Header (Hidden on md and up) */}
       <header className="md:hidden h-16 bg-[#001A72] flex items-center justify-between px-6 shrink-0 z-40">
         <h2 className="text-xl font-bold text-white">{title}</h2>
-        <button 
+        <button
           onClick={onToggleMobileMenu}
           className="px-4 py-2 bg-white/10 text-white rounded-xl font-bold text-xs hover:bg-white/20 transition"
         >

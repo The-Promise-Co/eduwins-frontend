@@ -3,31 +3,23 @@
 import { useState, FormEvent, Suspense, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { useApiMutation } from '@/hooks/useApi';
-import { useUser } from '../../context/UserContext';
-import AuthSlider from '../../components/AuthSlider';
-import Button from '../../components/Button';
+import { useResendOtp, useVerifyOtp } from '@/misc/hooks/api/auth';
+import { useUser } from '../../misc/context/UserContext';
+import AuthSlider from '@/misc/components/AuthSlider';
+import Button from '@/misc/components/Button';
 
 function VerifyOtpContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { login } = useUser();
   const [otp, setOtp] = useState('');
-  
+
   const is2FA = searchParams.get('mode') === '2fa' || (typeof window !== 'undefined' && sessionStorage.getItem('is2FA') === 'true');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [countdown, setCountdown] = useState(60);
-  const resendOtpMutation = useApiMutation<unknown, { token: string }>({
-    method: 'post',
-    url: '/auth/resend-otp',
-    data: ({ token }) => ({ token }),
-  });
-  const verifyOtpMutation = useApiMutation<any, { token: string; otp: string; is2FA: boolean }>({
-    method: 'post',
-    url: ({ is2FA }) => (is2FA ? '/auth/verify-2fa' : '/auth/verify-email'),
-    data: ({ token, otp }) => ({ token, otp }),
-  });
+  const resendOtpMutation = useResendOtp();
+  const verifyOtpMutation = useVerifyOtp();
 
   useEffect(() => {
     let timer: NodeJS.Timeout;

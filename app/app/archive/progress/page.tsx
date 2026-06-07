@@ -2,8 +2,8 @@
 
 import { useState, useEffect, ReactElement, ChangeEvent, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import DashboardNavigation from '@/components/DashboardNavigation';
-import { User } from '@/types';
+import DashboardNavigation from '@/misc/components/DashboardNavigation';
+import { User } from '@/misc/types';
 
 interface Report {
   id: number;
@@ -201,8 +201,8 @@ export default function ReportPage(): ReactElement {
                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mt-1">{report.subject} • {report.date}</p>
                   </div>
                   <div className={`w-14 h-14 rounded-2xl flex items-center justify-center font-black text-white text-xl shadow-lg ${report.grade === 'A' ? 'bg-green-500 shadow-green-100' :
-                      report.grade === 'B' ? 'bg-blue-500 shadow-blue-100' :
-                        report.grade === 'C' ? 'bg-[#FFB81C] shadow-yellow-100' : 'bg-red-500 shadow-red-100'
+                    report.grade === 'B' ? 'bg-blue-500 shadow-blue-100' :
+                      report.grade === 'C' ? 'bg-[#FFB81C] shadow-yellow-100' : 'bg-red-500 shadow-red-100'
                     }`}>
                     {report.grade}
                   </div>

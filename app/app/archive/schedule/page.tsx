@@ -2,14 +2,14 @@
 
 import { useState, useEffect, ReactElement } from 'react';
 import { useRouter } from 'next/navigation';
-import DashboardNavigation from '@/components/DashboardNavigation';
-import { User } from '@/types';
-import { 
-  Calendar, 
-  Clock, 
-  Settings, 
-  Sparkles, 
-  CalendarDays 
+import DashboardNavigation from '@/misc/components/DashboardNavigation';
+import { User } from '@/misc/types';
+import {
+  Calendar,
+  Clock,
+  Settings,
+  Sparkles,
+  CalendarDays
 } from 'lucide-react';
 
 interface UpcomingSession {

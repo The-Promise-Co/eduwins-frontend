@@ -2,9 +2,11 @@
 
 import { useState, useEffect, ReactElement, ChangeEvent, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import { useApiMutation, useApiQuery } from '@/hooks/useApi';
-import DashboardNavigation from '@/components/DashboardNavigation';
-import { User } from '@/types';
+import { useQuery } from '@tanstack/react-query';
+import api from '@/misc/services/api';
+import { useUploadFile } from '@/misc/hooks/api/uploads';
+import DashboardNavigation from '@/misc/components/DashboardNavigation';
+import { User } from '@/misc/types';
 import {
   Gem,
   Tv,
@@ -49,20 +51,23 @@ export default function PremiumContentPage(): ReactElement {
   const [user, setUser] = useState<User | null>(null);
   const [activeTab, setActiveTab] = useState<'videos' | 'materials'>('videos');
   const [message, setMessage] = useState<Message>({ type: '', text: '' });
-  const statusQuery = useApiQuery<{ subscriptionActive: boolean }>(
-    ['premium', 'subscription-status', 'content-archive'],
-    user ? '/premium/subscription/status' : null
-  );
-  const contentQuery = useApiQuery<{ content?: PremiumContent[] }>(
-    ['premium', 'teacher-content'],
-    statusQuery.data?.subscriptionActive ? '/premium/teacher-content' : null
-  );
-  const uploadContentMutation = useApiMutation<unknown, { endpoint: string; data: FormData }>({
-    method: 'post',
-    url: ({ endpoint }) => endpoint,
-    data: ({ data }) => data,
-    invalidate: [['premium', 'teacher-content']],
+  const statusQuery = useQuery({
+    queryKey: ['premium', 'subscription-status'],
+    queryFn: async () => {
+      const response = await api.get('/premium/subscription/status');
+      return response.data;
+    },
+    enabled: !!user,
   });
+  const contentQuery = useQuery({
+    queryKey: ['premium', 'teacher-content'],
+    queryFn: async () => {
+      const response = await api.get('/premium/teacher-content');
+      return response.data;
+    },
+    enabled: !!statusQuery.data?.subscriptionActive,
+  });
+  const uploadContentMutation = useUploadFile();
 
   // Form states
   const [videoForm, setVideoForm] = useState<ContentForm>({

@@ -3,24 +3,24 @@
 import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useApiMutation } from '@/hooks/useApi';
-import { useUser } from '@/context/UserContext';
+import { useCreateCourse, useUpdateCourseById } from '@/misc/hooks/api/courses';
+import { useUser } from '@/misc/context/UserContext';
 import {
   BookOpen,
   AlertCircle,
   Loader2,
   Search,
 } from "lucide-react"
-import ImageUpload from '@/components/ImageUpload';
-import Section from '@/components/Section';
-import { useR2 } from '@/hooks/useR2';
+import ImageUpload from '@/misc/components/ImageUpload';
+import Section from '@/misc/components/Section';
+import { useR2 } from '@/misc/hooks/useR2';
 import { toast } from 'sonner';
 import { useForm } from 'react-hook-form';
-import { CourseFormInput } from '@/types/course';
+import { CourseFormInput } from '@/misc/types/course';
 
-import PageHeader from '@/components/PageHeader';
+import PageHeader from '@/misc/components/PageHeader';
 import { useSubjects } from '@/app/app/courses/misc/api';
-import { LEVELS } from '@/types/course';
+import { LEVELS } from '@/misc/types/course';
 
 export default function CreateCoursePage() {
   const router = useRouter();
@@ -58,18 +58,8 @@ export default function CreateCoursePage() {
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
 
   const { data: subjects, isLoading: loadingSubjects } = useSubjects();
-  const createCourseMutation = useApiMutation<{ id: string }, any>({
-    method: 'post',
-    url: '/courses',
-    data: (data) => data,
-    invalidate: [['courses']],
-  });
-  const updateCourseMutation = useApiMutation<unknown, { courseId: string; data: any }>({
-    method: 'put',
-    url: ({ courseId }) => `/courses/${courseId}`,
-    data: ({ data }) => data,
-    invalidate: [['courses']],
-  });
+  const createCourseMutation = useCreateCourse();
+  const updateCourseMutation = useUpdateCourseById();
 
   if (user?.role !== 'teacher') {
     return (
@@ -120,7 +110,7 @@ export default function CreateCoursePage() {
         await updateCourseMutation.mutateAsync({
           courseId,
           data: {
-          thumbnail_url: uploaded,
+            thumbnail_url: uploaded,
           },
         });
       }

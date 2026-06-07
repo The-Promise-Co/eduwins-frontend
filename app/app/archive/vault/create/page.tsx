@@ -2,9 +2,9 @@
 
 import { useState, useEffect, ReactElement, ChangeEvent, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import { useApiMutation } from '@/hooks/useApi';
-import DashboardNavigation from '@/components/DashboardNavigation';
-import { User } from '@/types';
+import { useCreateVaultItem } from '@/misc/hooks/api/vault';
+import DashboardNavigation from '@/misc/components/DashboardNavigation';
+import { User } from '@/misc/types';
 
 interface VaultFormData {
   title: string;
@@ -39,12 +39,7 @@ export default function CreateVaultItemPage(): ReactElement {
     }
     setAppLoading(false);
   }, []);
-  const createVaultMutation = useApiMutation<unknown, VaultFormData>({
-    method: 'post',
-    url: '/vault',
-    data: (data) => data,
-    invalidate: [['vault']],
-  });
+  const createVaultMutation = useCreateVaultItem();
 
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -70,7 +65,7 @@ export default function CreateVaultItemPage(): ReactElement {
     }
 
     try {
-      await createVaultMutation.mutateAsync(formData);
+      await createVaultMutation.mutateAsync(formData as unknown as Record<string, unknown>);
 
       setSuccess('Content successfully added to the Elite Digital Vault! Redirecting...');
       setTimeout(() => {

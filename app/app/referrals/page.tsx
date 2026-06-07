@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, ReactElement } from 'react';
-import { useUser } from '@/context/UserContext';
+import { useUser } from '@/misc/context/UserContext';
 import { Users, Copy, Check, Gift, UserCheck, Banknote, Clock } from 'lucide-react';
-import PageHeader from '@/components/PageHeader';
-import StatCard from '@/components/StatCard';
+import PageHeader from '@/misc/components/PageHeader';
+import StatCard from '@/misc/components/StatCard';
 
 interface Referral {
   name: string;
@@ -18,13 +18,13 @@ interface Referral {
 
 const MOCK_REFERRALS: Referral[] = [
   // Paid out by admin
-  { name: 'Amaka Obi',    role: 'Parent',  date: 'Mar 12, 2026', status: 'Active', reward: 500, paid: true,  paidDate: 'Apr 1, 2026' },
-  { name: 'Chidi Nweke',  role: 'Teacher', date: 'Mar 20, 2026', status: 'Active', reward: 500, paid: true,  paidDate: 'Apr 1, 2026' },
-  { name: 'Emeka Eze',    role: 'Parent',  date: 'Mar 28, 2026', status: 'Active', reward: 500, paid: true,  paidDate: 'Apr 1, 2026' },
+  { name: 'Amaka Obi', role: 'Parent', date: 'Mar 12, 2026', status: 'Active', reward: 500, paid: true, paidDate: 'Apr 1, 2026' },
+  { name: 'Chidi Nweke', role: 'Teacher', date: 'Mar 20, 2026', status: 'Active', reward: 500, paid: true, paidDate: 'Apr 1, 2026' },
+  { name: 'Emeka Eze', role: 'Parent', date: 'Mar 28, 2026', status: 'Active', reward: 500, paid: true, paidDate: 'Apr 1, 2026' },
   // New — awaiting payout
-  { name: 'Fatima Aliyu', role: 'Parent',  date: 'Apr 30, 2026', status: 'Active', reward: 500, paid: false },
-  { name: 'Kemi Adeyemi', role: 'Teacher', date: 'May 3, 2026',  status: 'Active', reward: 500, paid: false },
-  { name: 'Tunde Bello',  role: 'Parent',  date: 'May 7, 2026',  status: 'Pending', reward: 500, paid: false },
+  { name: 'Fatima Aliyu', role: 'Parent', date: 'Apr 30, 2026', status: 'Active', reward: 500, paid: false },
+  { name: 'Kemi Adeyemi', role: 'Teacher', date: 'May 3, 2026', status: 'Active', reward: 500, paid: false },
+  { name: 'Tunde Bello', role: 'Parent', date: 'May 7, 2026', status: 'Pending', reward: 500, paid: false },
 ];
 
 function ReferralTable({ referrals, emptyText }: { referrals: Referral[]; emptyText: string }) {
@@ -67,11 +67,10 @@ function ReferralTable({ referrals, emptyText }: { referrals: Referral[]; emptyT
                 )}
               </td>
               <td className="py-4 px-6 text-center">
-                <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase border ${
-                  ref.status === 'Active'
-                    ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
-                    : 'bg-amber-50 text-amber-700 border-amber-100'
-                }`}>
+                <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase border ${ref.status === 'Active'
+                  ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
+                  : 'bg-amber-50 text-amber-700 border-amber-100'
+                  }`}>
                   {ref.status}
                 </span>
               </td>
@@ -101,10 +100,10 @@ export default function ReferralsPage(): ReactElement {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const paid   = MOCK_REFERRALS.filter((r) => r.paid);
+  const paid = MOCK_REFERRALS.filter((r) => r.paid);
   const unpaid = MOCK_REFERRALS.filter((r) => !r.paid);
 
-  const totalEarned  = paid.reduce((s, r) => s + r.reward, 0);
+  const totalEarned = paid.reduce((s, r) => s + r.reward, 0);
   const pendingPayout = unpaid
     .filter((r) => r.status === 'Active')
     .reduce((s, r) => s + r.reward, 0);
@@ -118,10 +117,10 @@ export default function ReferralsPage(): ReactElement {
 
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <StatCard label="Total Referred"   value={String(MOCK_REFERRALS.length)} icon={Users}     color="text-[#001A72]"    bg="bg-[#001A72]/5" />
-        <StatCard label="Awaiting Payout"  value={String(unpaid.filter(r => r.status === 'Active').length)} icon={Clock} color="text-amber-600"  bg="bg-amber-50" />
-        <StatCard label="Total Paid Out"   value={`₦${totalEarned.toLocaleString()}`}  icon={Banknote}  color="text-emerald-600" bg="bg-emerald-50" />
-        <StatCard label="Pending Earnings" value={`₦${pendingPayout.toLocaleString()}`} icon={Gift}    color="text-purple-600"  bg="bg-purple-50" />
+        <StatCard label="Total Referred" value={String(MOCK_REFERRALS.length)} icon={Users} color="text-[#001A72]" bg="bg-[#001A72]/5" />
+        <StatCard label="Awaiting Payout" value={String(unpaid.filter(r => r.status === 'Active').length)} icon={Clock} color="text-amber-600" bg="bg-amber-50" />
+        <StatCard label="Total Paid Out" value={`₦${totalEarned.toLocaleString()}`} icon={Banknote} color="text-emerald-600" bg="bg-emerald-50" />
+        <StatCard label="Pending Earnings" value={`₦${pendingPayout.toLocaleString()}`} icon={Gift} color="text-purple-600" bg="bg-purple-50" />
       </div>
 
       {/* Referral Link */}
@@ -151,36 +150,32 @@ export default function ReferralsPage(): ReactElement {
         <div className="flex border-b border-gray-100">
           <button
             onClick={() => setActiveTab('awaiting')}
-            className={`flex-1 flex items-center justify-center gap-2 py-4 text-xs font-black uppercase tracking-widest transition border-b-2 ${
-              activeTab === 'awaiting'
-                ? 'border-amber-400 text-amber-600 bg-amber-50/40'
-                : 'border-transparent text-gray-400 hover:text-gray-600 hover:bg-gray-50'
-            }`}
+            className={`flex-1 flex items-center justify-center gap-2 py-4 text-xs font-black uppercase tracking-widest transition border-b-2 ${activeTab === 'awaiting'
+              ? 'border-amber-400 text-amber-600 bg-amber-50/40'
+              : 'border-transparent text-gray-400 hover:text-gray-600 hover:bg-gray-50'
+              }`}
           >
             <Clock size={13} />
             Awaiting Payout
             {unpaid.length > 0 && (
-              <span className={`ml-1 px-1.5 py-0.5 rounded-full text-[9px] font-black ${
-                activeTab === 'awaiting' ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-500'
-              }`}>
+              <span className={`ml-1 px-1.5 py-0.5 rounded-full text-[9px] font-black ${activeTab === 'awaiting' ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-500'
+                }`}>
                 {unpaid.length}
               </span>
             )}
           </button>
           <button
             onClick={() => setActiveTab('paid')}
-            className={`flex-1 flex items-center justify-center gap-2 py-4 text-xs font-black uppercase tracking-widest transition border-b-2 ${
-              activeTab === 'paid'
-                ? 'border-emerald-400 text-emerald-600 bg-emerald-50/40'
-                : 'border-transparent text-gray-400 hover:text-gray-600 hover:bg-gray-50'
-            }`}
+            className={`flex-1 flex items-center justify-center gap-2 py-4 text-xs font-black uppercase tracking-widest transition border-b-2 ${activeTab === 'paid'
+              ? 'border-emerald-400 text-emerald-600 bg-emerald-50/40'
+              : 'border-transparent text-gray-400 hover:text-gray-600 hover:bg-gray-50'
+              }`}
           >
             <Banknote size={13} />
             Paid Out
             {paid.length > 0 && (
-              <span className={`ml-1 px-1.5 py-0.5 rounded-full text-[9px] font-black ${
-                activeTab === 'paid' ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-500'
-              }`}>
+              <span className={`ml-1 px-1.5 py-0.5 rounded-full text-[9px] font-black ${activeTab === 'paid' ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-500'
+                }`}>
                 {paid.length}
               </span>
             )}

@@ -20,7 +20,7 @@ import {
   BookMarked,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { useChild, Child } from '@/hooks/useChildren';
+import { useChild, Child } from '@/misc/hooks/useChildren';
 
 type Tab = 'courses' | 'schedule' | 'analytics' | 'assessments';
 
@@ -195,11 +195,10 @@ function CoursesTab() {
                   <h4 className="font-bold text-gray-900 text-sm">{course.title}</h4>
                   <p className="text-xs text-gray-400 mt-0.5">{course.teacher}</p>
                 </div>
-                <span className={`text-[10px] font-black px-2.5 py-1 rounded-full shrink-0 ${
-                  course.status === 'completed'
-                    ? 'bg-emerald-50 text-emerald-600 border border-emerald-100'
-                    : 'bg-blue-50 text-blue-600 border border-blue-100'
-                }`}>
+                <span className={`text-[10px] font-black px-2.5 py-1 rounded-full shrink-0 ${course.status === 'completed'
+                  ? 'bg-emerald-50 text-emerald-600 border border-emerald-100'
+                  : 'bg-blue-50 text-blue-600 border border-blue-100'
+                  }`}>
                   {course.status === 'completed' ? 'Completed' : 'In Progress'}
                 </span>
               </div>
@@ -253,9 +252,8 @@ function ScheduleTab() {
                 <div className="text-right shrink-0">
                   <p className="text-xs font-bold text-gray-700">{s.time}</p>
                   <p className="text-[10px] text-gray-400">{s.duration}</p>
-                  <span className={`text-[9px] font-black px-2 py-0.5 rounded-full mt-1 inline-block ${
-                    s.type === 'online' ? 'bg-indigo-50 text-indigo-600' : 'bg-amber-50 text-amber-600'
-                  }`}>
+                  <span className={`text-[9px] font-black px-2 py-0.5 rounded-full mt-1 inline-block ${s.type === 'online' ? 'bg-indigo-50 text-indigo-600' : 'bg-amber-50 text-amber-600'
+                    }`}>
                     {s.type}
                   </span>
                 </div>
@@ -539,11 +537,10 @@ export default function ChildDetailPage() {
             <button
               key={key}
               onClick={() => setActiveTab(key)}
-              className={`flex items-center gap-2 px-5 py-4 text-xs font-black uppercase tracking-wider whitespace-nowrap transition-all border-b-2 -mb-px ${
-                activeTab === key
-                  ? 'text-[#001A72] border-[#001A72]'
-                  : 'text-gray-400 border-transparent hover:text-gray-600 hover:border-gray-200'
-              }`}
+              className={`flex items-center gap-2 px-5 py-4 text-xs font-black uppercase tracking-wider whitespace-nowrap transition-all border-b-2 -mb-px ${activeTab === key
+                ? 'text-[#001A72] border-[#001A72]'
+                : 'text-gray-400 border-transparent hover:text-gray-600 hover:border-gray-200'
+                }`}
             >
               <Icon size={14} className={activeTab === key ? 'text-[#FFB81C]' : 'text-gray-400'} />
               {label}

@@ -2,9 +2,10 @@
 
 import { useState, useEffect, ReactElement, ChangeEvent, FormEvent, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { useApiMutation, useApiQuery } from '@/hooks/useApi';
-import { useUser } from '@/context/UserContext';
-import { TeacherProfile } from '@/types';
+import { useProfileCompletion, useUploadFile } from '@/misc/hooks/api/uploads';
+import { useUpdateProfile } from '@/misc/hooks/api/auth';
+import { useUser } from '@/misc/context/UserContext';
+import { TeacherProfile } from '@/misc/types';
 import {
   User as UserIcon,
   Camera,
@@ -19,10 +20,10 @@ import {
   ShieldCheck,
   RefreshCw,
 } from 'lucide-react';
-import PageHeader from '@/components/PageHeader';
-import Button from '@/components/Button';
-import ImageCropModal from '@/components/ImageCropModal';
-import { useR2 } from '@/hooks/useR2';
+import PageHeader from '@/misc/components/PageHeader';
+import Button from '@/misc/components/Button';
+import ImageCropModal from '@/misc/components/ImageCropModal';
+import { useR2 } from '@/misc/hooks/useR2';
 import { toast } from 'sonner';
 
 interface ProfileCompletion {
@@ -61,22 +62,9 @@ export default function ProfilePage(): ReactElement {
   const [imageSrc, setImageSrc] = useState<string>('');
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const completionQuery = useApiQuery<ProfileCompletion>(
-    ['uploads', 'profile-completion'],
-    user?.role === 'teacher' ? '/uploads/profile-completion' : null
-  );
-  const updateProfileMutation = useApiMutation<unknown, any>({
-    method: 'put',
-    url: '/auth/profile',
-    data: (data) => data,
-    invalidate: [['auth', 'me'], ['uploads', 'profile-completion']],
-  });
-  const uploadDocumentMutation = useApiMutation<{ message?: string }, { endpoint: string; data: FormData }>({
-    method: 'post',
-    url: ({ endpoint }) => endpoint,
-    data: ({ data }) => data,
-    invalidate: [['auth', 'me'], ['uploads', 'profile-completion']],
-  });
+  const completionQuery = useProfileCompletion();
+  const updateProfileMutation = useUpdateProfile();
+  const uploadDocumentMutation = useUploadFile();
 
   const init = async () => {
     const token = localStorage.getItem('token');
@@ -177,7 +165,7 @@ export default function ProfilePage(): ReactElement {
         bio: formData.bio,
         photoUrl: r2Url,
       });
-      
+
       setFormData((prev) => ({ ...prev, photo_url: r2Url }));
       const updated = { ...(user || {}), photo_url: r2Url } as TeacherProfile;
       localStorage.setItem('user', JSON.stringify(updated));
@@ -230,7 +218,7 @@ export default function ProfilePage(): ReactElement {
         videoIntro: '/uploads/video-intro',
         credentials: '/uploads/credentials',
       };
-      
+
       const res = await uploadDocumentMutation.mutateAsync({
         endpoint: endpointMap[uploadType],
         data: uploadData,
@@ -458,9 +446,8 @@ export default function ProfilePage(): ReactElement {
                     </div>
                   </div>
 
-                  <label className={`flex items-center justify-center gap-2 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest cursor-pointer transition select-none ${
-                    uploading.videoIntro ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-[#001A72] text-white hover:bg-[#001A72]/90 shadow-sm shadow-[#001A72]/5'
-                  }`}>
+                  <label className={`flex items-center justify-center gap-2 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest cursor-pointer transition select-none ${uploading.videoIntro ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-[#001A72] text-white hover:bg-[#001A72]/90 shadow-sm shadow-[#001A72]/5'
+                    }`}>
                     <Upload size={12} />
                     {uploading.videoIntro ? 'Uploading…' : 'Choose Video'}
                     <input
@@ -481,11 +468,10 @@ export default function ProfilePage(): ReactElement {
                         <FileText size={15} />
                       </div>
                       {completion?.completion?.credentials ? (
-                        <div className={`flex items-center gap-1 text-[9px] font-black px-2 py-0.5 rounded-md border ${
-                          completion?.completion?.credentialsVerified
-                            ? 'text-emerald-600 bg-emerald-50 border-emerald-100'
-                            : 'text-amber-600 bg-amber-50 border-amber-100'
-                        }`}>
+                        <div className={`flex items-center gap-1 text-[9px] font-black px-2 py-0.5 rounded-md border ${completion?.completion?.credentialsVerified
+                          ? 'text-emerald-600 bg-emerald-50 border-emerald-100'
+                          : 'text-amber-600 bg-amber-50 border-amber-100'
+                          }`}>
                           {completion?.completion?.credentialsVerified ? <CheckCircle2 size={10} /> : <Clock size={10} />}
                           {completion?.completion?.credentialsVerified ? 'Verified' : 'Pending Verification'}
                         </div>
@@ -503,9 +489,8 @@ export default function ProfilePage(): ReactElement {
                     </div>
                   </div>
 
-                  <label className={`flex items-center justify-center gap-2 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest cursor-pointer transition select-none ${
-                    uploading.credentials ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-[#001A72] text-white hover:bg-[#001A72]/90 shadow-sm shadow-[#001A72]/5'
-                  }`}>
+                  <label className={`flex items-center justify-center gap-2 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest cursor-pointer transition select-none ${uploading.credentials ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-[#001A72] text-white hover:bg-[#001A72]/90 shadow-sm shadow-[#001A72]/5'
+                    }`}>
                     <Upload size={12} />
                     {uploading.credentials ? 'Uploading…' : 'Choose PDF'}
                     <input

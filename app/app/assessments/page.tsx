@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, ReactElement } from 'react';
-import { useUser } from '@/context/UserContext';
+import { useUser } from '@/misc/context/UserContext';
 import { ClipboardList, Clock, CheckCircle2, XCircle, ChevronRight, Trophy, Target } from 'lucide-react';
-import PageHeader from '@/components/PageHeader';
-import StatCard from '@/components/StatCard';
+import PageHeader from '@/misc/components/PageHeader';
+import StatCard from '@/misc/components/StatCard';
 
 interface Assessment {
   id: number;
@@ -26,9 +26,9 @@ const ASSESSMENTS: Assessment[] = [
 ];
 
 const STATUS_CONFIG = {
-  pending:   { label: 'Pending',   color: 'bg-amber-50 text-amber-700 border-amber-100',   icon: Clock },
+  pending: { label: 'Pending', color: 'bg-amber-50 text-amber-700 border-amber-100', icon: Clock },
   completed: { label: 'Completed', color: 'bg-emerald-50 text-emerald-700 border-emerald-100', icon: CheckCircle2 },
-  missed:    { label: 'Missed',    color: 'bg-red-50 text-red-600 border-red-100',           icon: XCircle },
+  missed: { label: 'Missed', color: 'bg-red-50 text-red-600 border-red-100', icon: XCircle },
 };
 
 export default function AssessmentsPage(): ReactElement {
@@ -61,11 +61,10 @@ export default function AssessmentsPage(): ReactElement {
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`px-4 py-1.5 rounded-lg text-xs font-bold capitalize transition ${
-              activeTab === tab
-                ? 'bg-white text-[#001A72] shadow-sm'
-                : 'text-gray-500 hover:text-gray-700'
-            }`}
+            className={`px-4 py-1.5 rounded-lg text-xs font-bold capitalize transition ${activeTab === tab
+              ? 'bg-white text-[#001A72] shadow-sm'
+              : 'text-gray-500 hover:text-gray-700'
+              }`}
           >
             {tab}
           </button>
