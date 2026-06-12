@@ -68,7 +68,7 @@ export default function HomePage(): ReactElement {
             {/* pill badge */}
             <div className="inline-flex items-center gap-2 bg-[#FFB81C]/15 border border-[#FFB81C]/30 text-[#FFB81C] text-sm font-semibold px-4 py-1.5 rounded-full mb-6">
               <Sparkles size={14} />
-              Nigeria's #1 Tutor Marketplace
+              Nigeria's #1 Tutors Marketplace
             </div>
 
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-black text-white leading-[1.1] mb-6">
