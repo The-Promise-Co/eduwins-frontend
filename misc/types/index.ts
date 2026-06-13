@@ -15,34 +15,42 @@ export interface User {
   twoFactorEnabled?: boolean;
 }
 
+export interface TeacherDocument {
+  id: string;
+  url: string;
+  name: string;
+  tags: string[];
+  verified: boolean;
+  verified_at?: string;
+  uploaded_at: string;
+}
+
 export interface TeacherProfile extends User {
   subjects: string[];
   bio: string;
   rating: number;
   reviewsCount: number;
   hourlyRate: number;
-  verified: boolean;
-  introVideoUrl?: string;
-  headshot?: string;
+  email_verified: boolean;
+  phone_verified: boolean;
+  id_verified: boolean;
+  photo: string | null;
+  video_verified: string | null;
+  is_verified: boolean;
+  documents: TeacherDocument[];
   name?: string;
-  credentialsVerified?: boolean;
   subscribersCount?: string | number;
-  photo_url?: string;
-  profilePhoto?: string;
   full_name?: string;
   reviewCount?: number;
   baseHourlyRate?: number;
   yearsExperience?: number | string;
   qualification?: string;
-  videoIntro?: string;
-  credentials?: string;
   is_premium?: boolean;
   referralCode?: string;
   referralCount?: number;
   referralDiscount?: number;
   welfareBoost?: number;
   base_hourly_rate?: number;
-  credentials_url?: string;
 }
 
 export interface Booking {

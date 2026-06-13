@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, ReactElement } from 'react';
-import { useTeachersPending, useBookingsPending, useAdminStats, useApproveTeacher, useRejectTeacher, useReleaseBookingFunds } from '@/misc/hooks/api/admin';
+import { useTeachersPending, useBookingsPending, useAdminStats, useApproveTeacher, useRejectTeacher, useReleaseBookingFunds, useVerifyDocument, useRejectDocument } from '@/misc/hooks/api/admin';
 import NavBar from '@/misc/components/NavBar';
 import { TeacherProfile } from '@/misc/types';
 import {
@@ -49,6 +49,8 @@ export default function AdminVettingDashboard(): ReactElement {
   const approveTeacherMutation = useApproveTeacher();
   const rejectTeacherMutation = useRejectTeacher();
   const releaseFundsMutation = useReleaseBookingFunds();
+  const verifyDocMutation = useVerifyDocument();
+  const rejectDocMutation = useRejectDocument();
 
   const handleApproveTeacher = async (teacherId: string) => {
     try {
@@ -63,6 +65,22 @@ export default function AdminVettingDashboard(): ReactElement {
       await rejectTeacherMutation.mutateAsync(teacherId);
     } catch (err: any) {
       alert('Failed to reject teacher');
+    }
+  };
+
+  const handleVerifyDocument = async (documentId: string, teacherId: string) => {
+    try {
+      await verifyDocMutation.mutateAsync({ documentId, teacherId });
+    } catch (err: any) {
+      alert('Failed to verify document');
+    }
+  };
+
+  const handleRejectDocument = async (documentId: string, teacherId: string) => {
+    try {
+      await rejectDocMutation.mutateAsync({ documentId, teacherId });
+    } catch (err: any) {
+      alert('Failed to reject document');
     }
   };
 
@@ -140,15 +158,48 @@ export default function AdminVettingDashboard(): ReactElement {
                               <RecordItem label="Base Hourly Rate" value={`₦${teacher.baseHourlyRate?.toLocaleString()}`} />
                               <RecordItem label="Expertise Subjects" value={(teacher.subjects || []).join(', ')} />
                             </div>
-                            {teacher.credentials && (
-                              <a
-                                href={teacher.credentials}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="mt-8 inline-flex items-center gap-2 bg-[#001A72]/5 text-[#001A72] px-6 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-[#001A72]/10 transition"
-                              >
-                                <FileText size={14} /> Open Verified Document
-                              </a>
+                            {/* Documents */}
+                            {teacher.documents && teacher.documents.length > 0 && (
+                              <div className="mt-6 space-y-3">
+                                <h5 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Documents</h5>
+                                {teacher.documents.map((doc) => (
+                                  <div key={doc.id} className="flex items-center justify-between p-3 rounded-xl bg-gray-50 border border-gray-100">
+                                    <div className="flex items-center gap-3 min-w-0">
+                                      <FileText size={14} className="text-[#001A72] shrink-0" />
+                                      <div className="min-w-0">
+                                        <p className="text-xs font-semibold text-gray-800 truncate">{doc.name}</p>
+                                        <div className="flex flex-wrap gap-1 mt-0.5">
+                                          {doc.tags.map((tag) => (
+                                            <span key={tag} className="text-[8px] font-bold text-gray-500 bg-gray-200/60 px-1.5 py-0.5 rounded">{tag}</span>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    </div>
+                                    <div className="flex items-center gap-1.5 shrink-0">
+                                      {doc.verified ? (
+                                        <span className="text-[9px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100">
+                                          <CheckCircle2 size={10} className="inline mr-0.5" /> Verified
+                                        </span>
+                                      ) : (
+                                        <>
+                                          <button
+                                            onClick={() => handleVerifyDocument(doc.id, teacher.id)}
+                                            className="text-[9px] font-black text-green-600 bg-green-50 px-2 py-0.5 rounded-md border border-green-100 hover:bg-green-100 transition"
+                                          >
+                                            Verify
+                                          </button>
+                                          <button
+                                            onClick={() => handleRejectDocument(doc.id, teacher.id)}
+                                            className="text-[9px] font-black text-red-500 bg-red-50 px-2 py-0.5 rounded-md border border-red-100 hover:bg-red-100 transition"
+                                          >
+                                            Reject
+                                          </button>
+                                        </>
+                                      )}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
                             )}
                           </div>
 

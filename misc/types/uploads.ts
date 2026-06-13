@@ -3,9 +3,9 @@ export interface ProfileCompletion {
   nextStep: string;
   isPremium: boolean;
   completion: {
-    headshot: boolean;
-    videoIntro: boolean;
-    credentials: boolean;
-    credentialsVerified: boolean;
+    photo: boolean;
+    video_verified: boolean;
+    documents_uploaded: boolean;
+    documents_verified: boolean;
   };
 }

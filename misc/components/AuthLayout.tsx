@@ -34,7 +34,7 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
       </div>
 
       {/* Right Column */}
-      <div className="hidden md:block md:w-1/2 relative bg-primary items-center justify-center overflow-hidden">
+      <div className="hidden md:flex md:w-1/2 relative bg-primary items-center justify-center overflow-hidden min-h-screen">
         <AuthSlider />
       </div>
     </div>

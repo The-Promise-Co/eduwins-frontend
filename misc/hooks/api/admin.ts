@@ -92,6 +92,7 @@ export const useUpdateVetting = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'vetting'] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'teachers-pending'] });
       queryClient.invalidateQueries({ queryKey: ['admin', 'overview'] });
     },
   });
@@ -114,7 +115,7 @@ export const useTeachersPending = () => {
   return useQuery<TeacherProfile[]>({
     queryKey: ['admin', 'teachers-pending'],
     queryFn: async () => {
-      const response = await api.get<TeacherProfile[]>('/admin/teachers-pending');
+      const response = await api.get<TeacherProfile[]>('/api/admin/vetting');
       return response.data;
     },
   });
@@ -144,11 +145,12 @@ export const useApproveTeacher = () => {
   const queryClient = useQueryClient();
   return useMutation<unknown, unknown, string>({
     mutationFn: async (teacherId) => {
-      const response = await api.put(`/admin/teachers/${teacherId}/approve`);
+      const response = await api.post(`/api/admin/vetting/${teacherId}`, { action: 'approve' });
       return response.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'teachers-pending'] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'vetting'] });
     },
   });
 };
@@ -157,11 +159,12 @@ export const useRejectTeacher = () => {
   const queryClient = useQueryClient();
   return useMutation<unknown, unknown, string>({
     mutationFn: async (teacherId) => {
-      const response = await api.put(`/admin/teachers/${teacherId}/reject`);
+      const response = await api.post(`/api/admin/vetting/${teacherId}`, { action: 'reject' });
       return response.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'teachers-pending'] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'vetting'] });
     },
   });
 };
@@ -176,6 +179,34 @@ export const useReleaseBookingFunds = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'bookings-pending'] });
       queryClient.invalidateQueries({ queryKey: ['admin', 'stats'] });
+    },
+  });
+};
+
+export const useVerifyDocument = () => {
+  const queryClient = useQueryClient();
+  return useMutation<unknown, unknown, { documentId: string; teacherId: string }>({
+    mutationFn: async ({ documentId }) => {
+      const response = await api.put(`/api/admin/documents/${documentId}/verify`);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'teachers-pending'] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'vetting'] });
+    },
+  });
+};
+
+export const useRejectDocument = () => {
+  const queryClient = useQueryClient();
+  return useMutation<unknown, unknown, { documentId: string; teacherId: string }>({
+    mutationFn: async ({ documentId }) => {
+      const response = await api.put(`/api/admin/documents/${documentId}/reject`);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'teachers-pending'] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'vetting'] });
     },
   });
 };

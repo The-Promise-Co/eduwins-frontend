@@ -165,10 +165,10 @@ export default function ProfileBuilderPage(): ReactElement {
             <UploadCard
               title="Identity & Face"
               desc="Professional headshot. Max 5MB."
-              type="headshot"
+              type="photo"
               icon="📸"
               color="border-blue-500"
-              isDone={completion?.completion?.headshot}
+              isDone={completion?.completion?.photo}
               onUpload={handleFileUpload}
               isUploading={uploading.headshot}
             />
@@ -178,20 +178,20 @@ export default function ProfileBuilderPage(): ReactElement {
               type="videoIntro"
               icon="🎬"
               color="border-purple-500"
-              isDone={completion?.completion?.videoIntro}
+              isDone={completion?.completion?.video_verified}
               onUpload={handleFileUpload}
               isUploading={uploading.videoIntro}
             />
             <UploadCard
               title="Credentials"
               desc="TRCN/NIN PDF. Max 10MB."
-              type="credentials"
+              type="documents"
               icon="📄"
               color="border-green-500"
-              isDone={completion?.completion?.credentials}
+              isDone={completion?.completion?.documents_uploaded}
               onUpload={handleFileUpload}
               isUploading={uploading.credentials}
-              verified={completion?.completion?.credentialsVerified}
+              verified={completion?.completion?.documents_verified}
             />
           </div>
 

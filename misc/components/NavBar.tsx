@@ -89,11 +89,11 @@ export default function NavBar() {
   return (
     <>
       <nav
-        className={`sticky top-0 z-50 w-full transition-all duration-300 ${
-          scrolled
-            ? 'bg-white/95 backdrop-blur-md shadow-md'
-            : 'bg-white shadow-sm'
-        }`}
+        className={`sticky top-0 z-50 w-full transition-all duration-300 ${scrolled
+          ? 'bg-white/95 backdrop-blur-md shadow-md'
+          : 'bg-white shadow-sm'
+          }`}
+
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
@@ -113,7 +113,7 @@ export default function NavBar() {
                 </button>
 
                 {/* Mega dropdown */}
-                <div className="absolute left-0 top-full pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-[9999]">
+                <div className="absolute left-0 top-full pt-2 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all duration-200 z-[9999]">
                   <div className="bg-white border border-gray-100 rounded-2xl shadow-xl p-6 w-[620px]">
                     <div className="grid grid-cols-4 gap-6">
                       {SERVICES.map(({ category, items }) => (
@@ -158,7 +158,7 @@ export default function NavBar() {
                   Contact
                   <ChevronDown size={14} className="group-hover:rotate-180 transition-transform duration-200" />
                 </button>
-                <div className="absolute right-0 top-full pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-[9999]">
+                <div className="absolute right-0 top-full pt-2 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all duration-200 z-[9999]">
                   <div className="bg-white border border-gray-100 rounded-2xl shadow-xl p-4 w-64">
                     <div className="space-y-3">
                       {CONTACT.map(({ label, value, href, icon: Icon }) => (

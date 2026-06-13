@@ -122,9 +122,11 @@ export default function AdminDashboard() {
                       <td className="px-3 py-4 text-sm text-gray-600">{teacher.email}</td>
                       <td className="px-3 py-4 text-sm font-bold text-[#001A72]">₦{teacher.base_hourly_rate}</td>
                       <td className="px-3 py-4 text-sm">
-                        {teacher.credentials_url ? (
-                          <a href={teacher.credentials_url} target="_blank" rel="noreferrer" className="text-blue-600 font-bold hover:underline">View File</a>
-                        ) : <span className="text-gray-400 italic">Not uploaded</span>}
+                        {teacher.documents && teacher.documents.length > 0 ? (
+                          <span className="text-blue-600 font-bold">
+                            {teacher.documents.length} document{teacher.documents.length > 1 ? 's' : ''}
+                          </span>
+                        ) : <span className="text-gray-400 italic">None</span>}
                       </td>
                       <td className="px-3 py-4 text-sm space-x-3">
                         <button className="text-green-700 font-bold hover:text-green-900" onClick={() => processVettingAction(teacher.id, 'approve')}>Approve</button>

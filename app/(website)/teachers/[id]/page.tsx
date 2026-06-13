@@ -88,7 +88,7 @@ export default function TeacherDetailPage() {
   const rating = t.rating ?? 4.5;
   const reviews = t.students ?? t.reviewsCount ?? t.reviewCount ?? 0;
   const color = pickColor(t.id);
-  const hasPhoto = !!t.photo_url || !!t.headshot || !!t.profilePhoto;
+  const hasPhoto = !!t.photo;
 
   return (
     <div className="min-h-screen bg-white">
@@ -122,7 +122,7 @@ export default function TeacherDetailPage() {
             <div className="shrink-0">
               {hasPhoto ? (
                 <img
-                  src={t.photo_url || t.headshot || t.profilePhoto}
+                  src={t.photo || undefined}
                   alt={name}
                   className="w-24 h-24 md:w-28 md:h-28 rounded-2xl object-cover border-4 border-white/20 shadow-lg"
                 />
@@ -137,7 +137,7 @@ export default function TeacherDetailPage() {
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1">
                 <h1 className="text-2xl md:text-3xl font-black">{name}</h1>
-                {t.verified !== false && (
+                {t.is_verified && (
                   <CheckCircle2 size={20} className="text-emerald-400 shrink-0" />
                 )}
               </div>
@@ -230,7 +230,7 @@ export default function TeacherDetailPage() {
             )}
 
             {/* Intro Video */}
-            {t.introVideoUrl && (
+            {t.video_verified && (
               <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-6">
                 <h2 className="font-bold text-gray-800 text-sm mb-3 flex items-center gap-2">
                   <Video size={16} className="text-[#001A72]" />
@@ -238,7 +238,7 @@ export default function TeacherDetailPage() {
                 </h2>
                 <div className="aspect-video bg-gray-100 rounded-xl overflow-hidden">
                   <video
-                    src={t.introVideoUrl}
+                    src={t.video_verified}
                     controls
                     className="w-full h-full object-cover"
                   />
@@ -265,7 +265,7 @@ export default function TeacherDetailPage() {
                 {t.qualification && (
                   <StatRow icon={Award} label="Qualification" value={t.qualification} />
                 )}
-                <StatRow icon={CheckCircle2} label="Status" value={t.verified !== false ? 'Verified' : 'Unverified'} valueColor={t.verified !== false ? 'text-emerald-600' : 'text-amber-600'} />
+                <StatRow icon={CheckCircle2} label="Status" value={t.is_verified ? 'Verified' : 'Unverified'} valueColor={t.is_verified ? 'text-emerald-600' : 'text-amber-600'} />
               </div>
             </div>
 

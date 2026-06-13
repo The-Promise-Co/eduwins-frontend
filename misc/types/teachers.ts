@@ -1,7 +1,7 @@
 import { TeacherProfile } from '@/misc/types';
 
 export interface TeacherSearchResult extends Partial<TeacherProfile> {
-  photo_url?: string;
+  photo?: string | null;
   full_name?: string;
   hourly_rate?: number;
   baseHourlyRate?: number;
