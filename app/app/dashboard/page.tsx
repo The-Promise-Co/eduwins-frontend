@@ -103,7 +103,7 @@ const FEATURE_CARDS: FeatureCard[] = [
     icon: Settings,
     title: 'Settings',
     description: 'Update your personal details, password, and notification preferences.',
-    href: '/app/settings',
+    href: '/app/profile/security',
     color: 'bg-gray-50 border-gray-100',
   },
 ];

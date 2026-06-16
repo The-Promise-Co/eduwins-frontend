@@ -19,16 +19,13 @@ export default function DashboardNavigation({ user }: DashboardNavigationProps) 
   const pathname = usePathname();
 
   const navItems: NavItem[] = [
-    { label: 'Dashboard', href: '/dashboard' },
-    { label: 'Edit Profile', href: '/profile-edit' },
-    { label: 'Profile Builder', href: '/profile-builder', role: 'teacher' },
-    { label: 'Premium', href: '/premium-subscription', role: 'teacher' },
-    { label: 'My Content', href: '/premium-content', role: 'teacher', premiumOnly: true },
-    { label: 'Welfare Fund', href: '/welfare-fund', role: 'teacher' },
-    { label: 'View Schedule', href: '/schedule' },
-    { label: 'Earnings', href: '/earnings' },
-    { label: 'Report', href: '/progress' },
-    { label: 'Settings', href: '/dashboard-settings' },
+    { label: 'Dashboard', href: '/app/dashboard' },
+    { label: 'Edit Profile', href: '/app/profile' },
+    { label: 'Premium', href: '/app/premium-subscription', role: 'teacher' },
+    { label: 'Welfare Fund', href: '/app/welfare-fund', role: 'teacher' },
+    { label: 'View Schedule', href: '/app/schedule' },
+    { label: 'Earnings', href: '/app/earnings' },
+    { label: 'Settings', href: '/app/profile/security' },
   ];
 
   return (

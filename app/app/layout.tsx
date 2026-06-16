@@ -15,7 +15,6 @@ const PAGE_TITLES: Record<string, string> = {
   '/app/schedule': 'Schedule',
   '/app/earnings': 'Earnings',
   '/app/progress': 'Progress Report',
-  '/app/profile/settings': 'Edit Profile',
   '/app/profile/notifications': 'Notifications',
   '/app/profile/security': 'Security & Settings',
   '/app/search': 'Search Teachers',
