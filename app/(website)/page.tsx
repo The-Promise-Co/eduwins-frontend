@@ -187,7 +187,7 @@ export default function HomePage(): ReactElement {
       </section>
 
       {/* ── FEATURED TUTORS ── */}
-      {/* <section className="py-14 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+      {/* <section className="p y-14 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
         <div className="flex items-end justify-between mb-8">
           <div>
             <p className="text-xs font-black text-[#FFB81C] uppercase tracking-widest mb-1">Top Rated</p>
