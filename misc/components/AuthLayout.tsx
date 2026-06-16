@@ -20,7 +20,7 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
         {/* Logo */}
         <div className="flex items-center justify-center pt-2 pb-8">
           <Link href="/" className="flex items-center gap-2">
-            <img src="/logo.png" alt="EduWins Logo" className="h-8" />
+            <img src="/logo.png" alt="Eduwins Logo" className="h-8" />
           </Link>
         </div>
 

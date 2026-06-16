@@ -41,7 +41,7 @@ function ForgotPasswordContent() {
 
         <h1 className="text-3xl font-extrabold text-gray-900 mb-2">Check your inbox</h1>
         <p className="text-gray-500 text-sm mb-8 leading-relaxed">
-          If <strong>{email}</strong> is registered with EduWins, you&apos;ll receive a
+          If <strong>{email}</strong> is registered with Eduwins, you&apos;ll receive a
           password reset link shortly. The link expires in <strong>1 hour</strong>.
         </p>
 

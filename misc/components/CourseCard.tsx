@@ -30,6 +30,28 @@ const toSentenceCase = (s: string) => {
   return spaced.charAt(0).toUpperCase() + spaced.slice(1).toLowerCase();
 };
 
+const AVATAR_GRADIENTS = [
+  'from-[#001A72] via-[#0033a0] to-[#FFB81C]',
+  'from-indigo-700 via-blue-600 to-cyan-400',
+  'from-emerald-700 via-teal-600 to-lime-300',
+  'from-purple-700 via-fuchsia-600 to-amber-300',
+  'from-slate-800 via-[#001A72] to-sky-400',
+];
+
+const getCourseInitials = (title: string) => {
+  const words = title.split(' ').filter(Boolean);
+  if (words.length === 0) return 'C';
+  if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+  return `${words[0][0]}${words[1][0]}`.toUpperCase();
+};
+
+const getAvatarGradient = (id: string | number | undefined) => {
+  const seed = String(id || 'course')
+    .split('')
+    .reduce((sum, char) => sum + char.charCodeAt(0), 0);
+  return AVATAR_GRADIENTS[seed % AVATAR_GRADIENTS.length];
+};
+
 interface CourseCardProps {
   course: Course;
   isTeacher: boolean;
@@ -37,7 +59,10 @@ interface CourseCardProps {
 
 export default function CourseCard({ course, isTeacher }: CourseCardProps) {
   const [showMenu, setShowMenu] = useState(false);
+  const [imageFailed, setImageFailed] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const tutorName = course.teacher_name || 'Tutor';
+  const showThumbnail = !!course.thumbnail_url && !imageFailed;
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -49,21 +74,26 @@ export default function CourseCard({ course, isTeacher }: CourseCardProps) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  useEffect(() => {
+    setImageFailed(false);
+  }, [course.thumbnail_url]);
+
   return (
     <div className="group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg transition-all duration-200 hover:-translate-y-0.5 overflow-hidden flex flex-col h-full relative">
       {/* Thumbnail / Color band */}
       <Link href={`/app/courses/${course.id}`} className="block">
-        {course.thumbnail_url ? (
+        {showThumbnail ? (
           <div className="h-32 w-full relative">
             <img
-              src={course.thumbnail_url}
+              src={course.thumbnail_url || undefined}
               alt={course.title}
               className="w-full h-full object-cover"
+              onError={() => setImageFailed(true)}
             />
             <div className="absolute inset-0 bg-black/5" />
           </div>
         ) : (
-          <div className="h-3 w-full bg-gradient-to-r from-[#001A72] to-[#0040c8]" />
+          <CourseAvatar course={course} />
         )}
       </Link>
 
@@ -123,6 +153,9 @@ export default function CourseCard({ course, isTeacher }: CourseCardProps) {
           <h3 className="font-bold text-[#001A72] text-sm leading-snug mb-1.5 line-clamp-2 group-hover:text-[#0028a5] transition">
             {course.title}
           </h3>
+          <p className="text-[10px] text-gray-400 font-semibold mb-2">
+            By {tutorName}
+          </p>
           <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed flex-1">
             {course.description}
           </p>
@@ -152,7 +185,7 @@ export default function CourseCard({ course, isTeacher }: CourseCardProps) {
         <div className="mt-3 flex items-center justify-between">
           {!isTeacher && (
             <div>
-              <p className="text-[10px] text-gray-400 font-medium">{course.teacher_name}</p>
+              <p className="text-[10px] text-gray-400 font-medium">{tutorName}</p>
               {course.rating_avg && Number(course.rating_avg) > 0 ? (
                 <div className="flex items-center gap-1 mt-0.5">
                   <Star size={11} className="text-amber-400 fill-amber-400" />
@@ -186,3 +219,14 @@ export default function CourseCard({ course, isTeacher }: CourseCardProps) {
   );
 }
 
+function CourseAvatar({ course }: { course: Course }) {
+  return (
+    <div className={`h-32 w-full bg-gradient-to-br ${getAvatarGradient(course.id)} relative overflow-hidden flex items-center justify-center`}>
+      <div className="absolute -top-10 -right-10 h-28 w-28 rounded-full bg-white/10" />
+      <div className="absolute -bottom-12 -left-8 h-32 w-32 rounded-full bg-white/10" />
+      <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-white/15 text-2xl font-black text-white shadow-xl backdrop-blur-sm border border-white/20">
+        {getCourseInitials(course.title)}
+      </div>
+    </div>
+  );
+}

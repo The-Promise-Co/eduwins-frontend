@@ -6,7 +6,7 @@ import {
   ShieldCheck,
   Star,
   Banknote,
-  Smartphone,
+  CalendarCheck,
   CheckCircle2,
   ArrowRight,
   BookOpen,
@@ -16,6 +16,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import TutorCard from '@/misc/components/TutorCard';
+import { COMPANY_NAME } from '@/misc/constants';
 
 const SUBJECTS = [
   { label: 'Mathematics', icon: '📐' },
@@ -37,7 +38,7 @@ const TUTORS = [
 ];
 
 const TESTIMONIALS = [
-  { name: 'Adaeze Nwosu', role: 'WAEC Student', quote: 'EduWins helped me go from a D to a B in Mathematics in just 6 weeks. My tutor was patient and explained everything clearly.', rating: 5 },
+  { name: 'Adaeze Nwosu', role: 'WAEC Student', quote: `${COMPANY_NAME} helped me go from a D to a B in Mathematics in just 6 weeks. My tutor was patient and explained everything clearly.`, rating: 5 },
   { name: 'Chidi Okafor', role: 'JAMB Candidate', quote: "I found an amazing Physics tutor within minutes. The booking process was seamless and I passed my JAMB with 310!", rating: 5 },
   { name: 'Fatima Bello', role: 'IELTS Candidate', quote: "Scored 7.5 on my IELTS with my tutor's guidance. The platform made everything so easy to manage and track my progress.", rating: 5 },
 ];
@@ -213,14 +214,14 @@ export default function HomePage(): ReactElement {
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <p className="text-xs font-black text-[#FFB81C] uppercase tracking-widest mb-2">Why Us</p>
-            <h2 className="text-2xl md:text-3xl font-black text-white">Why Choose EduWins?</h2>
+            <h2 className="text-2xl md:text-3xl font-black text-white">Why Choose {COMPANY_NAME}?</h2>
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
               { icon: ShieldCheck, title: 'Secure & Safe', desc: 'OTP verification & filtered chat keep every interaction safe and trusted.', color: 'text-emerald-400', bg: 'bg-emerald-400/10' },
               { icon: Star, title: 'Trusted Tutors', desc: 'Dynamic trust scores based on real student reviews and lesson history.', color: 'text-[#FFB81C]', bg: 'bg-[#FFB81C]/10' },
               { icon: Banknote, title: 'Fair Payments', desc: 'Secure escrow — tutors keep 80%, fully transparent with no hidden fees.', color: 'text-blue-400', bg: 'bg-blue-400/10' },
-              // { icon: Smartphone, title: 'Works Offline', desc: 'Progressive web app — install on any device and access from anywhere.', color: 'text-purple-400', bg: 'bg-purple-400/10' },
+              { icon: CalendarCheck, title: 'Flexible Scheduling', desc: 'Book lessons around your routine with tutors available online and in person.', color: 'text-purple-400', bg: 'bg-purple-400/10' },
             ].map(({ icon: Icon, title, desc, color, bg }) => (
               <div key={title} className="bg-white/5 border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition">
                 <div className={`w-12 h-12 ${bg} rounded-xl flex items-center justify-center mb-4`}>
@@ -239,7 +240,7 @@ export default function HomePage(): ReactElement {
         <div className="text-center mb-12">
           <p className="text-xs font-black text-[#FFB81C] uppercase tracking-widest mb-2">Simple Steps</p>
           <h2 className="text-2xl md:text-3xl font-black text-[#001A72]">How It Works</h2>
-          <p className="text-gray-500 mt-2 max-w-lg mx-auto text-sm">Getting started with EduWins takes less than 2 minutes.</p>
+          <p className="text-gray-500 mt-2 max-w-lg mx-auto text-sm">Getting started with {COMPANY_NAME} takes less than 2 minutes.</p>
         </div>
         <div className="relative">
           {/* connector line */}
@@ -322,7 +323,7 @@ export default function HomePage(): ReactElement {
             </div>
             <h2 className="text-3xl md:text-4xl font-black text-white mb-4">Ready to Achieve Your Goals?</h2>
             <p className="text-white/70 text-base md:text-lg mb-8 max-w-xl mx-auto">
-              Join thousands of students and tutors already using EduWins to transform learning outcomes across Nigeria.
+              Join thousands of students and tutors already using {COMPANY_NAME} to transform learning outcomes across Nigeria.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link

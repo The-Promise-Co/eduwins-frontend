@@ -340,7 +340,7 @@ function SearchContent() {
             </div>
             <div className="relative">
               <p className="text-xs font-black text-[#FFB81C] uppercase tracking-widest mb-3">Are You a Tutor?</p>
-              <h2 className="text-2xl md:text-3xl font-black text-white mb-3">Join EduWins &amp; Start Earning</h2>
+              <h2 className="text-2xl md:text-3xl font-black text-white mb-3">Join Eduwins &amp; Start Earning</h2>
               <p className="text-white/60 text-sm mb-7 max-w-md mx-auto">
                 Create your tutor profile for free and connect with hundreds of students across Nigeria.
               </p>

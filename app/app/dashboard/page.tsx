@@ -218,7 +218,7 @@ export default function DashboardPage() {
         <div className="relative z-10">
           <p className="text-[#FFB81C] font-bold text-xs tracking-widest uppercase mb-1">Platform Overview</p>
           <h3 className="text-white font-black text-lg leading-snug max-w-xs">
-            Discover EduWins' powerful learning possibilities
+            Discover Eduwins' powerful learning possibilities
           </h3>
           <p className="text-white/60 text-xs mt-2 max-w-sm">
             Connect with expert tutors, track progress, manage earnings, and grow your educational journey — all in one place.

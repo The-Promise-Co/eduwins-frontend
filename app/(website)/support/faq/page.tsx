@@ -53,12 +53,12 @@ const FAQ_DATA = [
     icon: HelpCircle,
     items: [
       {
-        q: 'What is EduWins?',
-        a: "EduWins is Nigeria's leading marketplace connecting students with verified, top-rated tutors for personalized learning. We provide a secure platform for discovering, booking, and conducting lessons across hundreds of subjects."
+        q: 'What is Eduwins?',
+        a: "Eduwins is Nigeria's leading marketplace connecting students with verified, top-rated tutors for personalized learning. We provide a secure platform for discovering, booking, and conducting lessons across hundreds of subjects."
       },
       {
-        q: 'Is EduWins available across Nigeria?',
-        a: 'Yes! EduWins operates nationwide. You can find tutors for both online lessons (accessible from anywhere) and in-person lessons in major cities including Lagos, Abuja, Port Harcourt, and more.'
+        q: 'Is Eduwins available across Nigeria?',
+        a: 'Yes! Eduwins operates nationwide. You can find tutors for both online lessons (accessible from anywhere) and in-person lessons in major cities including Lagos, Abuja, Port Harcourt, and more.'
       },
       {
         q: 'How do I contact support?',
@@ -80,7 +80,7 @@ const FAQ_DATA = [
       },
       {
         q: 'Are the tutors verified?',
-        a: 'Absolutely. Every tutor on EduWins goes through a multi-step verification process, which includes identity verification, credential checks (degrees/certifications), and sometimes a teaching trial.'
+        a: 'Absolutely. Every tutor on Eduwins goes through a multi-step verification process, which includes identity verification, credential checks (degrees/certifications), and sometimes a teaching trial.'
       },
       {
         q: 'Can I get a refund if I\'m not satisfied?',
@@ -93,7 +93,7 @@ const FAQ_DATA = [
     icon: Users,
     items: [
       {
-        q: 'How do I become a tutor on EduWins?',
+        q: 'How do I become a tutor on Eduwins?',
         a: 'Click on "Become a Tutor", create an account, and complete your professional profile. You\'ll need to provide your qualifications, subjects you teach, and identification. Once our team reviews and approves your profile, you\'ll start appearing in search results.'
       },
       {
@@ -102,11 +102,11 @@ const FAQ_DATA = [
       },
       {
         q: 'When do I get paid?',
-        a: 'Earnings from completed lessons are credited to your EduWins wallet. Once the student confirms the lesson, the funds are released. You can withdraw your balance to any Nigerian bank account at any time.'
+        a: 'Earnings from completed lessons are credited to your Eduwins wallet. Once the student confirms the lesson, the funds are released. You can withdraw your balance to any Nigerian bank account at any time.'
       },
       {
         q: 'What are the platform fees?',
-        a: 'EduWins takes a flat 20% commission on every lesson. This fee covers platform maintenance, marketing to bring you more students, secure payment processing, and dedicated support for both you and your students.'
+        a: 'Eduwins takes a flat 20% commission on every lesson. This fee covers platform maintenance, marketing to bring you more students, secure payment processing, and dedicated support for both you and your students.'
       }
     ]
   },

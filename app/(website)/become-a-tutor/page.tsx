@@ -18,9 +18,9 @@ import {
 } from 'lucide-react';
 
 export const metadata = {
-  title: 'Become a Tutor | EduWins',
+  title: 'Become a Tutor | Eduwins',
   description:
-    'Join thousands of Nigerian tutors earning on their own schedule. Share your knowledge, build your brand, and earn more with EduWins.',
+    'Join thousands of Nigerian tutors earning on their own schedule. Share your knowledge, build your brand, and earn more with Eduwins.',
 };
 
 /* ── data ──────────────────────────────────────────── */
@@ -50,7 +50,7 @@ const REASONS = [
   {
     icon: ShieldCheck,
     title: 'Secure & Guaranteed Payment',
-    desc: 'Lesson fees are held in escrow and released to you on completion. You never chase payments — EduWins handles it all.',
+    desc: 'Lesson fees are held in escrow and released to you on completion. You never chase payments — Eduwins handles it all.',
     color: 'text-[#001A72]',
     bg: 'bg-[#001A72]/5',
   },
@@ -88,7 +88,7 @@ const TESTIMONIALS = [
   {
     name: 'Emeka Obi',
     subject: 'Mathematics Tutor · Lagos',
-    quote: 'Within my first month I had 12 regular students. EduWins handles everything — bookings, payments, reviews. I just teach.',
+    quote: 'Within my first month I had 12 regular students. Eduwins handles everything — bookings, payments, reviews. I just teach.',
     initials: 'EO',
     color: 'from-blue-600 to-blue-800',
   },
@@ -115,7 +115,7 @@ const FAQS = [
   },
   {
     q: 'How and when do I get paid?',
-    a: 'Earnings are credited to your EduWins wallet after each completed session and can be withdrawn to your bank account at any time.',
+    a: 'Earnings are credited to your Eduwins wallet after each completed session and can be withdrawn to your bank account at any time.',
   },
   {
     q: 'What subjects can I teach?',
@@ -156,7 +156,7 @@ export default function BecomeATutorPage(): ReactElement {
           </h1>
 
           <p className="text-white/70 text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed">
-            Join over 5,000 tutors across Nigeria who are building sustainable income, growing their personal brand, and changing students' lives — on EduWins.
+            Join over 5,000 tutors across Nigeria who are building sustainable income, growing their personal brand, and changing students' lives — on Eduwins.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -199,7 +199,7 @@ export default function BecomeATutorPage(): ReactElement {
       <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gray-50">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-14">
-            <p className="text-xs font-black text-[#FFB81C] uppercase tracking-widest mb-2">Why EduWins</p>
+            <p className="text-xs font-black text-[#FFB81C] uppercase tracking-widest mb-2">Why Eduwins</p>
             <h2 className="text-3xl md:text-4xl font-black text-[#001A72]">Everything You Need to Thrive</h2>
             <p className="text-gray-500 mt-3 max-w-xl mx-auto text-sm">
               We built the tools that let great teachers focus on what they love — teaching.
@@ -310,7 +310,7 @@ export default function BecomeATutorPage(): ReactElement {
             Ready to Start Earning?
           </h2>
           <p className="text-white/60 text-base mb-10 leading-relaxed">
-            Join thousands of tutors already building their future on EduWins. It's free to get started.
+            Join thousands of tutors already building their future on Eduwins. It's free to get started.
           </p>
           <Link
             href="/register?role=tutor"

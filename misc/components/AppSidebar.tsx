@@ -26,7 +26,8 @@ import {
   X,
   Users,
   ClipboardList,
-  Baby
+  Baby,
+  LogOut
 } from 'lucide-react';
 
 interface AppSidebarProps {
@@ -37,7 +38,7 @@ interface AppSidebarProps {
 }
 
 export default function AppSidebar({ collapsed, onToggle, isMobileOpen, onCloseMobile }: AppSidebarProps) {
-  const { user } = useUser();
+  const { user, logout } = useUser();
   const pathname = usePathname();
 
   const navItems = [
@@ -80,7 +81,7 @@ export default function AppSidebar({ collapsed, onToggle, isMobileOpen, onCloseM
       ) : (
         <div className="flex items-center gap-3 px-4 py-5 border-b border-white/10 overflow-hidden">
           <Link href="/" className="flex items-center gap-3 shrink-0">
-            <img src="/logo-white.png" alt="EduWins" className={collapsed ? "h-6 w-auto mx-auto" : "h-7 w-auto"} />
+            <img src="/logo-white.png" alt="Eduwins" className={collapsed ? "h-6 w-auto mx-auto" : "h-7 w-auto"} />
           </Link>
         </div>
       )}
@@ -151,6 +152,25 @@ export default function AppSidebar({ collapsed, onToggle, isMobileOpen, onCloseM
           );
         })}
       </nav>
+
+      {/* Bottom action */}
+      <div className={`${isMobile ? 'px-4 pb-6' : 'px-3 pb-4'} mt-auto border-t border-white/10 pt-4`}>
+        <button
+          onClick={() => {
+            onCloseMobile?.();
+            logout();
+          }}
+          title={(!isMobile && collapsed) ? 'Logout' : undefined}
+          className="flex w-full items-center justify-between gap-3 rounded-2xl px-4 py-3 text-white/70 transition-all hover:bg-red-500/10 hover:text-red-200"
+        >
+          <div className="flex items-center gap-3">
+            <span className="shrink-0 w-6 flex justify-center">
+              <LogOut size={20} />
+            </span>
+            {(!collapsed || isMobile) && <span className="font-medium">Logout</span>}
+          </div>
+        </button>
+      </div>
     </div>
   );
 

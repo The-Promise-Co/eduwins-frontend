@@ -91,7 +91,7 @@ function RegisterContent() {
   return (
     <>
       <h1 className="text-3xl font-extrabold text-gray-900 mb-2 w-full">Create Account</h1>
-      <p className="text-gray-500 text-sm mb-8 w-full">Join EduWins today and get started</p>
+      <p className="text-gray-500 text-sm mb-8 w-full">Join Eduwins today and get started</p>
 
       {/* Sign In / Sign Up toggle */}
       <div className="flex w-full bg-gray-100 p-1 rounded-xl mb-6">

@@ -35,3 +35,29 @@ export interface AdminBooking {
   totalSessions: number;
   status: string;
 }
+
+export type PlatformConfigTarget = 'tutor' | 'welfare' | 'platform_fee';
+export type PlatformConfigValueType = 'flat_fee' | 'percentage';
+
+export interface PlatformConfig {
+  id: string;
+  key: string;
+  label: string;
+  target: PlatformConfigTarget;
+  valueType: PlatformConfigValueType;
+  value: string;
+  description?: string | null;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PlatformConfigInput {
+  key: string;
+  label: string;
+  target: PlatformConfigTarget;
+  valueType: PlatformConfigValueType;
+  value: string | number;
+  description?: string;
+  isActive?: boolean;
+}

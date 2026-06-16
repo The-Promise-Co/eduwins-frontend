@@ -12,7 +12,7 @@ import QueryProvider from '@/misc/context/QueryProvider';
 import { Toaster } from 'sonner';
 
 export const metadata: Metadata = {
-  title: 'EduWins - Connect with Quality Tutors',
+  title: 'Eduwins - Connect with Quality Tutors',
   description: 'Connecting students with quality tutors for better learning outcomes.',
 };
 
@@ -27,7 +27,7 @@ export default function RootLayout({
         <QueryProvider>
           <UserProvider>
             <main className="flex-1 w-full h-full">
-              <Suspense fallback={<div className="flex items-center justify-center min-h-screen text-[#001A72] font-semibold">Loading EduWins...</div>}>
+              <Suspense fallback={<div className="flex items-center justify-center min-h-screen text-[#001A72] font-semibold">Loading Eduwins...</div>}>
                 {children}
               </Suspense>
             </main>

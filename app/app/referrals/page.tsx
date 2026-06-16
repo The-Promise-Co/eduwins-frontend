@@ -2,32 +2,24 @@
 
 import { useState, ReactElement } from 'react';
 import { useUser } from '@/misc/context/UserContext';
-import { Users, Copy, Check, Gift, UserCheck, Banknote, Clock } from 'lucide-react';
+import { Users, Copy, Check, Gift, Banknote, Clock, Loader2 } from 'lucide-react';
 import PageHeader from '@/misc/components/PageHeader';
 import StatCard from '@/misc/components/StatCard';
+import { useMyReferrals } from '@/misc/hooks/api/referrals';
+import type { ReferralItem } from '@/misc/types/referrals';
 
-interface Referral {
-  name: string;
-  role: string;
-  date: string;
-  status: 'Active' | 'Pending';
-  reward: number;
-  paid: boolean;
-  paidDate?: string;
-}
+const formatDate = (value?: string | null) => {
+  if (!value) return '—';
+  return new Intl.DateTimeFormat('en-NG', { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(value));
+};
 
-const MOCK_REFERRALS: Referral[] = [
-  // Paid out by admin
-  { name: 'Amaka Obi', role: 'Parent', date: 'Mar 12, 2026', status: 'Active', reward: 500, paid: true, paidDate: 'Apr 1, 2026' },
-  { name: 'Chidi Nweke', role: 'Teacher', date: 'Mar 20, 2026', status: 'Active', reward: 500, paid: true, paidDate: 'Apr 1, 2026' },
-  { name: 'Emeka Eze', role: 'Parent', date: 'Mar 28, 2026', status: 'Active', reward: 500, paid: true, paidDate: 'Apr 1, 2026' },
-  // New — awaiting payout
-  { name: 'Fatima Aliyu', role: 'Parent', date: 'Apr 30, 2026', status: 'Active', reward: 500, paid: false },
-  { name: 'Kemi Adeyemi', role: 'Teacher', date: 'May 3, 2026', status: 'Active', reward: 500, paid: false },
-  { name: 'Tunde Bello', role: 'Parent', date: 'May 7, 2026', status: 'Pending', reward: 500, paid: false },
-];
+const getPendingReward = (referral: ReferralItem) => {
+  if (referral.rewardAmount) return Number(referral.rewardAmount);
+  if (referral.subscription) return referral.subscription.rewardAmount;
+  return referral.pendingRewardEstimates?.monthly?.reward || 0;
+};
 
-function ReferralTable({ referrals, emptyText }: { referrals: Referral[]; emptyText: string }) {
+function ReferralTable({ referrals, emptyText }: { referrals: ReferralItem[]; emptyText: string }) {
   if (referrals.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-10 text-center opacity-40">
@@ -49,36 +41,40 @@ function ReferralTable({ referrals, emptyText }: { referrals: Referral[]; emptyT
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-50">
-          {referrals.map((ref, i) => (
-            <tr key={i} className="hover:bg-gray-50/50 transition-colors">
+          {referrals.map((ref) => {
+            const name = ref.referee?.name || 'Unknown User';
+            const reward = getPendingReward(ref);
+            return (
+            <tr key={ref.id} className="hover:bg-gray-50/50 transition-colors">
               <td className="py-4 px-6">
                 <div className="flex items-center gap-3">
                   <div className="w-7 h-7 rounded-full bg-[#001A72]/10 text-[#001A72] text-[10px] font-black flex items-center justify-center shrink-0">
-                    {ref.name.charAt(0)}
+                    {name.charAt(0)}
                   </div>
-                  <span className="text-xs font-bold text-gray-800">{ref.name}</span>
+                  <span className="text-xs font-bold text-gray-800">{name}</span>
                 </div>
               </td>
-              <td className="py-4 px-6 text-xs text-gray-500">{ref.role}</td>
+              <td className="py-4 px-6 text-xs text-gray-500 capitalize">{ref.referee?.role || '—'}</td>
               <td className="py-4 px-6 text-xs text-gray-500">
-                <span>{ref.date}</span>
-                {ref.paid && ref.paidDate && (
-                  <p className="text-[10px] text-gray-400 mt-0.5">Paid out: {ref.paidDate}</p>
+                <span>{formatDate(ref.referee?.joinedAt || ref.createdAt)}</span>
+                {ref.rewardCredited && ref.rewardedAt && (
+                  <p className="text-[10px] text-gray-400 mt-0.5">Credited: {formatDate(ref.rewardedAt)}</p>
                 )}
               </td>
               <td className="py-4 px-6 text-center">
-                <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase border ${ref.status === 'Active'
+                <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase border ${ref.status === 'subscribed'
                   ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
                   : 'bg-amber-50 text-amber-700 border-amber-100'
                   }`}>
-                  {ref.status}
+                  {ref.status === 'subscribed' ? 'Active' : 'Pending'}
                 </span>
               </td>
               <td className="py-4 px-6 text-right text-xs font-black text-purple-600">
-                ₦{ref.reward.toLocaleString()}
+                ₦{reward.toLocaleString()}
               </td>
             </tr>
-          ))}
+          );
+          })}
         </tbody>
       </table>
     </div>
@@ -89,6 +85,7 @@ export default function ReferralsPage(): ReactElement {
   const { user } = useUser();
   const [copied, setCopied] = useState(false);
   const [activeTab, setActiveTab] = useState<'awaiting' | 'paid'>('awaiting');
+  const referralsQuery = useMyReferrals();
 
   const referralCode =
     (user as any)?.referralCode || 'EDU-' + (user?.id?.slice(0, 6).toUpperCase() ?? 'XXXXXX');
@@ -100,13 +97,16 @@ export default function ReferralsPage(): ReactElement {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const paid = MOCK_REFERRALS.filter((r) => r.paid);
-  const unpaid = MOCK_REFERRALS.filter((r) => !r.paid);
-
-  const totalEarned = paid.reduce((s, r) => s + r.reward, 0);
-  const pendingPayout = unpaid
-    .filter((r) => r.status === 'Active')
-    .reduce((s, r) => s + r.reward, 0);
+  const referrals = referralsQuery.data?.referrals || [];
+  const summary = referralsQuery.data?.summary || {
+    total: 0,
+    pending: 0,
+    subscribed: 0,
+    totalRewardCredited: 0,
+    pendingRewardEstimate: 0,
+  };
+  const paid = referrals.filter((r) => r.rewardCredited);
+  const unpaid = referrals.filter((r) => !r.rewardCredited);
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
@@ -117,16 +117,16 @@ export default function ReferralsPage(): ReactElement {
 
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <StatCard label="Total Referred" value={String(MOCK_REFERRALS.length)} icon={Users} color="text-[#001A72]" bg="bg-[#001A72]/5" />
-        <StatCard label="Awaiting Payout" value={String(unpaid.filter(r => r.status === 'Active').length)} icon={Clock} color="text-amber-600" bg="bg-amber-50" />
-        <StatCard label="Total Paid Out" value={`₦${totalEarned.toLocaleString()}`} icon={Banknote} color="text-emerald-600" bg="bg-emerald-50" />
-        <StatCard label="Pending Earnings" value={`₦${pendingPayout.toLocaleString()}`} icon={Gift} color="text-purple-600" bg="bg-purple-50" />
+        <StatCard label="Total Referred" value={String(summary.total)} icon={Users} color="text-[#001A72]" bg="bg-[#001A72]/5" />
+        <StatCard label="Awaiting Reward" value={String(unpaid.length)} icon={Clock} color="text-amber-600" bg="bg-amber-50" />
+        <StatCard label="Total Credited" value={`₦${summary.totalRewardCredited.toLocaleString()}`} icon={Banknote} color="text-emerald-600" bg="bg-emerald-50" />
+        <StatCard label="Potential Earnings" value={`₦${summary.pendingRewardEstimate.toLocaleString()}`} icon={Gift} color="text-purple-600" bg="bg-purple-50" />
       </div>
 
       {/* Referral Link */}
       <div className="bg-gradient-to-br from-[#001A72] to-[#002aad] rounded-2xl p-6 text-white">
         <p className="text-xs font-black uppercase tracking-widest text-white/50 mb-1">Your Referral Link</p>
-        <p className="text-lg font-black mb-4">Share &amp; Earn ₦500 per signup</p>
+        <p className="text-lg font-black mb-4">Share &amp; Earn when referred users subscribe</p>
         <div className="flex gap-2">
           <div className="flex-1 bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-sm font-medium truncate">
             {referralLink}
@@ -140,7 +140,7 @@ export default function ReferralsPage(): ReactElement {
           </button>
         </div>
         <p className="text-[10px] text-white/40 mt-3">
-          You earn ₦500 for every person who signs up and completes their first session using your link.
+          Rewards are credited when someone signs up with your link and completes their first subscription.
         </p>
       </div>
 
@@ -156,7 +156,7 @@ export default function ReferralsPage(): ReactElement {
               }`}
           >
             <Clock size={13} />
-            Awaiting Payout
+            Awaiting Reward
             {unpaid.length > 0 && (
               <span className={`ml-1 px-1.5 py-0.5 rounded-full text-[9px] font-black ${activeTab === 'awaiting' ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-500'
                 }`}>
@@ -172,7 +172,7 @@ export default function ReferralsPage(): ReactElement {
               }`}
           >
             <Banknote size={13} />
-            Paid Out
+            Credited
             {paid.length > 0 && (
               <span className={`ml-1 px-1.5 py-0.5 rounded-full text-[9px] font-black ${activeTab === 'paid' ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-500'
                 }`}>
@@ -182,10 +182,14 @@ export default function ReferralsPage(): ReactElement {
           </button>
         </div>
 
-        {activeTab === 'awaiting' ? (
-          <ReferralTable referrals={unpaid} emptyText="No unpaid referrals — you're all caught up!" />
+        {referralsQuery.isLoading || referralsQuery.isPending ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 size={24} className="animate-spin text-[#001A72]" />
+          </div>
+        ) : activeTab === 'awaiting' ? (
+          <ReferralTable referrals={unpaid} emptyText="No referrals awaiting rewards" />
         ) : (
-          <ReferralTable referrals={paid} emptyText="No paid referrals yet" />
+          <ReferralTable referrals={paid} emptyText="No credited referrals yet" />
         )}
       </div>
     </div>

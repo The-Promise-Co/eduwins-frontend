@@ -7,6 +7,8 @@ import type {
   Dispute,
   AdminStatsData,
   AdminBooking,
+  PlatformConfig,
+  PlatformConfigInput,
 } from '@/misc/types/admin';
 
 export const useAdminOverview = () => {
@@ -207,6 +209,55 @@ export const useRejectDocument = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'teachers-pending'] });
       queryClient.invalidateQueries({ queryKey: ['admin', 'vetting'] });
+    },
+  });
+};
+
+export const usePlatformConfigs = () => {
+  return useQuery<PlatformConfig[]>({
+    queryKey: ['admin', 'configs'],
+    queryFn: async () => {
+      const response = await api.get<PlatformConfig[]>('/api/admin/configs');
+      return response.data;
+    },
+  });
+};
+
+export const useCreatePlatformConfig = () => {
+  const queryClient = useQueryClient();
+  return useMutation<PlatformConfig, unknown, PlatformConfigInput>({
+    mutationFn: async (data) => {
+      const response = await api.post<PlatformConfig>('/api/admin/configs', data);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'configs'] });
+    },
+  });
+};
+
+export const useUpdatePlatformConfig = () => {
+  const queryClient = useQueryClient();
+  return useMutation<PlatformConfig, unknown, { id: string; data: Partial<PlatformConfigInput> }>({
+    mutationFn: async ({ id, data }) => {
+      const response = await api.put<PlatformConfig>(`/api/admin/configs/${id}`, data);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'configs'] });
+    },
+  });
+};
+
+export const useDeletePlatformConfig = () => {
+  const queryClient = useQueryClient();
+  return useMutation<unknown, unknown, string>({
+    mutationFn: async (id) => {
+      const response = await api.delete(`/api/admin/configs/${id}`);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'configs'] });
     },
   });
 };

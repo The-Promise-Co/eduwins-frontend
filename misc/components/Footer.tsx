@@ -7,20 +7,20 @@ export default function Footer(): React.ReactElement {
       <div className="max-w-7xl mx-auto px-4">
         <div className="mb-8 pb-8 border-b border-gray-800">
           <Link href="/">
-            <img src="/logo-white.png" alt="EduWins logo" className="h-10 w-auto" />
+            <img src="/logo-white.png" alt="Eduwins logo" className="h-10 w-auto" />
           </Link>
         </div>
         <div className="grid md:grid-cols-4 gap-8 mb-8">
           <div>
-            <h3 className="text-white font-bold mb-4">About EduWins</h3>
+            <h3 className="text-white font-bold mb-4">About Eduwins</h3>
             <p className="text-sm">Connecting students with quality tutors for better learning outcomes.</p>
           </div>
           <div>
             <h3 className="text-white font-bold mb-4">For Parents</h3>
             <ul className="space-y-2 text-sm">
+              <li><Link href="/for-parents" className="hover:text-white">Why Join</Link></li>
               <li><Link href="/search" className="hover:text-white">Find Tutors</Link></li>
-              <li><Link href="#" className="hover:text-white">Book Lessons</Link></li>
-              <li><Link href="#" className="hover:text-white">Pricing</Link></li>
+              <li><Link href="/courses" className="hover:text-white">Buy Courses</Link></li>
             </ul>
           </div>
           <div>
@@ -41,7 +41,7 @@ export default function Footer(): React.ReactElement {
           </div>
         </div>
         <div className="border-t border-gray-800 pt-8 text-center">
-          <p className="text-sm">© 2026 EduWins. All rights reserved.</p>
+          <p className="text-sm">© 2026 Eduwins. All rights reserved.</p>
         </div>
       </div>
     </footer>

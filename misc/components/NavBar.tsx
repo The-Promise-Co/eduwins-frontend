@@ -100,7 +100,7 @@ export default function NavBar() {
 
             {/* Logo */}
             <Link href="/" className="flex items-center gap-2 shrink-0" onClick={() => setMobileOpen(false)}>
-              <img src="/logo.png" alt="EduWins logo" className="h-9 w-auto" />
+              <img src="/logo.png" alt="Eduwins logo" className="h-9 w-auto" />
             </Link>
 
             {/* Desktop Nav */}
@@ -146,6 +146,10 @@ export default function NavBar() {
 
               <Link href="/search" className="px-3 py-2 rounded-lg text-sm font-semibold text-gray-700 hover:text-[#001A72] hover:bg-[#001A72]/5 transition">
                 Find a Tutor
+              </Link>
+
+              <Link href="/for-parents" className="px-3 py-2 rounded-lg text-sm font-semibold text-gray-700 hover:text-[#001A72] hover:bg-[#001A72]/5 transition">
+                For Parents
               </Link>
 
               <Link href="/courses" className="px-3 py-2 rounded-lg text-sm font-semibold text-gray-700 hover:text-[#001A72] hover:bg-[#001A72]/5 transition">
@@ -248,6 +252,7 @@ export default function NavBar() {
             <div className="max-w-7xl mx-auto px-4 py-4 space-y-1">
               <Link href="/" onClick={() => setMobileOpen(false)} className="block px-3 py-2.5 rounded-xl text-sm font-semibold text-gray-700 hover:bg-[#001A72]/5 hover:text-[#001A72]">Home</Link>
               <Link href="/search" onClick={() => setMobileOpen(false)} className="block px-3 py-2.5 rounded-xl text-sm font-semibold text-gray-700 hover:bg-[#001A72]/5 hover:text-[#001A72]">Find a Tutor</Link>
+              <Link href="/for-parents" onClick={() => setMobileOpen(false)} className="block px-3 py-2.5 rounded-xl text-sm font-semibold text-gray-700 hover:bg-[#001A72]/5 hover:text-[#001A72]">For Parents</Link>
               <Link href="/courses" onClick={() => setMobileOpen(false)} className="block px-3 py-2.5 rounded-xl text-sm font-semibold text-gray-700 hover:bg-[#001A72]/5 hover:text-[#001A72]">Courses</Link>
 
               {/* Mobile subjects */}

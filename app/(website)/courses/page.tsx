@@ -5,19 +5,15 @@ import Link from 'next/link';
 import {
   Search,
   BookOpen,
-  Star,
-  Users,
-  Clock,
-  Layers,
   ArrowRight,
   Sparkles,
   ChevronLeft,
   ChevronRight,
   Loader2,
-  Filter,
 } from 'lucide-react';
 import { usePublicCourses } from '@/misc/hooks/api/courses';
 import { Course, LEVELS } from '@/misc/types/course';
+import PublicCourseCard from '@/misc/components/PublicCourseCard';
 
 const toSentenceCase = (s: string) => {
   const spaced = s.replace(/_/g, ' ');
@@ -142,7 +138,7 @@ function CoursesContent() {
           <>
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {filtered.map((course) => (
-                <CourseCard key={course.id} course={course} />
+                <PublicCourseCard key={course.id} course={course} />
               ))}
             </div>
 
@@ -186,7 +182,7 @@ function CoursesContent() {
               <p className="text-xs font-black text-[#FFB81C] uppercase tracking-widest mb-3">Are You a Tutor?</p>
               <h2 className="text-2xl md:text-3xl font-black text-white mb-3">Create Your Own Course</h2>
               <p className="text-white/60 text-sm mb-7 max-w-md mx-auto">
-                Share your knowledge with students across Nigeria by creating a course on EduWins.
+                Share your knowledge with students across Nigeria by creating a course on Eduwins.
               </p>
               <Link
                 href="/register-teacher"
@@ -199,112 +195,6 @@ function CoursesContent() {
         </section>
       )}
     </div>
-  );
-}
-
-/* ── Course Card (public version) ── */
-function CourseCard({ course }: { course: Course }) {
-  const lessonCount = course.lesson_count || 0;
-  const subjectName = typeof course.subject === 'object' && course.subject ? course.subject.name : course.subject || '';
-  const hasThumbnail = !!course.thumbnail_url;
-
-  return (
-    <Link
-      href={`/courses/${course.id}`}
-      className="group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg transition-all duration-200 hover:-translate-y-0.5 overflow-hidden flex flex-col h-full cursor-pointer"
-    >
-      {/* Thumbnail or color band */}
-      {hasThumbnail ? (
-        <div className="relative h-40 overflow-hidden">
-          <img
-            src={course.thumbnail_url!}
-            alt={course.title}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
-          <div className="absolute bottom-2 left-3 flex flex-wrap items-center gap-1.5">
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full border bg-white/20 backdrop-blur-sm text-white border-white/30 capitalize">
-              {(course.level || '').replace('_', ' ')}
-            </span>
-            {subjectName && (
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full border bg-white/20 backdrop-blur-sm text-white border-white/30">
-                {subjectName}
-              </span>
-            )}
-          </div>
-        </div>
-      ) : (
-        <div className="h-3 w-full bg-gradient-to-r from-[#001A72] to-[#0040c8]" />
-      )}
-
-      <div className={`flex-1 flex flex-col ${hasThumbnail ? 'p-4' : 'p-5'}`}>
-        {/* Badges (only when no thumbnail) */}
-        {!hasThumbnail && (
-          <div className="flex items-center gap-2 mb-3 flex-wrap">
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full border bg-green-50 text-green-700 border-green-200 capitalize">
-              {(course.level || '').replace('_', ' ')}
-            </span>
-            {subjectName && (
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full border bg-[#001A72]/5 text-[#001A72] border-[#001A72]/20">
-                {subjectName}
-              </span>
-            )}
-          </div>
-        )}
-
-        {/* Title & Description */}
-        <h3 className="font-bold text-[#001A72] text-sm leading-snug mb-1.5 line-clamp-2 group-hover:text-[#0028a5] transition">
-          {course.title}
-        </h3>
-        <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed flex-1">
-          {course.description}
-        </p>
-
-        {/* Meta */}
-        <div className="mt-4 pt-3 border-t border-gray-50 flex items-center justify-between gap-2 text-xs text-gray-400">
-          <div className="flex items-center gap-3">
-            <span className="flex items-center gap-1">
-              <Layers size={12} />
-              {lessonCount} lessons
-            </span>
-            <span className="flex items-center gap-1">
-              <Clock size={12} />
-              {course.duration_weeks}w
-            </span>
-          </div>
-          {course.enrolled_count !== undefined && (
-            <span className="flex items-center gap-1">
-              <Users size={12} />
-              {Number(course.enrolled_count).toLocaleString()}
-            </span>
-          )}
-        </div>
-
-        {/* Teacher & Price */}
-        <div className="mt-3 flex items-center justify-between">
-          <div>
-            <p className="text-[10px] text-gray-400 font-medium">By {course.teacher_name || 'Unknown'}</p>
-            {course.rating_avg && Number(course.rating_avg) > 0 ? (
-              <div className="flex items-center gap-1 mt-0.5">
-                <Star size={11} className="text-amber-400 fill-amber-400" />
-                <span className="text-xs font-bold text-gray-700">{Number(course.rating_avg).toFixed(1)}</span>
-              </div>
-            ) : null}
-          </div>
-          <div className="text-right">
-            {course.is_free ? (
-              <span className="text-sm font-black text-emerald-600">Free</span>
-            ) : (
-              <span className="text-sm font-black text-[#001A72]">₦{Number(course.price || 0).toLocaleString()}</span>
-            )}
-          </div>
-        </div>
-      </div>
-
-      <div className={`${hasThumbnail ? 'px-4' : 'px-5'} pb-4 flex justify-end`}>
-        <ChevronRight size={14} className="text-[#001A72]/30 group-hover:text-[#001A72] group-hover:translate-x-1 transition-all" />
-      </div>
-    </Link>
   );
 }
 

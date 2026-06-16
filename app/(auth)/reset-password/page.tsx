@@ -140,7 +140,7 @@ function ResetPasswordContent() {
 
       <h1 className="text-3xl font-extrabold text-gray-900 mb-2 w-full">Reset Password</h1>
       <p className="text-gray-500 text-sm mb-8 w-full">
-        Choose a strong new password for your EduWins account.
+        Choose a strong new password for your Eduwins account.
       </p>
 
       {formError && (

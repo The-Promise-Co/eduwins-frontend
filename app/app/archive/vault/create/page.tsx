@@ -100,7 +100,7 @@ export default function CreateVaultItemPage(): ReactElement {
               <span>🏦</span> Vault Publishing
             </h1>
             <p className="text-gray-500 font-medium text-lg leading-relaxed">
-              Monetize your intellectual property by sharing your resources with the EduWins community.
+              Monetize your intellectual property by sharing your resources with the Eduwins community.
             </p>
           </div>
 
@@ -248,7 +248,7 @@ export default function CreateVaultItemPage(): ReactElement {
                   <div className="pt-4 border-t border-gray-50 flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-[#FFB81C] flex items-center justify-center text-white">✨</div>
                     <div>
-                      <p className="text-[10px] font-black text-[#001A72] uppercase tracking-widest">EduWins Verified</p>
+                      <p className="text-[10px] font-black text-[#001A72] uppercase tracking-widest">Eduwins Verified</p>
                       <p className="text-[9px] font-bold text-gray-400">Resource Compliance</p>
                     </div>
                   </div>

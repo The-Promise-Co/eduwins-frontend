@@ -128,7 +128,7 @@ export default function SettingsPage(): ReactElement {
             <h1 className="text-4xl font-black text-[#001A72] mb-1 flex items-center gap-4">
               <span>⚙️</span> System Settings
             </h1>
-            <p className="text-gray-500 font-medium">Fine-tune your EduWins experience and security parameters.</p>
+            <p className="text-gray-500 font-medium">Fine-tune your Eduwins experience and security parameters.</p>
           </div>
 
           {message.text && (
@@ -288,7 +288,7 @@ export default function SettingsPage(): ReactElement {
               </h2>
               <div className="flex flex-col md:flex-row items-center justify-between gap-6 relative z-10">
                 <p className="text-gray-500 font-medium text-center md:text-left max-w-md">
-                  Proceeding with account deletion will purge all associated records, earnings history, and access keys from the EduWins infrastructure.
+                  Proceeding with account deletion will purge all associated records, earnings history, and access keys from the Eduwins infrastructure.
                 </p>
                 <button
                   onClick={handleDeleteAccount}
