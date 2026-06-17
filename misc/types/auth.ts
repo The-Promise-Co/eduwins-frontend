@@ -14,6 +14,16 @@ export interface RegisterResponse {
   verificationToken?: string;
 }
 
+export interface GoogleLoginPayload {
+  idToken: string;
+}
+
+export interface GoogleRegisterPayload {
+  idToken: string;
+  role: string;
+  referralCode?: string;
+}
+
 export interface VerifyOtpResponse {
   user: TeacherProfile;
   token: string;

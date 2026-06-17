@@ -1,13 +1,14 @@
 'use client';
 
-import { useState, useEffect, ChangeEvent, FormEvent, Suspense } from 'react';
+import { useCallback, useState, useEffect, ChangeEvent, FormEvent, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { useRegister } from '@/misc/hooks/api/auth';
+import { useGoogleRegister, useRegister } from '@/misc/hooks/api/auth';
 import { useUser } from '@/misc/context/UserContext';
 import { User, Mail, Phone, Lock, Eye, EyeOff, CheckCircle2, Hash, Users, BookOpen } from 'lucide-react';
 import AuthLayout from '@/misc/components/AuthLayout';
 import Button from '@/misc/components/Button';
+import GoogleAuthButton from '@/misc/components/GoogleAuthButton';
 
 function RegisterContent() {
   const router = useRouter();
@@ -28,6 +29,7 @@ function RegisterContent() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const registerMutation = useRegister();
+  const googleRegisterMutation = useGoogleRegister();
 
   useEffect(() => {
     const code = searchParams.get('ref') || searchParams.get('referral');
@@ -88,6 +90,28 @@ function RegisterContent() {
     }
   };
 
+  const handleGoogleCredential = useCallback(async (idToken: string) => {
+    setError('');
+    setSuccess('');
+
+    try {
+      const data = await googleRegisterMutation.mutateAsync({
+        idToken,
+        role: formData.role,
+        referralCode: referralCode || undefined,
+      });
+
+      if (data?.token && data?.user) {
+        login(data.user, data.token);
+        setSuccess('Account created with Google! Redirecting to your dashboard...');
+        setTimeout(() => router.push('/app/dashboard'), 1000);
+      }
+    } catch (err: any) {
+      const serverError = err.response?.data?.error || err.response?.data?.message || err.message;
+      setError(`${serverError}`);
+    }
+  }, [formData.role, googleRegisterMutation, login, referralCode, router]);
+
   return (
     <>
       <h1 className="text-3xl font-extrabold text-gray-900 mb-2 w-full">Create Account</h1>
@@ -120,6 +144,66 @@ function RegisterContent() {
           {success}
         </div>
       )}
+
+      <div className="w-full space-y-3 mb-6">
+        <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Choose account type</p>
+        <div className="grid grid-cols-2 gap-3">
+          <div
+            onClick={() => setFormData((prev) => ({ ...prev, role: 'parent' }))}
+            className={`flex items-center gap-3 p-3.5 border-2 rounded-xl cursor-pointer transition-all ${formData.role === 'parent'
+              ? 'border-primary bg-primary/5 shadow-sm shadow-primary/10'
+              : 'border-gray-200 hover:border-primary/30 hover:bg-gray-50 bg-white'
+              }`}
+          >
+            <Users className={`h-5 w-5 ${formData.role === 'parent' ? 'text-primary' : 'text-gray-400'}`} />
+            <span className={`font-semibold text-sm ${formData.role === 'parent' ? 'text-primary' : 'text-gray-600'}`}>
+              Parent
+            </span>
+          </div>
+
+          <div
+            onClick={() => setFormData((prev) => ({ ...prev, role: 'teacher' }))}
+            className={`flex items-center gap-3 p-3.5 border-2 rounded-xl cursor-pointer transition-all ${formData.role === 'teacher'
+              ? 'border-primary bg-primary/5 shadow-sm shadow-primary/10'
+              : 'border-gray-200 hover:border-primary/30 hover:bg-gray-50 bg-white'
+              }`}
+          >
+            <BookOpen className={`h-5 w-5 ${formData.role === 'teacher' ? 'text-primary' : 'text-gray-400'}`} />
+            <span className={`font-semibold text-sm ${formData.role === 'teacher' ? 'text-primary' : 'text-gray-600'}`}>
+              Tutor
+            </span>
+          </div>
+        </div>
+
+        <div className="relative">
+          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+            <Hash className="h-5 w-5 text-gray-400" />
+          </div>
+          <input
+            type="text"
+            value={referralCode}
+            onChange={(e) => setReferralCode(e.target.value)}
+            placeholder="Referral Code (Optional)"
+            className="w-full pl-12 pr-12 py-3.5 border border-gray-200 rounded-xl focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary text-sm text-gray-800 placeholder-gray-400 transition"
+          />
+          {referralCode && (
+            <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+              <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+            </div>
+          )}
+        </div>
+
+        <GoogleAuthButton onCredential={handleGoogleCredential} text="signup_with" />
+      </div>
+
+      <div className="w-full relative flex items-center justify-center mb-6">
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-gray-200" />
+        </div>
+        <div className="relative bg-white px-4 text-xs font-medium text-gray-400">
+          Or sign up with email
+        </div>
+      </div>
 
       <form onSubmit={handleRegisterSubmit} className="w-full space-y-3">
         {/* Name */}
@@ -185,35 +269,6 @@ function RegisterContent() {
           />
         </div>
 
-        {/* Role picker */}
-        <div className="grid grid-cols-2 gap-3">
-          <div
-            onClick={() => setFormData((prev) => ({ ...prev, role: 'parent' }))}
-            className={`flex items-center gap-3 p-3.5 border-2 rounded-xl cursor-pointer transition-all ${formData.role === 'parent'
-              ? 'border-primary bg-primary/5 shadow-sm shadow-primary/10'
-              : 'border-gray-200 hover:border-primary/30 hover:bg-gray-50 bg-white'
-              }`}
-          >
-            <Users className={`h-5 w-5 ${formData.role === 'parent' ? 'text-primary' : 'text-gray-400'}`} />
-            <span className={`font-semibold text-sm ${formData.role === 'parent' ? 'text-primary' : 'text-gray-600'}`}>
-              Parent
-            </span>
-          </div>
-
-          <div
-            onClick={() => setFormData((prev) => ({ ...prev, role: 'teacher' }))}
-            className={`flex items-center gap-3 p-3.5 border-2 rounded-xl cursor-pointer transition-all ${formData.role === 'teacher'
-              ? 'border-primary bg-primary/5 shadow-sm shadow-primary/10'
-              : 'border-gray-200 hover:border-primary/30 hover:bg-gray-50 bg-white'
-              }`}
-          >
-            <BookOpen className={`h-5 w-5 ${formData.role === 'teacher' ? 'text-primary' : 'text-gray-400'}`} />
-            <span className={`font-semibold text-sm ${formData.role === 'teacher' ? 'text-primary' : 'text-gray-600'}`}>
-              Tutor
-            </span>
-          </div>
-        </div>
-
         {/* Password */}
         <div className="relative">
           <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -260,25 +315,6 @@ function RegisterContent() {
           </button>
         </div>
 
-        {/* Referral Code */}
-        <div className="relative">
-          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-            <Hash className="h-5 w-5 text-gray-400" />
-          </div>
-          <input
-            type="text"
-            value={referralCode}
-            onChange={(e) => setReferralCode(e.target.value)}
-            placeholder="Referral Code (Optional)"
-            className="w-full pl-12 pr-12 py-3.5 border border-gray-200 rounded-xl focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary text-sm text-gray-800 placeholder-gray-400 transition"
-          />
-          {referralCode && (
-            <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
-              <CheckCircle2 className="h-5 w-5 text-emerald-500" />
-            </div>
-          )}
-        </div>
-
         {/* Submit */}
         <Button
           type="submit"
@@ -290,23 +326,6 @@ function RegisterContent() {
         </Button>
       </form>
 
-      {/* Social Logins */}
-      <div className="w-full mt-8">
-        <div className="relative flex items-center justify-center">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-gray-200" />
-          </div>
-          <div className="relative bg-white px-4 text-xs font-medium text-gray-400">
-            Or Signup With
-          </div>
-        </div>
-
-        <div className="flex justify-center gap-4 mt-6">
-          <button className="flex items-center justify-center h-12 w-12 rounded-full border border-gray-200 hover:bg-gray-50 transition">
-            <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" className="h-5 w-5" />
-          </button>
-        </div>
-      </div>
     </>
   );
 }

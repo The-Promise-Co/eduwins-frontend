@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, Suspense } from 'react';
+import { useCallback, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { useLogin } from '@/misc/hooks/api/auth';
+import { useGoogleLogin, useLogin } from '@/misc/hooks/api/auth';
 import { useUser } from '@/misc/context/UserContext';
 import { Mail, CheckCircle2, Lock, Eye, EyeOff } from 'lucide-react';
 import AuthLayout from '@/misc/components/AuthLayout';
+import GoogleAuthButton from '@/misc/components/GoogleAuthButton';
 
 function LoginContent() {
   const router = useRouter();
@@ -21,6 +22,7 @@ function LoginContent() {
   );
   const [showPassword, setShowPassword] = useState(false);
   const loginMutation = useLogin();
+  const googleLoginMutation = useGoogleLogin();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -65,6 +67,20 @@ function LoginContent() {
       }
     }
   };
+
+  const handleGoogleCredential = useCallback(async (idToken: string) => {
+    setError('');
+    setSuccess('');
+
+    try {
+      const data = await googleLoginMutation.mutateAsync({ idToken });
+      login(data.user, data.token);
+      const redirectTo = searchParams.get('redirect') || '/app/dashboard';
+      router.push(redirectTo);
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Google login failed. Please try again.');
+    }
+  }, [googleLoginMutation, login, router, searchParams]);
 
   return (
     <>
@@ -179,10 +195,8 @@ function LoginContent() {
           </div>
         </div>
 
-        <div className="flex justify-center gap-4 mt-6">
-          <button className="flex items-center justify-center h-12 w-12 rounded-full border border-gray-200 hover:bg-gray-50 transition">
-            <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" className="h-5 w-5" />
-          </button>
+        <div className="mt-6">
+          <GoogleAuthButton onCredential={handleGoogleCredential} text="signin_with" />
         </div>
       </div>
     </>

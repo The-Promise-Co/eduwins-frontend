@@ -1,7 +1,7 @@
 import { useQuery, useMutation } from '@tanstack/react-query';
 import api from '@/misc/services/api';
 import { TeacherProfile } from '@/misc/types';
-import type { LoginResponse, RegisterResponse, VerifyOtpResponse } from '@/misc/types/auth';
+import type { GoogleLoginPayload, GoogleRegisterPayload, LoginResponse, RegisterResponse, VerifyOtpResponse } from '@/misc/types/auth';
 
 type UseMeOptions = { retry?: boolean; enabled?: boolean };
 
@@ -26,6 +26,15 @@ export const useLogin = () => {
   });
 };
 
+export const useGoogleLogin = () => {
+  return useMutation<LoginResponse, unknown, GoogleLoginPayload>({
+    mutationFn: async (data) => {
+      const response = await api.post<LoginResponse>('/auth/google/login', data);
+      return response.data;
+    },
+  });
+};
+
 export const useRegister = () => {
   return useMutation<RegisterResponse, unknown, {
     firstName: string;
@@ -38,6 +47,15 @@ export const useRegister = () => {
   }>({
     mutationFn: async (data) => {
       const response = await api.post<RegisterResponse>('/auth/register', data);
+      return response.data;
+    },
+  });
+};
+
+export const useGoogleRegister = () => {
+  return useMutation<RegisterResponse, unknown, GoogleRegisterPayload>({
+    mutationFn: async (data) => {
+      const response = await api.post<RegisterResponse>('/auth/google/register', data);
       return response.data;
     },
   });
