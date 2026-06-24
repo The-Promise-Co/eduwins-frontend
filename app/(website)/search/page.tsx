@@ -108,7 +108,7 @@ function ResultCard({ teacher }: ResultCardProps) {
 
         <div className="flex gap-2">
           <Link
-            href={`/teachers/${teacher.id}`}
+            href={`/tutors/${teacher.id}`}
             className="flex-1 bg-[#001A72] text-white text-xs font-bold py-2.5 rounded-xl text-center hover:bg-[#001A72]/90 transition"
           >
             View &amp; Book

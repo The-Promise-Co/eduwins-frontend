@@ -6,6 +6,7 @@ import { useUser } from '@/misc/context/UserContext';
 import { User, Booking } from '@/misc/types';
 import { useChildren } from '@/misc/hooks/useChildren';
 import { usePendingLessons, useConfirmLesson } from '@/misc/hooks/useLessons';
+import { useMyWallets } from '@/misc/hooks/api/wallets';
 import {
   Search,
   Calendar,
@@ -50,10 +51,9 @@ const FEATURE_CARDS: FeatureCard[] = [
   {
     icon: Wallet,
     title: 'Earnings',
-    description: 'Review your income, track payments, and manage your withdrawal requests.',
+    description: 'Review your wallet balances, transactions, and withdrawal activity.',
     href: '/app/earnings',
     color: 'bg-emerald-50 border-emerald-100',
-    role: 'teacher',
   },
   {
     icon: Handshake,
@@ -113,6 +113,7 @@ export default function DashboardPage() {
 
   const { data: children = [], isLoading: childrenLoading } = useChildren(user?.role);
   const { data: pendingLessons = [], isLoading: lessonsLoading } = usePendingLessons(user?.role);
+  const walletsQuery = useMyWallets();
   const confirmLessonMutation = useConfirmLesson();
 
   const [otpInput, setOtpInput] = useState<Record<string, string>>({});
@@ -171,6 +172,9 @@ export default function DashboardPage() {
 
   const visibleCards = FEATURE_CARDS.filter(c => !c.role || c.role === user?.role);
   const firstName = (user?.fullName || user?.full_name || 'there').split(' ')[0];
+  const wallets = walletsQuery.data?.wallets || [];
+  const referralWallet = wallets.find((wallet) => wallet.walletType === 'referrals');
+  const welfareWallet = wallets.find((wallet) => wallet.walletType === 'welfare');
 
 
   return (
@@ -236,14 +240,14 @@ export default function DashboardPage() {
           <>
             <StatCard label="Referral Code" value={user?.referralCode || 'N/A'} icon={Users} bg="bg-[#001A72]/5" color="text-[#001A72]" />
             <StatCard label="Referred Users" value={String(user?.referralCount || 0)} icon={Users} bg="bg-[#FFB81C]/10" color="text-[#001A72]" />
-            <StatCard label="Referral Rewards" value={`₦${((user?.referralCount || 0) * 500).toLocaleString()}`} icon={Wallet} bg="bg-emerald-50" color="text-emerald-600" />
-            <StatCard label="Welfare Boost" value={`₦${(user?.welfareBoost || 0).toLocaleString()}`} icon={HeartPulse} bg="bg-purple-50" color="text-purple-600" />
+            <StatCard label="Referral Wallet" value={`₦${Number(referralWallet?.balance || 0).toLocaleString()}`} icon={Wallet} bg="bg-emerald-50" color="text-emerald-600" />
+            <StatCard label="Welfare Wallet" value={`₦${Number(welfareWallet?.balance || 0).toLocaleString()}`} icon={HeartPulse} bg="bg-purple-50" color="text-purple-600" />
           </>
         ) : (
           <>
             <StatCard label="Referral Code" value={user?.referralCode || 'N/A'} icon={Users} bg="bg-[#001A72]/5" color="text-[#001A72]" />
             <StatCard label="Referred Users" value={String(user?.referralCount || 0)} icon={Users} bg="bg-[#FFB81C]/10" color="text-[#001A72]" />
-            <StatCard label="Referral Income" value={`₦${((user?.referralCount || 0) * 1000).toLocaleString()}`} icon={Wallet} bg="bg-emerald-50" color="text-emerald-600" />
+            <StatCard label="Referral Wallet" value={`₦${Number(referralWallet?.balance || 0).toLocaleString()}`} icon={Wallet} bg="bg-emerald-50" color="text-emerald-600" />
             <Link href="/app/children" className="block hover:-translate-y-0.5 transition-transform">
               <StatCard label="Children Linked" value={String(children.length)} icon={Users} bg="bg-purple-50" color="text-purple-600" />
             </Link>
@@ -322,37 +326,6 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Teacher: Welfare Fund Summary */}
-      {user?.role === 'teacher' && (
-        <div className="bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-100 rounded-2xl p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-base font-bold text-[#001A72] flex items-center gap-2">
-              <Wallet size={18} /> Your Welfare Fund
-            </h3>
-            <span className="text-xs bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full font-semibold">10% of earnings</span>
-          </div>
-          <div className="grid grid-cols-3 gap-4">
-            <div className="bg-white rounded-xl p-4 shadow-sm">
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Total Accumulated</p>
-              <p className="text-xl font-black text-purple-600">₦156,000</p>
-            </div>
-            <div className="bg-white rounded-xl p-4 shadow-sm">
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Available</p>
-              <p className="text-xl font-black text-indigo-600">₦140,000</p>
-            </div>
-            <div className="bg-white rounded-xl p-4 shadow-sm">
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Locked This Month</p>
-              <p className="text-xl font-black text-pink-600">₦16,000</p>
-            </div>
-          </div>
-          <p className="text-xs text-gray-600 mt-4 p-3 bg-white rounded-lg border-l-4 border-indigo-400 leading-relaxed">
-            ℹ️ <strong>Welfare Fund:</strong> 10% of every lesson payment goes into your protected savings. Funds are released on the 5th of each month.
-          </p>
-          <Link href="/app/welfare-fund" className="mt-4 inline-flex items-center gap-1 text-xs font-bold text-indigo-600 hover:underline">
-            View full details →
-          </Link>
-        </div>
-      )}
     </div>
   );
 }

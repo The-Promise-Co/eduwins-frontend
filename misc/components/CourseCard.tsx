@@ -4,11 +4,10 @@ import {
   Layers,
   Clock,
   Users,
-  Star,
-  ChevronRight,
   Pencil,
   Eye,
-  MoreVertical
+  MoreVertical,
+  BookOpen
 } from 'lucide-react';
 import { Course } from '@/misc/types/course';
 
@@ -52,6 +51,8 @@ const getAvatarGradient = (id: string | number | undefined) => {
   return AVATAR_GRADIENTS[seed % AVATAR_GRADIENTS.length];
 };
 
+const clampProgress = (value: number) => Math.min(100, Math.max(0, Math.round(value || 0)));
+
 interface CourseCardProps {
   course: Course;
   isTeacher: boolean;
@@ -63,6 +64,8 @@ export default function CourseCard({ course, isTeacher }: CourseCardProps) {
   const menuRef = useRef<HTMLDivElement>(null);
   const tutorName = course.teacher_name || 'Tutor';
   const showThumbnail = !!course.thumbnail_url && !imageFailed;
+  const courseHref = isTeacher ? `/app/courses/${course.id}` : `/app/courses/${course.id}/learn`;
+  const tutorHref = course.teacher_id ? `/tutors/${course.teacher_id}` : null;
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -78,10 +81,75 @@ export default function CourseCard({ course, isTeacher }: CourseCardProps) {
     setImageFailed(false);
   }, [course.thumbnail_url]);
 
+  if (!isTeacher) {
+    const lessonCount = course.lesson_count || 0;
+    const courseProgress = typeof (course as any).progress === 'number' ? (course as any).progress : course.progress?.progressPercent;
+    const progress = clampProgress(Number(course.progress_percent ?? courseProgress ?? 0));
+    const completedLessons = course.progress?.completedLessons || Math.round((progress / 100) * lessonCount);
+    const subjectName = typeof course.subject === 'object' && course.subject ? course.subject.name : course.subject;
+    const chips = [subjectName, course.level ? toSentenceCase(course.level) : null].filter(Boolean).slice(0, 2);
+
+    return (
+      <Link
+        href={courseHref}
+        className="group block bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg transition-all duration-200 hover:-translate-y-0.5 overflow-hidden p-3"
+      >
+        <div className="relative h-40 rounded-xl overflow-hidden bg-[#001A72]/5 flex items-center justify-center">
+          <span className="absolute left-2 top-2 z-10 rounded-lg bg-white/90 backdrop-blur-sm px-2.5 py-1 text-[10px] font-black text-[#001A72] shadow-sm uppercase tracking-wide">
+            {lessonCount} lesson{lessonCount === 1 ? '' : 's'}
+          </span>
+
+          {showThumbnail ? (
+            <img
+              src={course.thumbnail_url || undefined}
+              alt={course.title}
+              className="absolute inset-0 h-full w-full object-cover"
+              onError={() => setImageFailed(true)}
+            />
+          ) : (
+            <LearningCourseIllustration />
+          )}
+        </div>
+
+        <div className="pt-3">
+          <div className="flex flex-wrap gap-2 mb-3 min-h-6">
+            {chips.map((chip) => (
+              <span key={String(chip)} className="rounded-lg bg-[#001A72]/5 border border-[#001A72]/10 px-2.5 py-1 text-[10px] font-bold text-[#001A72]">
+                {chip}
+              </span>
+            ))}
+          </div>
+
+          <h3 className="text-base leading-snug font-black text-[#001A72] line-clamp-2 group-hover:text-[#0028a5] transition">
+            {course.title}
+          </h3>
+
+          <div className="mt-5 pt-3 border-t border-gray-50 space-y-2">
+            <div className="flex items-center justify-between gap-3 text-xs">
+              <p className="text-gray-400 font-medium">
+                Level: <span className="font-black text-[#001A72]">{toSentenceCase(course.level || 'all_levels')}</span>
+              </p>
+              <span className="font-black text-[#001A72]">{progress}% complete</span>
+            </div>
+            <div className="h-2 rounded-full bg-gray-100 overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all ${progress === 100 ? 'bg-emerald-500' : 'bg-[#FFB81C]'}`}
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+            <p className="text-[11px] font-semibold text-gray-400">
+              {completedLessons}/{lessonCount} lessons completed
+            </p>
+          </div>
+        </div>
+      </Link>
+    );
+  }
+
   return (
     <div className="group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg transition-all duration-200 hover:-translate-y-0.5 overflow-hidden flex flex-col h-full relative">
       {/* Thumbnail / Color band */}
-      <Link href={`/app/courses/${course.id}`} className="block">
+      <Link href={courseHref} className="block">
         {showThumbnail ? (
           <div className="h-32 w-full relative">
             <img
@@ -149,17 +217,24 @@ export default function CourseCard({ course, isTeacher }: CourseCardProps) {
         </div>
 
         {/* Title & description */}
-        <Link href={`/app/courses/${course.id}`} className="block">
+        <Link href={courseHref} className="block">
           <h3 className="font-bold text-[#001A72] text-sm leading-snug mb-1.5 line-clamp-2 group-hover:text-[#0028a5] transition">
             {course.title}
           </h3>
-          <p className="text-[10px] text-gray-400 font-semibold mb-2">
-            By {tutorName}
-          </p>
           <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed flex-1">
             {course.description}
           </p>
         </Link>
+        <p className="text-[10px] text-gray-400 font-semibold mt-2 mb-2">
+          By{' '}
+          {tutorHref ? (
+            <Link href={tutorHref} className="hover:text-[#001A72] hover:underline">
+              {tutorName}
+            </Link>
+          ) : (
+            tutorName
+          )}
+        </p>
 
         {/* Meta info */}
         <div className="mt-4 pt-3 border-t border-gray-50 flex items-center justify-between gap-2 text-xs text-gray-400">
@@ -181,19 +256,8 @@ export default function CourseCard({ course, isTeacher }: CourseCardProps) {
           )}
         </div>
 
-        {/* Teacher & Price row */}
+        {/* Price row */}
         <div className="mt-3 flex items-center justify-between">
-          {!isTeacher && (
-            <div>
-              <p className="text-[10px] text-gray-400 font-medium">{tutorName}</p>
-              {course.rating_avg && Number(course.rating_avg) > 0 ? (
-                <div className="flex items-center gap-1 mt-0.5">
-                  <Star size={11} className="text-amber-400 fill-amber-400" />
-                  <span className="text-xs font-bold text-gray-700">{Number(course.rating_avg).toFixed(1)}</span>
-                </div>
-              ) : null}
-            </div>
-          )}
           <div className={`${isTeacher ? 'w-full' : ''} text-right`}>
             {course.is_free ? (
               <span className="text-sm font-black text-emerald-600">Free</span>
@@ -204,17 +268,18 @@ export default function CourseCard({ course, isTeacher }: CourseCardProps) {
         </div>
       </div>
 
-      {/* CTA Row (Non-Teacher) */}
-      {!isTeacher && (
-        <div className="px-5 pb-4">
-          <Link href={`/app/courses/${course.id}`} className="flex items-center justify-between text-[#001A72]">
-            <span className="text-xs font-bold group-hover:underline">
-              View course
-            </span>
-            <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" />
-          </Link>
-        </div>
-      )}
+    </div>
+  );
+}
+
+function LearningCourseIllustration() {
+  return (
+    <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[#001A72] via-[#0033a0] to-[#FFB81C]">
+      <div className="absolute -right-10 -top-10 h-28 w-28 rounded-full bg-white/30" />
+      <div className="absolute -left-14 bottom-4 h-28 w-28 rounded-full bg-white/20" />
+      <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-white/15 text-2xl font-black text-white shadow-xl backdrop-blur-sm border border-white/20">
+        <BookOpen size={34} className="text-white" />
+      </div>
     </div>
   );
 }

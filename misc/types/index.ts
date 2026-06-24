@@ -48,8 +48,6 @@ export interface TeacherProfile extends User {
   is_premium?: boolean;
   referralCode?: string;
   referralCount?: number;
-  referralDiscount?: number;
-  welfareBoost?: number;
   base_hourly_rate?: number;
 }
 

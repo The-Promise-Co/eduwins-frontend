@@ -45,8 +45,8 @@ export default function AppSidebar({ collapsed, onToggle, isMobileOpen, onCloseM
     { label: 'Dashboard', href: '/app/dashboard', icon: Home },
     // { label: 'Profile', href: '/app/profile', icon: UserCog },
     { label: 'Courses', href: '/app/courses', icon: BookOpen },
+    { label: 'Earnings', href: '/app/earnings', icon: Wallet },
     ...(user?.role === 'teacher' ? [
-      { label: 'Earnings', href: '/app/earnings', icon: Wallet },
       { label: 'Welfare Fund', href: '/app/welfare-fund', icon: Handshake },
     ] : []),
     { label: 'Schedule', href: '/app/schedule', icon: Calendar },

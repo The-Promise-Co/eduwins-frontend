@@ -90,7 +90,7 @@ export default function TeacherCard({ teacher }: TeacherCardProps) {
 
         <div className="flex gap-2">
           <Link
-            href={`/teachers/${teacherId}`}
+            href={`/tutors/${teacherId}`}
             className="flex-1 bg-[#001A72] text-white text-xs font-bold py-2.5 rounded-xl text-center hover:bg-[#001A72]/90 transition"
           >
             View &amp; Book

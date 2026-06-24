@@ -148,6 +148,7 @@ export default function CourseDetailPage() {
 
   // Helper values
   const formattedPrice = course.price ? Number(course.price).toLocaleString() : '0';
+  const tutorHref = course.teacher_id ? `/tutors/${course.teacher_id}` : null;
   const lessonCount = modules.reduce((sum, mod) => sum + (mod.lessons?.length || 0), 0);
   const tagsArray = typeof course.tags === 'string'
     ? (course.tags as string).split(',').map(t => t.trim()).filter(Boolean)
@@ -217,7 +218,18 @@ export default function CourseDetailPage() {
               )}
             </div>
 
-            {course.teacher_name && <p className="text-white/50 text-xs mt-3">By {course.teacher_name}</p>}
+            {course.teacher_name && (
+              <p className="text-white/50 text-xs mt-3">
+                By{' '}
+                {tutorHref ? (
+                  <Link href={tutorHref} className="font-semibold text-white/70 hover:text-[#FFB81C] hover:underline">
+                    {course.teacher_name}
+                  </Link>
+                ) : (
+                  <span className="font-semibold text-white/70">{course.teacher_name}</span>
+                )}
+              </p>
+            )}
           </div>
 
           {/* Price / Actions panel */}

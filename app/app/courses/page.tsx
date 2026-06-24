@@ -41,6 +41,7 @@ export default function CoursesPage() {
   const [selectedSubject, setSelectedSubject] = useState('All');
   const [selectedLevel, setSelectedLevel] = useState('all');
   const [selectedStatus, setSelectedStatus] = useState<'all' | 'published' | 'draft'>('all');
+  const [teacherTab, setTeacherTab] = useState<'created' | 'purchased'>('created');
   const [showFilters, setShowFilters] = useState(false);
   const [subjectSearch, setSubjectSearch] = useState('');
   const [subjectOpen, setSubjectOpen] = useState(false);
@@ -54,14 +55,15 @@ export default function CoursesPage() {
 
   const isTeacher = user?.role === 'teacher';
   const isParent = user?.role === 'parent';
-  const baseUrl = isTeacher && user?.id
+  const isManagingTeacherCourses = isTeacher && teacherTab === 'created';
+  const baseUrl = isTeacher && user?.id && teacherTab === 'created'
     ? `/courses/teacher/${user.id}`
-    : isParent && user?.id
+    : (isParent || isTeacher) && user?.id
       ? `/courses/enrolled`
       : '/courses';
   const defaultMeta = { total: 0, page: 1, limit: 12, totalPages: 1 };
   const coursesQuery = useQuery<PaginatedResponse<Course>>({
-    queryKey: ['courses', isTeacher ? 'teacher' : isParent ? 'enrolled' : 'all', user?.id, page],
+    queryKey: ['courses', isTeacher ? teacherTab : isParent ? 'enrolled' : 'all', user?.id, page],
     queryFn: async () => {
       const response = await api.get(`${baseUrl}?page=${page}&limit=12`);
       return response.data;
@@ -81,9 +83,14 @@ export default function CoursesPage() {
     const subjectName = typeof c.subject === 'object' && c.subject ? c.subject.name : c.subject;
     const matchSubject = selectedSubject === 'All' || subjectName === selectedSubject;
     const matchLevel = selectedLevel === 'all' || c.level === selectedLevel;
-    const matchStatus = selectedStatus === 'all' || c.status === selectedStatus;
+    const matchStatus = !isManagingTeacherCourses || selectedStatus === 'all' || c.status === selectedStatus;
     return matchSearch && matchSubject && matchLevel && matchStatus;
   });
+
+  useEffect(() => {
+    setPage(1);
+    setSelectedStatus('all');
+  }, [teacherTab]);
 
   const publishedCount = courses.filter((c) => c.status === 'published').length;
   const totalEnrolled = courses.reduce((sum, c) => sum + Number(c.enrolled_count || 0), 0);
@@ -101,9 +108,9 @@ export default function CoursesPage() {
     <div className="space-y-6 max-w-7xl mx-auto">
       <PageHeader
         title="Courses"
-        subtitle={isTeacher ? 'Manage and track your created courses' : isParent ? 'Courses you have purchased' : 'Explore available courses'}
+        subtitle={isTeacher ? (teacherTab === 'created' ? 'Manage and track your created courses' : 'Courses you have purchased') : isParent ? 'Courses you have purchased' : 'Explore available courses'}
         rightElement={
-          isTeacher && (
+          isManagingTeacherCourses && (
             <Link
               href="/app/courses/create"
               className="inline-flex items-center gap-2 bg-[#001A72] text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-[#001A72]/90 transition shadow-sm hover:shadow-md"
@@ -115,8 +122,33 @@ export default function CoursesPage() {
         }
       />
 
-      {/* Stats Banner */}
       {isTeacher && (
+        <div className="bg-white border border-gray-100 rounded-2xl p-1.5 shadow-sm flex gap-1 max-w-md">
+          <button
+            type="button"
+            onClick={() => setTeacherTab('created')}
+            className={`flex-1 px-4 py-2.5 rounded-xl text-sm font-bold transition ${teacherTab === 'created'
+              ? 'bg-[#001A72] text-white shadow-sm'
+              : 'text-gray-500 hover:bg-gray-50 hover:text-[#001A72]'
+              }`}
+          >
+            Created Courses
+          </button>
+          <button
+            type="button"
+            onClick={() => setTeacherTab('purchased')}
+            className={`flex-1 px-4 py-2.5 rounded-xl text-sm font-bold transition ${teacherTab === 'purchased'
+              ? 'bg-[#001A72] text-white shadow-sm'
+              : 'text-gray-500 hover:bg-gray-50 hover:text-[#001A72]'
+              }`}
+          >
+            Purchased Courses
+          </button>
+        </div>
+      )}
+
+      {/* Stats Banner */}
+      {isManagingTeacherCourses && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard label="My Courses" value={String(courses.length)} icon={BookOpen} color="text-[#001A72]" bg="bg-[#001A72]/5" />
           <StatCard label="Published" value={String(publishedCount)} icon={PlayCircle} color="text-emerald-600" bg="bg-emerald-50" />
@@ -219,7 +251,7 @@ export default function CoursesPage() {
             </div>
 
             {/* Status Filter (Teacher Only) */}
-            {isTeacher && (
+            {isManagingTeacherCourses && (
               <div className="sm:col-span-2 pt-2">
                 <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1.5">Course Status</label>
                 <div className="flex gap-2">
@@ -251,13 +283,13 @@ export default function CoursesPage() {
       {filtered.length === 0 ? (
         <div className="text-center py-20 bg-white rounded-2xl border-2 border-dashed border-gray-200">
           <div className="text-5xl mb-4">📚</div>
-          <p className="text-gray-500 font-semibold">{courses.length === 0 && isParent ? 'No purchased courses yet' : 'No courses found'}</p>
+          <p className="text-gray-500 font-semibold">{courses.length === 0 && (isParent || teacherTab === 'purchased') ? 'No purchased courses yet' : 'No courses found'}</p>
           <p className="text-gray-400 text-sm mt-1">
-            {courses.length === 0 && isParent
+            {courses.length === 0 && (isParent || teacherTab === 'purchased')
               ? 'Courses you purchase will appear here'
               : 'Try adjusting your search or filters'}
           </p>
-          {isTeacher && (
+          {isManagingTeacherCourses && (
             <Link
               href="/app/courses/create"
               className="mt-4 inline-flex items-center gap-2 bg-[#001A72] text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-[#001A72]/90 transition"
@@ -271,7 +303,7 @@ export default function CoursesPage() {
         <>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {filtered.map((course) => (
-              <CourseCard key={course.id} course={course} isTeacher={isTeacher} />
+              <CourseCard key={course.id} course={course} isTeacher={isManagingTeacherCourses} />
             ))}
           </div>
 

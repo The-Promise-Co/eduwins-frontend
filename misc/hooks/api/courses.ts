@@ -3,6 +3,15 @@ import api from '@/misc/services/api';
 import { Course, CourseFormInput } from '@/misc/types/course';
 import type { PaginatedResponse, CreateCourseResponse, AnalyticSnapshot, StudentEnrolled } from '@/misc/types/courses';
 
+export interface EnrollCourseResponse {
+  enrollment?: unknown;
+  requiresPayment?: boolean;
+  authorizationUrl?: string;
+  authorization_url?: string;
+  reference?: string;
+  access_code?: string;
+}
+
 export const usePublicCourses = (page: number) => {
   return useQuery<PaginatedResponse<Course>>({
     queryKey: ['public-courses', page],
@@ -47,6 +56,17 @@ export const useCourseDetail = (id: string | undefined) => {
   });
 };
 
+export const useCourseLearning = (id: string | undefined) => {
+  return useQuery<Course>({
+    queryKey: ['courses', id, 'learn'],
+    queryFn: async () => {
+      const response = await api.get<Course>(`/courses/${id}/learn`);
+      return response.data;
+    },
+    enabled: !!id,
+  });
+};
+
 export const useCourseAnalytics = (id: string | undefined) => {
   return useQuery<AnalyticSnapshot[]>({
     queryKey: ['courses', id, 'analytics'],
@@ -84,14 +104,41 @@ export const useCreateCourse = () => {
 
 export const useEnrollCourse = (id: string) => {
   const queryClient = useQueryClient();
-  return useMutation<unknown, unknown, void>({
-    mutationFn: async () => {
-      const response = await api.post(`/courses/${id}/enroll`);
+  return useMutation<EnrollCourseResponse, unknown, { email?: string; callback_url?: string } | void>({
+    mutationFn: async (data) => {
+      const response = await api.post<EnrollCourseResponse>(`/courses/${id}/enroll`, data || {});
       return response.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['public-course', id] });
       queryClient.invalidateQueries({ queryKey: ['courses', id] });
+    },
+  });
+};
+
+interface CourseProgressResponse {
+  progress: unknown;
+  summary: NonNullable<Course['progress']>;
+}
+
+export const useUpdateCourseProgress = (id: string) => {
+  const queryClient = useQueryClient();
+  return useMutation<CourseProgressResponse, unknown, { lessonId: string; completed?: boolean; lastPositionSeconds?: number }>({
+    mutationFn: async (data) => {
+      const response = await api.put<CourseProgressResponse>(`/courses/${id}/progress`, data);
+      return response.data;
+    },
+    onSuccess: (data) => {
+      queryClient.setQueryData<Course>(['courses', id, 'learn'], (course) => {
+        if (!course) return course;
+        return {
+          ...course,
+          progress: data.summary,
+          progress_percent: data.summary.progressPercent,
+        };
+      });
+      queryClient.invalidateQueries({ queryKey: ['courses', id, 'learn'] });
+      queryClient.invalidateQueries({ queryKey: ['courses'] });
     },
   });
 };

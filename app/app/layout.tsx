@@ -42,6 +42,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     if (PAGE_TITLES[path]) return PAGE_TITLES[path];
     if (path.startsWith('/app/courses/create')) return 'Create Course';
     if (path.match(/^\/app\/courses\/[^/]+\/edit/)) return 'Edit Course';
+    if (path.match(/^\/app\/courses\/[^/]+\/learn/)) return 'Course Player';
     if (path.match(/^\/app\/courses\/[^/]+/)) return 'Course Details';
     if (path.match(/^\/app\/vault\/[^/]+/)) return 'Vault Item';
     if (path.match(/^\/app\/children\/[^/]+/)) return 'Child Profile';

@@ -32,38 +32,42 @@ export default function PublicCourseCard({ course }: { course: Course }) {
   const lessonCount = course.lesson_count || 0;
   const subjectName = typeof course.subject === 'object' && course.subject ? course.subject.name : course.subject || '';
   const hasThumbnail = !!course.thumbnail_url && !imageFailed;
+  const tutorHref = course.teacher_id ? `/tutors/${course.teacher_id}` : null;
 
   return (
-    <Link
-      href={`/courses/${course.id}`}
+    <article
       className="group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg transition-all duration-200 hover:-translate-y-0.5 overflow-hidden flex flex-col h-full cursor-pointer"
     >
-      {hasThumbnail ? (
-        <div className="relative h-40 overflow-hidden">
-          <img
-            src={course.thumbnail_url || undefined}
-            alt={course.title}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-            onError={() => setImageFailed(true)}
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
-          <CourseBadges course={course} subjectName={subjectName} />
-        </div>
-      ) : (
-        <div className={`relative h-40 overflow-hidden bg-gradient-to-br ${getCourseAvatarGradient(course.id)} flex items-center justify-center`}>
-          <div className="absolute -top-10 -right-10 h-28 w-28 rounded-full bg-white/10" />
-          <div className="absolute -bottom-12 -left-8 h-32 w-32 rounded-full bg-white/10" />
-          <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-white/15 text-2xl font-black text-white shadow-xl backdrop-blur-sm border border-white/20">
-            {getCourseInitials(course.title)}
+      <Link href={`/courses/${course.id}`} className="block">
+        {hasThumbnail ? (
+          <div className="relative h-40 overflow-hidden">
+            <img
+              src={course.thumbnail_url || undefined}
+              alt={course.title}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              onError={() => setImageFailed(true)}
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+            <CourseBadges course={course} subjectName={subjectName} />
           </div>
-          <CourseBadges course={course} subjectName={subjectName} />
-        </div>
-      )}
+        ) : (
+          <div className={`relative h-40 overflow-hidden bg-gradient-to-br ${getCourseAvatarGradient(course.id)} flex items-center justify-center`}>
+            <div className="absolute -top-10 -right-10 h-28 w-28 rounded-full bg-white/10" />
+            <div className="absolute -bottom-12 -left-8 h-32 w-32 rounded-full bg-white/10" />
+            <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-white/15 text-2xl font-black text-white shadow-xl backdrop-blur-sm border border-white/20">
+              {getCourseInitials(course.title)}
+            </div>
+            <CourseBadges course={course} subjectName={subjectName} />
+          </div>
+        )}
+      </Link>
 
       <div className="flex-1 flex flex-col p-4">
-        <h3 className="font-bold text-[#001A72] text-sm leading-snug mb-1.5 line-clamp-2 group-hover:text-[#0028a5] transition">
-          {course.title}
-        </h3>
+        <Link href={`/courses/${course.id}`}>
+          <h3 className="font-bold text-[#001A72] text-sm leading-snug mb-1.5 line-clamp-2 group-hover:text-[#0028a5] transition">
+            {course.title}
+          </h3>
+        </Link>
         <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed flex-1">
           {course.description}
         </p>
@@ -89,7 +93,16 @@ export default function PublicCourseCard({ course }: { course: Course }) {
 
         <div className="mt-3 flex items-center justify-between">
           <div>
-            <p className="text-[10px] text-gray-400 font-medium">By {course.teacher_name || 'Unknown'}</p>
+            <p className="text-[10px] text-gray-400 font-medium">
+              By{' '}
+              {tutorHref ? (
+                <Link href={tutorHref} className="hover:text-[#001A72] hover:underline">
+                  {course.teacher_name || 'Unknown'}
+                </Link>
+              ) : (
+                course.teacher_name || 'Unknown'
+              )}
+            </p>
             {course.rating_avg && Number(course.rating_avg) > 0 ? (
               <div className="flex items-center gap-1 mt-0.5">
                 <Star size={11} className="text-amber-400 fill-amber-400" />
@@ -108,9 +121,11 @@ export default function PublicCourseCard({ course }: { course: Course }) {
       </div>
 
       <div className="px-4 pb-4 flex justify-end">
-        <ChevronRight size={14} className="text-[#001A72]/30 group-hover:text-[#001A72] group-hover:translate-x-1 transition-all" />
+        <Link href={`/courses/${course.id}`} aria-label={`View ${course.title}`}>
+          <ChevronRight size={14} className="text-[#001A72]/30 group-hover:text-[#001A72] group-hover:translate-x-1 transition-all" />
+        </Link>
       </div>
-    </Link>
+    </article>
   );
 }
 

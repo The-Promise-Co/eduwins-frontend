@@ -66,6 +66,24 @@ export interface Course {
   rating_avg?: number;
   enrolled_count?: number;
   lesson_count?: number;
+  progress_percent?: number;
+  progress?: {
+    totalLessons: number;
+    completedLessons: number;
+    progressPercent: number;
+    progressByLesson: Record<string, {
+      id: string;
+      lessonId: string;
+      completed: boolean;
+      completedAt?: string | null;
+      lastPositionSeconds?: number;
+      updatedAt?: string;
+    }>;
+    lastProgress?: {
+      lessonId: string;
+      lastPositionSeconds?: number;
+    } | null;
+  };
   modules?: Module[];
 }
 

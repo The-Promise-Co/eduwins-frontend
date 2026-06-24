@@ -3,18 +3,19 @@
 import { useState, useEffect, ReactElement } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import api from '@/misc/services/api';
-import DashboardNavigation from '@/misc/components/DashboardNavigation';
 import { User } from '@/misc/types';
+import { useMyWallets, useWalletTransactions } from '@/misc/hooks/api/wallets';
+import type { Wallet as WalletRecord, WalletTransaction } from '@/misc/types/wallets';
 import {
   Wallet,
-  Building2,
+  Gift,
   HeartPulse,
   Calendar,
-  ShieldCheck,
   TrendingUp,
   Brain,
-  Undo2
+  Undo2,
+  ArrowDownLeft,
+  ArrowUpRight
 } from 'lucide-react';
 import PageHeader from '@/misc/components/PageHeader';
 import StatCard from '@/misc/components/StatCard';
@@ -28,10 +29,27 @@ interface HistoryEntry {
   status: 'Completed' | 'Pending' | 'Failed';
 }
 
+const formatMoney = (value?: string | number | null) => `₦${Number(value || 0).toLocaleString()}`;
+
+const getWalletLabel = (type: string) => {
+  if (type === 'main') return 'Main Wallet';
+  if (type === 'referrals') return 'Referral Wallet';
+  if (type === 'welfare') return 'Welfare Wallet';
+  return 'Wallet';
+};
+
+const getWalletIcon = (type: string) => {
+  if (type === 'referrals') return Gift;
+  if (type === 'welfare') return HeartPulse;
+  return Wallet;
+};
+
 export default function EarningsPage(): ReactElement {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [selectedWalletId, setSelectedWalletId] = useState<string | null>(null);
+  const walletsQuery = useMyWallets();
 
   useEffect(() => {
     const init = async () => {
@@ -68,6 +86,15 @@ export default function EarningsPage(): ReactElement {
   }
 
   const isTeacher = user?.role === 'teacher';
+  const wallets = walletsQuery.data?.wallets || [];
+  const selectedWallet = wallets.find((wallet) => wallet.id === selectedWalletId) || wallets[0];
+  const walletTransactionsQuery = useWalletTransactions(selectedWallet?.id);
+  const walletTransactions = walletTransactionsQuery.data?.transactions || [];
+  const mainWallet = wallets.find((wallet) => wallet.walletType === 'main');
+  const referralWallet = wallets.find((wallet) => wallet.walletType === 'referrals');
+  const welfareWallet = wallets.find((wallet) => wallet.walletType === 'welfare');
+  const totalWalletBalance = wallets.reduce((total, wallet) => total + Number(wallet.balance || 0), 0);
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       <PageHeader
@@ -79,8 +106,8 @@ export default function EarningsPage(): ReactElement {
               <Wallet size={16} className="text-[#001A72]" />
             </div>
             <div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-[#001A72]/60 leading-none mb-1">Wallet Balance</p>
-              <p className="text-lg font-black text-[#001A72] leading-none">₦28,500</p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-[#001A72]/60 leading-none mb-1">Total Wallet Balance</p>
+              <p className="text-lg font-black text-[#001A72] leading-none">{formatMoney(totalWalletBalance)}</p>
             </div>
           </div>
         }
@@ -90,11 +117,20 @@ export default function EarningsPage(): ReactElement {
         <div className="space-y-6">
           {/* Teacher Stats Grid */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <StatCard label="Personal Take (75%)" value="₦45,000" color="text-[#001A72]" bg="bg-[#001A72]/5" icon={Wallet} />
-            <StatCard label="Welfare Fund (10%)" value="₦6,000" color="text-purple-600" bg="bg-purple-50" icon={HeartPulse} />
-            <StatCard label="Total Booked" value="₦60,000" color="text-[#001A72]" bg="bg-[#FFB81C]/10" icon={Calendar} />
-            <StatCard label="Platform Growth" value="15%" color="text-emerald-600" bg="bg-emerald-50" icon={TrendingUp} />
+            <StatCard label="Main Wallet" value={formatMoney(mainWallet?.balance)} color="text-[#001A72]" bg="bg-[#001A72]/5" icon={Wallet} />
+            <StatCard label="Referral Wallet" value={formatMoney(referralWallet?.balance)} color="text-emerald-600" bg="bg-emerald-50" icon={Gift} />
+            <StatCard label="Welfare Wallet" value={formatMoney(welfareWallet?.balance)} color="text-purple-600" bg="bg-purple-50" icon={HeartPulse} />
+            <StatCard label="Wallets" value={String(wallets.length)} color="text-[#001A72]" bg="bg-[#FFB81C]/10" icon={Calendar} />
           </div>
+
+          <WalletSection
+            wallets={wallets}
+            selectedWallet={selectedWallet}
+            selectedWalletId={selectedWallet?.id}
+            onSelect={setSelectedWalletId}
+            transactions={walletTransactions}
+            loading={walletsQuery.isLoading || walletsQuery.isPending || walletTransactionsQuery.isLoading || walletTransactionsQuery.isPending}
+          />
 
           {/* Welfare Fund Highlight */}
           <div className="bg-white border-2 border-[#001A72]/10 rounded-2xl p-8 shadow-sm">
@@ -115,9 +151,9 @@ export default function EarningsPage(): ReactElement {
               </div>
             </div>
             <div className="grid md:grid-cols-3 gap-6">
-              <WelfareBox label="Accumulated Total" value="₦156,000" sub="Total lifetime savings" />
-              <WelfareBox label="Available to Withdraw" value="₦140,000" sub="Ready for withdrawal" highlight />
-              <WelfareBox label="Locked (Current Period)" value="₦16,000" sub="Unlocks on the 5th" />
+              <WelfareBox label="Accumulated Total" value={formatMoney(welfareWallet?.balance)} sub="Current welfare wallet balance" />
+              <WelfareBox label="Available to Withdraw" value={formatMoney(welfareWallet?.balance)} sub="Subject to welfare withdrawal rules" highlight />
+              <WelfareBox label="Locked (Current Period)" value="₦0" sub="No locked wallet amount currently tracked" />
             </div>
           </div>
 
@@ -172,8 +208,17 @@ export default function EarningsPage(): ReactElement {
             <StatCard label="Total Spent" value="₦45,000" color="text-[#001A72]" bg="bg-[#001A72]/5" icon={TrendingUp} />
             <StatCard label="This Month" value="₦12,500" color="text-[#001A72]" bg="bg-[#FFB81C]/10" icon={Calendar} />
             <StatCard label="Active Sessions" value="5" color="text-emerald-600" bg="bg-emerald-50" icon={Brain} />
-            <StatCard label="Refund Balance" value="₦0" color="text-purple-600" bg="bg-purple-50" icon={Undo2} />
+            <StatCard label="Referral Wallet" value={formatMoney(referralWallet?.balance)} color="text-purple-600" bg="bg-purple-50" icon={Undo2} />
           </div>
+
+          <WalletSection
+            wallets={wallets}
+            selectedWallet={selectedWallet}
+            selectedWalletId={selectedWallet?.id}
+            onSelect={setSelectedWalletId}
+            transactions={walletTransactions}
+            loading={walletsQuery.isLoading || walletsQuery.isPending || walletTransactionsQuery.isLoading || walletTransactionsQuery.isPending}
+          />
 
           {/* Parent Table */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
@@ -225,6 +270,103 @@ interface WelfareBoxProps {
   value: string;
   sub: string;
   highlight?: boolean;
+}
+
+interface WalletSectionProps {
+  wallets: WalletRecord[];
+  selectedWallet?: WalletRecord;
+  selectedWalletId?: string;
+  onSelect: (walletId: string) => void;
+  transactions: WalletTransaction[];
+  loading: boolean;
+}
+
+function WalletSection({ wallets, selectedWallet, selectedWalletId, onSelect, transactions, loading }: WalletSectionProps): ReactElement {
+  return (
+    <div className="grid lg:grid-cols-[320px_1fr] gap-6">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-3">
+        <div className="px-1 pb-2">
+          <h2 className="text-sm font-black text-[#001A72] uppercase tracking-widest">Wallets</h2>
+          <p className="text-xs text-gray-500 mt-1">Referral rewards appear only after the referred user subscribes.</p>
+        </div>
+
+        {wallets.length === 0 ? (
+          <div className="text-sm text-gray-500 border border-dashed border-gray-200 rounded-xl p-4 text-center">
+            No wallets available yet.
+          </div>
+        ) : wallets.map((wallet) => {
+          const Icon = getWalletIcon(wallet.walletType);
+          const active = selectedWalletId === wallet.id;
+          return (
+            <button
+              key={wallet.id}
+              type="button"
+              onClick={() => onSelect(wallet.id)}
+              className={`w-full text-left rounded-2xl border p-4 transition ${active
+                ? 'border-[#001A72] bg-[#001A72]/5 shadow-sm'
+                : 'border-gray-100 hover:border-[#001A72]/30 hover:bg-gray-50'
+                }`}
+            >
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <span className="h-10 w-10 rounded-xl bg-[#FFB81C]/15 text-[#001A72] flex items-center justify-center shrink-0">
+                    <Icon size={18} />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="font-black text-sm text-[#001A72] truncate">{getWalletLabel(wallet.walletType)}</p>
+                    <p className="text-[10px] text-gray-400 uppercase tracking-widest">{wallet.currency}</p>
+                  </div>
+                </div>
+                <p className="font-black text-sm text-gray-900 shrink-0">{formatMoney(wallet.balance)}</p>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className="px-6 py-4 border-b border-gray-50 flex items-center justify-between">
+          <div>
+            <h2 className="text-sm font-black text-gray-900 uppercase tracking-widest">Wallet Transactions</h2>
+            <p className="text-xs text-gray-500 mt-1">{selectedWallet ? getWalletLabel(selectedWallet.walletType) : 'Select a wallet'}</p>
+          </div>
+        </div>
+
+        {loading ? (
+          <div className="p-8 text-center text-sm text-gray-500">Loading wallet transactions...</div>
+        ) : transactions.length === 0 ? (
+          <div className="p-8 text-center text-sm text-gray-500">No wallet transactions yet.</div>
+        ) : (
+          <div className="divide-y divide-gray-50">
+            {transactions.map((transaction) => {
+              const isCredit = transaction.direction === 'credit';
+              return (
+                <div key={transaction.id} className="px-6 py-4 flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <span className={`h-10 w-10 rounded-2xl flex items-center justify-center ${isCredit ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>
+                      {isCredit ? <ArrowDownLeft size={18} /> : <ArrowUpRight size={18} />}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="font-bold text-sm text-gray-900 truncate">{transaction.description || transaction.type.replaceAll('_', ' ')}</p>
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        {transaction.createdAt ? new Date(transaction.createdAt).toLocaleString() : 'Recently'}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <p className={`font-black ${isCredit ? 'text-emerald-600' : 'text-red-600'}`}>
+                      {isCredit ? '+' : '-'}{formatMoney(transaction.amount)}
+                    </p>
+                    <p className="text-xs text-gray-400 mt-0.5">Bal: {formatMoney(transaction.balanceAfter)}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }
 
 function WelfareBox({ label, value, sub, highlight }: WelfareBoxProps): ReactElement {
