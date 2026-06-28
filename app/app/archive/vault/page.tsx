@@ -26,31 +26,7 @@ export default function DigitalVaultPage() {
       setUser(JSON.parse(userData));
     }
   }, []);
-  const fallbackItems = [
-    {
-      id: 1,
-      title: 'Complete Mathematics Lesson Notes (Grade 7-9)',
-      description: 'Detailed lesson notes covering algebra, geometry, and statistics for junior secondary students.',
-      content_type: 'PDF',
-      teacher_name: 'Mr. Okonkwo',
-      price: 2500,
-      subject: 'Mathematics',
-      rating_avg: 4.8,
-      total_sessions: 124
-    },
-    {
-      id: 2,
-      title: 'Physics Practical Video Guide',
-      description: 'A step-by-step video guide for WAEC/NECO physics practicals including light and electricity experiments.',
-      content_type: 'Video',
-      teacher_name: 'Dr. Chukwu',
-      price: 3500,
-      subject: 'Physics',
-      rating_avg: 4.9,
-      total_sessions: 89
-    }
-  ];
-  const items = vaultQuery.isError ? fallbackItems : vaultQuery.data || [];
+  const items = vaultQuery.data || [];
   const loading = vaultQuery.isLoading || vaultQuery.isPending;
 
   const handleFilterChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {

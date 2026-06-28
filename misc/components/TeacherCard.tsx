@@ -32,12 +32,12 @@ interface TeacherCardProps {
   teacher: Partial<TeacherProfile> & {
     photo_url?: string;
     full_name?: string;
-    hourly_rate?: number;
-    baseHourlyRate?: number;
+    baseHourlyRate?: number | string;
     lga?: string;
     students?: number;
     fullName?: string;
     subject?: string;
+    ratingAvg?: number | string;
   };
 }
 
@@ -45,9 +45,9 @@ export default function TeacherCard({ teacher }: TeacherCardProps) {
   const teacherId = teacher.id;
   const name = teacher.full_name || teacher.fullName || 'Tutor';
   const subject = teacher.subject || (teacher.subjects && teacher.subjects[0]) || '—';
-  const rate = teacher.hourly_rate ?? teacher.hourlyRate ?? teacher.baseHourlyRate ?? 0;
+  const rate = teacher.hourlyRate ?? teacher.baseHourlyRate ?? 0;
   const location = teacher.lga || teacher.location || 'Lagos';
-  const rating = teacher.rating ?? 4.5;
+  const rating = teacher.ratingAvg ?? 4.5;
   const reviews = teacher.students ?? teacher.reviewsCount ?? 0;
   const color = pickColor(teacher.id);
 
@@ -75,7 +75,7 @@ export default function TeacherCard({ teacher }: TeacherCardProps) {
         <div className="space-y-1.5 mb-4 flex-1">
           <div className="flex items-center gap-1.5 text-xs text-gray-600">
             <Banknote size={12} className="text-gray-400" />
-            ₦{rate.toLocaleString()}/hr
+            ₦{Number(rate).toLocaleString()}/hr
           </div>
           <div className="flex items-center gap-1.5 text-xs text-gray-600">
             <MapPin size={12} className="text-gray-400" />

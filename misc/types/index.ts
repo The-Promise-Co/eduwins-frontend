@@ -25,30 +25,51 @@ export interface TeacherDocument {
   uploaded_at: string;
 }
 
-export interface TeacherProfile extends User {
+export interface TeacherProfile extends Partial<User> {
+  id: string;
+  userId?: string;
+  fullName: string;
+  firstName?: string;
+  lastName?: string;
+  email: string;
   subjects: string[];
-  bio: string;
-  rating: number;
-  reviewsCount: number;
-  hourlyRate: number;
-  email_verified: boolean;
-  phone_verified: boolean;
-  id_verified: boolean;
-  photo: string | null;
-  video_verified: string | null;
-  is_verified: boolean;
-  documents: TeacherDocument[];
+  subject?: string;
+  bio?: string | null;
+  photo?: string | null;
+  photoUrl?: string | null;
+  documents?: TeacherDocument[];
   name?: string;
+  languages?: string[];
   subscribersCount?: string | number;
   full_name?: string;
+  ratingAvg?: number | string;
+  reviewsCount?: number;
   reviewCount?: number;
-  baseHourlyRate?: number;
-  yearsExperience?: number | string;
-  qualification?: string;
+  students?: number;
+  totalSessions?: number;
+  baseHourlyRate?: number | string;
+  hourlyRate?: number | string;
+  qualification?: string | null;
+  highestDegree?: string | null;
+  institution?: string | null;
+  yearsOfExperience?: number | null;
+  certifications?: string[];
+  intro_video?: string | null;
+  isVerified?: boolean;
+  educationLevels?: string[];
+  sessionFormats?: string[];
+  sessionDurations?: number[];
+  deliveryModes?: string[];
+  availability?: boolean;
+  availabilityConfig?: Record<string, { from: string; to: string }[]> | null;
+  timezone?: string | null;
+  lga?: string;
+  location?: string;
   is_premium?: boolean;
   referralCode?: string;
   referralCount?: number;
-  base_hourly_rate?: number;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface Booking {

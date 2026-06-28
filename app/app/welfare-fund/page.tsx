@@ -31,14 +31,6 @@ interface Contribution {
   total: number;
 }
 
-const MOCK_CONTRIBUTIONS: Contribution[] = [
-  { date: 'Mar 28, 2026', lesson: 'Mathematics', total: 10000 },
-  { date: 'Mar 27, 2026', lesson: 'English', total: 10000 },
-  { date: 'Mar 26, 2026', lesson: 'Physics', total: 12000 },
-  { date: 'Mar 25, 2026', lesson: 'Chemistry', total: 10000 },
-  { date: 'Mar 24, 2026', lesson: 'Biology', total: 8500 },
-];
-
 export default function WelfareFundPage(): ReactElement {
   const router = useRouter();
   const { user } = useUser();
@@ -103,8 +95,7 @@ export default function WelfareFundPage(): ReactElement {
   const welfareFund = welfareQuery.error && (welfareQuery.error as any).response?.status === 404
     ? emptyWelfareFund
     : welfareQuery.data || null;
-  const contributions =
-    welfareFund?.contributions?.length ? welfareFund.contributions : MOCK_CONTRIBUTIONS;
+  const contributions = welfareFund?.contributions || [];
   const loading = welfareQuery.isLoading || welfareQuery.isPending;
 
   if (loading) {

@@ -14,14 +14,14 @@ export const useTeacherProfile = (id: string | undefined) => {
   });
 };
 
-export const useTeacherSearch = (params: string) => {
+export const useTeacherSearch = (params: string = '') => {
   return useQuery<{ data?: TeacherSearchResult[]; meta?: { total: number; page: number; limit: number; totalPages: number } }>({
     queryKey: ['teachers', 'search', params],
     queryFn: async () => {
-      const response = await api.get(`/teachers/search?${params}`);
+      const query = params ? `?${params}` : '';
+      const response = await api.get(`/teachers/search${query}`);
       return response.data;
     },
-    enabled: !!params,
   });
 };
 

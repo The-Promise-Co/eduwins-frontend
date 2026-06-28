@@ -12,8 +12,6 @@ import {
   GraduationCap,
   School,
   Loader2,
-  TrendingUp,
-  TrendingDown,
   Clock,
   CheckCircle2,
   AlertCircle,
@@ -31,148 +29,42 @@ const TABS: { key: Tab; label: string; icon: React.ElementType }[] = [
   { key: 'assessments', label: 'Assessments', icon: ClipboardList },
 ];
 
-/* ─── Mock data — replace with API calls in future ─────────────────────────── */
-
-const MOCK_COURSES = [
-  {
-    id: '1',
-    title: 'Primary Mathematics',
-    teacher: 'Mr. Adeyemi Tunde',
-    progress: 72,
-    totalLessons: 24,
-    completedLessons: 17,
-    status: 'active',
-    subject: 'Mathematics',
-    thumbnail: null,
-  },
-  {
-    id: '2',
-    title: 'Basic English Language',
-    teacher: 'Mrs. Funke Okafor',
-    progress: 45,
-    totalLessons: 20,
-    completedLessons: 9,
-    status: 'active',
-    subject: 'English',
-    thumbnail: null,
-  },
-  {
-    id: '3',
-    title: 'Introductory Science',
-    teacher: 'Mr. Chukwu Emeka',
-    progress: 100,
-    totalLessons: 16,
-    completedLessons: 16,
-    status: 'completed',
-    subject: 'Science',
-    thumbnail: null,
-  },
-];
-
-const MOCK_SCHEDULE = [
-  {
-    id: '1',
-    subject: 'Mathematics',
-    teacher: 'Mr. Adeyemi Tunde',
-    date: '2026-06-03',
-    time: '09:00 AM',
-    duration: '1 hour',
-    status: 'upcoming',
-    type: 'online',
-  },
-  {
-    id: '2',
-    subject: 'English Language',
-    teacher: 'Mrs. Funke Okafor',
-    date: '2026-06-05',
-    time: '02:00 PM',
-    duration: '1 hour',
-    status: 'upcoming',
-    type: 'in-person',
-  },
-  {
-    id: '3',
-    subject: 'Mathematics',
-    teacher: 'Mr. Adeyemi Tunde',
-    date: '2026-05-27',
-    time: '09:00 AM',
-    duration: '1 hour',
-    status: 'completed',
-    type: 'online',
-  },
-  {
-    id: '4',
-    subject: 'English Language',
-    teacher: 'Mrs. Funke Okafor',
-    date: '2026-05-29',
-    time: '02:00 PM',
-    duration: '1 hour',
-    status: 'completed',
-    type: 'in-person',
-  },
-];
-
-const MOCK_ANALYTICS = {
-  overallGrade: 'B+',
-  attendanceRate: 91,
-  avgScore: 78,
-  coursesActive: 2,
-  coursesCompleted: 1,
-  hoursLearned: 34,
-  subjects: [
-    { name: 'Mathematics', score: 82, trend: 'up', change: '+5' },
-    { name: 'English', score: 74, trend: 'up', change: '+2' },
-    { name: 'Science', score: 88, trend: 'down', change: '-3' },
-  ],
-  weeklyActivity: [4, 6, 3, 7, 5, 0, 0], // hours per day (Mon–Sun)
+type ChildCourse = {
+  id: string;
+  title: string;
+  teacher: string;
+  progress: number;
+  totalLessons: number;
+  completedLessons: number;
+  status: 'active' | 'completed';
 };
 
-const MOCK_ASSESSMENTS = [
-  {
-    id: '1',
-    title: 'Mathematics Mid-Term Test',
-    subject: 'Mathematics',
-    teacher: 'Mr. Adeyemi Tunde',
-    dueDate: '2026-06-10',
-    status: 'pending',
-    score: null,
-    maxScore: 100,
-    type: 'test',
-  },
-  {
-    id: '2',
-    title: 'English Comprehension',
-    subject: 'English',
-    teacher: 'Mrs. Funke Okafor',
-    dueDate: '2026-06-07',
-    status: 'pending',
-    score: null,
-    maxScore: 50,
-    type: 'assignment',
-  },
-  {
-    id: '3',
-    title: 'Science End-of-Module Quiz',
-    subject: 'Science',
-    teacher: 'Mr. Chukwu Emeka',
-    dueDate: '2026-05-20',
-    status: 'graded',
-    score: 42,
-    maxScore: 50,
-    type: 'quiz',
-  },
-  {
-    id: '4',
-    title: 'Mathematics Homework — Fractions',
-    subject: 'Mathematics',
-    teacher: 'Mr. Adeyemi Tunde',
-    dueDate: '2026-05-25',
-    status: 'submitted',
-    score: null,
-    maxScore: 20,
-    type: 'homework',
-  },
-];
+type ChildScheduleItem = {
+  id: string;
+  subject: string;
+  teacher: string;
+  date: string;
+  time: string;
+  duration: string;
+  status: 'upcoming' | 'completed';
+  type: string;
+};
+
+type ChildAssessment = {
+  id: string;
+  title: string;
+  subject: string;
+  teacher: string;
+  dueDate: string;
+  status: 'pending' | 'submitted' | 'graded';
+  score: number | null;
+  maxScore: number;
+  type: string;
+};
+
+const childCourses: ChildCourse[] = [];
+const childSchedule: ChildScheduleItem[] = [];
+const childAssessments: ChildAssessment[] = [];
 
 /* ─── Sub-components ────────────────────────────────────────────────────────── */
 
@@ -180,9 +72,10 @@ function CoursesTab() {
   return (
     <div className="space-y-4">
       <p className="text-xs text-gray-400 font-medium">
-        {MOCK_COURSES.length} enrolled courses
+        {childCourses.length} enrolled courses
       </p>
-      {MOCK_COURSES.map((course) => (
+      {childCourses.length === 0 && <EmptyState text="No enrolled courses found for this child." />}
+      {childCourses.map((course) => (
         <div key={course.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 hover:shadow-md transition-shadow">
           <div className="flex items-start gap-4">
             {/* Course Thumbnail placeholder */}
@@ -223,8 +116,8 @@ function CoursesTab() {
 }
 
 function ScheduleTab() {
-  const upcoming = MOCK_SCHEDULE.filter((s) => s.status === 'upcoming');
-  const past = MOCK_SCHEDULE.filter((s) => s.status === 'completed');
+  const upcoming = childSchedule.filter((s) => s.status === 'upcoming');
+  const past = childSchedule.filter((s) => s.status === 'completed');
 
   return (
     <div className="space-y-6">
@@ -266,8 +159,11 @@ function ScheduleTab() {
       {/* Past */}
       <div>
         <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">Past Sessions</h3>
-        <div className="space-y-3">
-          {past.map((s) => (
+        {past.length === 0 ? (
+          <p className="text-sm text-gray-400 italic p-4 bg-white rounded-xl border border-gray-100">No past sessions found.</p>
+        ) : (
+          <div className="space-y-3">
+            {past.map((s) => (
             <div key={s.id} className="bg-gray-50 rounded-2xl border border-gray-100 p-4 flex items-center gap-4 opacity-70">
               <div className="w-12 h-12 rounded-xl bg-gray-100 flex flex-col items-center justify-center shrink-0">
                 <span className="text-[10px] font-black text-gray-400 uppercase">
@@ -289,90 +185,24 @@ function ScheduleTab() {
                 </div>
               </div>
             </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
 function AnalyticsTab() {
-  const data = MOCK_ANALYTICS;
-  const days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
-  const maxHours = Math.max(...data.weeklyActivity);
-
   return (
-    <div className="space-y-5">
-      {/* Top Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-        {[
-          { label: 'Overall Grade', value: data.overallGrade, sub: 'This term', color: 'text-[#001A72]', bg: 'bg-[#001A72]/5' },
-          { label: 'Attendance', value: `${data.attendanceRate}%`, sub: 'Sessions attended', color: 'text-emerald-600', bg: 'bg-emerald-50' },
-          { label: 'Avg Score', value: `${data.avgScore}%`, sub: 'Across all subjects', color: 'text-amber-600', bg: 'bg-amber-50' },
-          { label: 'Active Courses', value: data.coursesActive, sub: 'In progress', color: 'text-blue-600', bg: 'bg-blue-50' },
-          { label: 'Completed', value: data.coursesCompleted, sub: 'Courses finished', color: 'text-purple-600', bg: 'bg-purple-50' },
-          { label: 'Hours Learned', value: data.hoursLearned, sub: 'Total this term', color: 'text-teal-600', bg: 'bg-teal-50' },
-        ].map((stat) => (
-          <div key={stat.label} className={`${stat.bg} rounded-2xl p-4 border border-white`}>
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{stat.label}</p>
-            <p className={`text-2xl font-black ${stat.color} mt-1`}>{stat.value}</p>
-            <p className="text-[10px] text-gray-400 mt-0.5">{stat.sub}</p>
-          </div>
-        ))}
-      </div>
-
-      {/* Weekly Activity Bar Chart */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-        <h3 className="text-xs font-black text-gray-700 uppercase tracking-widest mb-4">This Week's Activity (hours)</h3>
-        <div className="flex items-end gap-2 h-24">
-          {data.weeklyActivity.map((hours, i) => (
-            <div key={i} className="flex-1 flex flex-col items-center gap-1">
-              <div className="w-full flex items-end justify-center" style={{ height: '72px' }}>
-                <div
-                  className={`w-full rounded-t-lg transition-all ${hours > 0 ? 'bg-gradient-to-t from-[#001A72] to-[#0028a5]' : 'bg-gray-100'}`}
-                  style={{ height: maxHours > 0 ? `${(hours / maxHours) * 100}%` : '8px', minHeight: hours > 0 ? '8px' : '4px' }}
-                />
-              </div>
-              <span className="text-[9px] font-bold text-gray-400">{days[i]}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Subject Scores */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-        <h3 className="text-xs font-black text-gray-700 uppercase tracking-widest mb-4">Subject Performance</h3>
-        <div className="space-y-4">
-          {data.subjects.map((subj) => (
-            <div key={subj.name}>
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="text-xs font-bold text-gray-700">{subj.name}</span>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-black text-gray-900">{subj.score}%</span>
-                  <div className={`flex items-center gap-0.5 text-[10px] font-bold ${subj.trend === 'up' ? 'text-emerald-600' : 'text-red-500'}`}>
-                    {subj.trend === 'up' ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
-                    {subj.change}
-                  </div>
-                </div>
-              </div>
-              <div className="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
-                <div
-                  className="h-2.5 rounded-full bg-gradient-to-r from-[#001A72] to-[#FFB81C] transition-all duration-700"
-                  style={{ width: `${subj.score}%` }}
-                />
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
+    <EmptyState text="Analytics will appear once the child has completed learning activity." />
   );
 }
 
 function AssessmentsTab() {
-  const pending = MOCK_ASSESSMENTS.filter((a) => a.status === 'pending');
-  const submitted = MOCK_ASSESSMENTS.filter((a) => a.status === 'submitted');
-  const graded = MOCK_ASSESSMENTS.filter((a) => a.status === 'graded');
+  const pending = childAssessments.filter((a) => a.status === 'pending');
+  const submitted = childAssessments.filter((a) => a.status === 'submitted');
+  const graded = childAssessments.filter((a) => a.status === 'graded');
 
   const typeColors: Record<string, string> = {
     test: 'bg-red-50 text-red-600 border-red-100',
@@ -381,7 +211,7 @@ function AssessmentsTab() {
     homework: 'bg-amber-50 text-amber-600 border-amber-100',
   };
 
-  const AssessmentCard = ({ a }: { a: typeof MOCK_ASSESSMENTS[0] }) => (
+  const AssessmentCard = ({ a }: { a: ChildAssessment }) => (
     <div className={`bg-white rounded-2xl border p-4 shadow-sm ${a.status === 'pending' ? 'border-amber-100' : 'border-gray-100'}`}>
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
@@ -444,11 +274,15 @@ function AssessmentsTab() {
           </div>
         </div>
       )}
-      {MOCK_ASSESSMENTS.length === 0 && (
+      {childAssessments.length === 0 && (
         <div className="text-center py-12 text-gray-400 text-sm">No assessments found.</div>
       )}
     </div>
   );
+}
+
+function EmptyState({ text }: { text: string }) {
+  return <div className="text-center py-12 text-gray-400 text-sm bg-white rounded-2xl border border-gray-100">{text}</div>;
 }
 
 /* ─── Main Page ─────────────────────────────────────────────────────────────── */

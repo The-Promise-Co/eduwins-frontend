@@ -120,7 +120,7 @@ export default function AdminDashboard() {
                     <tr key={teacher.id} className="hover:bg-gray-50 transition">
                       <td className="px-3 py-4 text-sm font-medium text-gray-900">{teacher.full_name}</td>
                       <td className="px-3 py-4 text-sm text-gray-600">{teacher.email}</td>
-                      <td className="px-3 py-4 text-sm font-bold text-[#001A72]">₦{teacher.base_hourly_rate}</td>
+                      <td className="px-3 py-4 text-sm font-bold text-[#001A72]">₦{teacher.baseHourlyRate}</td>
                       <td className="px-3 py-4 text-sm">
                         {teacher.documents && teacher.documents.length > 0 ? (
                           <span className="text-blue-600 font-bold">

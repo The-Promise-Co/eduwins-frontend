@@ -4,7 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useUser } from '@/misc/context/UserContext';
-import { User, Shield, Bell } from 'lucide-react';
+import { User, Shield, Bell, BookOpen } from 'lucide-react';
 
 export default function ProfileLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -12,10 +12,9 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
 
   const tabs = [
     { label: 'Profile Details', href: '/app/profile', icon: User },
+    ...(user?.role === 'teacher' ? [{ label: 'Teaching', href: '/app/profile/teaching', icon: BookOpen }] : []),
     { label: 'Notifications', href: '/app/profile/notifications', icon: Bell },
     { label: 'Security & Account', href: '/app/profile/security', icon: Shield },
-    // { label: 'Security & Account', href: '/app/profile/settings', icon: Shield },
-    //this is a test
   ];
 
 

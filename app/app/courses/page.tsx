@@ -23,11 +23,9 @@ import PageHeader from '@/misc/components/PageHeader';
 import StatCard from '@/misc/components/StatCard';
 import CourseCard from '@/misc/components/CourseCard';
 import { useSubjects } from './misc/api';
-import { Course, LEVELS } from '@/misc/types/course';
+import { LEVELS } from '@/misc/types/course';
+import type { Course } from '@/misc/types/course';
 import type { PaginatedResponse } from '@/misc/types/courses';
-
-const MOCK_COURSES: Course[] = [];
-
 
 const toSentenceCase = (s: string) => {
   const spaced = s.replace(/_/g, ' ');

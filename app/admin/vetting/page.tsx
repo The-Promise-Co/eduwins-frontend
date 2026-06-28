@@ -37,12 +37,6 @@ interface AdminBooking {
 
 export default function AdminVettingDashboard(): ReactElement {
   const [activeTab, setActiveTab] = useState<string>('vetting');
-  const fallbackStats: AdminStats = {
-    totalTeachers: 0,
-    totalParents: 0,
-    totalEarnings: 0,
-    welfarePooled: 0
-  };
   const teachersQuery = useTeachersPending();
   const bookingsQuery = useBookingsPending();
   const statsQuery = useAdminStats();
@@ -95,7 +89,7 @@ export default function AdminVettingDashboard(): ReactElement {
 
   const teachers = teachersQuery.data || [];
   const bookings = bookingsQuery.data || [];
-  const stats = statsQuery.data || fallbackStats;
+  const stats = statsQuery.data || null;
   const loading =
     (activeTab === 'vetting' && teachersQuery.isLoading) ||
     (activeTab === 'escrow' && bookingsQuery.isLoading) ||
@@ -146,7 +140,7 @@ export default function AdminVettingDashboard(): ReactElement {
                             <p className="text-gray-400 font-bold text-sm mb-6">{teacher.email}</p>
                             <div className="flex flex-col gap-3">
                               <MetaInfo label="Location" value={teacher.location || ''} />
-                              <MetaInfo label="Experience" value={`${teacher.yearsExperience} Years`} />
+                              <MetaInfo label="Experience" value={`${teacher.yearsOfExperience || 0} Years`} />
                             </div>
                           </div>
 
@@ -285,10 +279,10 @@ export default function AdminVettingDashboard(): ReactElement {
 
               {activeTab === 'stats' && (
                 <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-                  <AnalyticsCard label="Active Specialists" value={stats.totalTeachers.toString()} color="text-[#001A72]" icon={GraduationCap} />
-                  <AnalyticsCard label="Verified Clients" value={stats.totalParents.toString()} color="text-[#001A72]" icon={Home} />
-                  <AnalyticsCard label="Gross Volume" value={`₦${stats.totalEarnings?.toLocaleString()}`} color="text-[#FFB81C]" icon={TrendingUp} />
-                  <AnalyticsCard label="Welfare Reserves" value={`₦${stats.welfarePooled?.toLocaleString()}`} color="text-green-600" icon={HeartPulse} />
+                  <AnalyticsCard label="Active Specialists" value={(stats?.totalTeachers ?? 0).toString()} color="text-[#001A72]" icon={GraduationCap} />
+                  <AnalyticsCard label="Verified Clients" value={(stats?.totalParents ?? 0).toString()} color="text-[#001A72]" icon={Home} />
+                  <AnalyticsCard label="Gross Volume" value={`₦${(stats?.totalEarnings ?? 0).toLocaleString()}`} color="text-[#FFB81C]" icon={TrendingUp} />
+                  <AnalyticsCard label="Welfare Reserves" value={`₦${(stats?.welfarePooled ?? 0).toLocaleString()}`} color="text-green-600" icon={HeartPulse} />
                 </div>
               )}
             </>

@@ -9,6 +9,8 @@ import { TeacherProfile } from '@/misc/types';
 import {
   User as UserIcon,
   Camera,
+  Award,
+  GraduationCap,
   Mail,
   Phone,
   FileText,
@@ -29,16 +31,58 @@ import Button from '@/misc/components/Button';
 import ImageCropModal from '@/misc/components/ImageCropModal';
 import { useR2 } from '@/misc/hooks/useR2';
 import { toast } from 'sonner';
+import type { ProfileCompletion as ApiProfileCompletion } from '@/misc/types/uploads';
 
-interface ProfileCompletion {
-  completionPercentage: number;
-  nextStep: string;
-  isPremium: boolean;
-  completion: {
-    photo: boolean;
-    video_verified: boolean;
-    documents_uploaded: boolean;
-    documents_verified: boolean;
+type CompletionKey = 'photo' | 'bio' | 'subjects' | 'video_intro' | 'schedule' | 'hourly_pay' | 'certification' | 'education';
+
+type TutorCompletion = Omit<ApiProfileCompletion, 'completion'> & {
+  completion: Record<CompletionKey, boolean>;
+};
+
+const PROFILE_STEPS: { key: CompletionKey; label: string }[] = [
+  { key: 'photo', label: 'Profile picture' },
+  { key: 'bio', label: 'Bio' },
+  { key: 'subjects', label: 'Subjects' },
+  { key: 'video_intro', label: 'Video intro' },
+  { key: 'schedule', label: 'Teaching schedule' },
+  { key: 'hourly_pay', label: 'Hourly pay' },
+  { key: 'certification', label: 'Certification' },
+  { key: 'education', label: 'Education' },
+];
+
+const asList = (value: unknown): string[] => Array.isArray(value) ? value.filter(Boolean).map(String) : [];
+const hasText = (value: unknown) => typeof value === 'string' && value.trim().length > 0;
+const hasPositiveNumber = (value: unknown) => Number(value) > 0;
+const hasAvailabilityConfig = (value: unknown) => {
+  return !!value
+    && typeof value === 'object'
+    && !Array.isArray(value)
+    && Object.values(value as Record<string, unknown>).some((ranges) => Array.isArray(ranges) && ranges.some((range: any) => hasText(range?.from) && hasText(range?.to)));
+};
+
+function buildTutorCompletion(user: TeacherProfile | null, formData: Record<string, unknown>, apiCompletion: ApiProfileCompletion | null): TutorCompletion | null {
+  if (!user && !apiCompletion) return null;
+
+  const api = apiCompletion?.completion || ({} as ApiProfileCompletion['completion']);
+  const mergedUser = { ...(user || {}), ...formData } as TeacherProfile & Record<string, unknown>;
+  const completion: Record<CompletionKey, boolean> = {
+    photo: Boolean(api.profile_picture ?? api.photo ?? (hasText(mergedUser.photo) || hasText(mergedUser.photoUrl) || hasText(mergedUser.avatarUrl))),
+    bio: Boolean(api.bio ?? hasText(mergedUser.bio)),
+    subjects: Boolean(api.subjects ?? (asList(mergedUser.subjects).length > 0 || hasText(mergedUser.subjects) || hasText(mergedUser.subject))),
+    video_intro: Boolean(api.video_intro ?? api.video_verified ?? hasText(mergedUser.intro_video)),
+    schedule: Boolean(api.schedule ?? api.availability ?? (mergedUser.availability && hasAvailabilityConfig(mergedUser.availabilityConfig))),
+    hourly_pay: Boolean(api.hourly_pay ?? api.hourly_rate ?? (hasPositiveNumber(mergedUser.hourlyRate) || hasPositiveNumber(mergedUser.baseHourlyRate))),
+    certification: Boolean(api.certification ?? api.documents_uploaded ?? api.documents_verified ?? (asList(mergedUser.certifications).length > 0 || hasText(mergedUser.qualification))),
+    education: Boolean(api.education ?? (asList(mergedUser.educationLevels).length > 0 || hasText(mergedUser.highestDegree) || hasText(mergedUser.institution))),
+  };
+  const completed = PROFILE_STEPS.filter((step) => completion[step.key]).length;
+  const nextIncomplete = PROFILE_STEPS.find((step) => !completion[step.key]);
+
+  return {
+    completionPercentage: Math.round((completed / PROFILE_STEPS.length) * 100),
+    nextStep: nextIncomplete ? `Add ${nextIncomplete.label.toLowerCase()}` : 'Profile complete',
+    isPremium: Boolean(apiCompletion?.isPremium || mergedUser.is_premium),
+    completion,
   };
 }
 
@@ -56,6 +100,9 @@ export default function ProfilePage(): ReactElement {
     phone: '',
     bio: '',
     photo: '',
+    qualification: '',
+    highestDegree: '',
+    institution: '',
   });
 
   // Upload states
@@ -96,6 +143,9 @@ export default function ProfilePage(): ReactElement {
         phone: userData.phone || '',
         bio: userData.bio || '',
         photo: userData.photo || '',
+        qualification: userData.qualification || '',
+        highestDegree: userData.highestDegree || '',
+        institution: userData.institution || '',
       });
     } catch (err) {
       console.error(err);
@@ -118,11 +168,13 @@ export default function ProfilePage(): ReactElement {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     try {
-      await updateProfileMutation.mutateAsync(formData);
-      const updated = { ...(user || {}), ...formData } as TeacherProfile;
+      const payload = { ...formData };
+      await updateProfileMutation.mutateAsync(payload);
+      const updated = { ...(user || {}), ...payload } as TeacherProfile;
       localStorage.setItem('user', JSON.stringify(updated));
       setUser(updated);
       await refreshUser();
+      await completionQuery.refetch();
       toast.success('Profile updated successfully!');
     } catch (err: any) {
       toast.error(err.response?.data?.error || 'Failed to update profile.');
@@ -174,8 +226,8 @@ export default function ProfilePage(): ReactElement {
       await updateProfileMutation.mutateAsync({
         firstName: formData.firstName,
         lastName: formData.lastName,
-        bio: formData.bio,
-        photoUrl: r2Url,
+          bio: formData.bio,
+          photoUrl: r2Url,
       });
 
       setFormData((prev) => ({ ...prev, photo: r2Url }));
@@ -184,6 +236,7 @@ export default function ProfilePage(): ReactElement {
       setUser(updated);
 
       await refreshUser();
+      await completionQuery.refetch();
       toast.success('Headshot updated and verified successfully!');
     } catch (err: any) {
       toast.error(err.message || err.response?.data?.error || 'Upload failed');
@@ -310,7 +363,10 @@ export default function ProfilePage(): ReactElement {
   }
 
   const isTeacher = user?.role === 'teacher';
-  const completion = completionQuery.data || null;
+  const completion = buildTutorCompletion(user, formData, completionQuery.data || null);
+  const documents = documentsQuery.data || [];
+  const hasDocuments = documents.length > 0;
+  const allDocumentsVerified = hasDocuments && documents.every((doc) => doc.verified);
   const saving = updateProfileMutation.isPending;
 
   return (
@@ -447,6 +503,44 @@ export default function ProfilePage(): ReactElement {
                 placeholder="Share your qualifications, teaching methodology, achievements, and what students should expect..."
               />
             </Field>
+
+            {isTeacher && (
+              <div className="grid sm:grid-cols-2 gap-4">
+                <Field label="Certification">
+                  <div className="relative">
+                    <input
+                      name="qualification"
+                      value={formData.qualification}
+                      onChange={handleChange}
+                      className={INPUT + ' pl-10'}
+                      placeholder="TRCN, PGDE, professional certificate"
+                    />
+                    <Award size={14} className="absolute left-3.5 top-3.5 text-gray-400" />
+                  </div>
+                </Field>
+                <Field label="Education">
+                  <div className="relative">
+                    <input
+                      name="highestDegree"
+                      value={formData.highestDegree}
+                      onChange={handleChange}
+                      className={INPUT + ' pl-10'}
+                      placeholder="B.Sc Mathematics"
+                    />
+                    <GraduationCap size={14} className="absolute left-3.5 top-3.5 text-gray-400" />
+                  </div>
+                </Field>
+                <Field label="Institution">
+                  <input
+                    name="institution"
+                    value={formData.institution}
+                    onChange={handleChange}
+                    className={INPUT}
+                    placeholder="University or school attended"
+                  />
+                </Field>
+              </div>
+            )}
           </div>
 
           {/* Teacher Upload & Verification */}
@@ -480,6 +574,14 @@ export default function ProfilePage(): ReactElement {
                       style={{ width: `${completion.completionPercentage}%` }}
                     />
                   </div>
+                  <div className="grid sm:grid-cols-2 gap-2 pt-2">
+                    {PROFILE_STEPS.map((step) => (
+                      <div key={step.key} className="flex items-center gap-2 text-[10px] font-bold text-gray-600">
+                        {completion.completion[step.key] ? <CheckCircle2 size={12} className="text-emerald-500" /> : <Clock size={12} className="text-amber-500" />}
+                        {step.label}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
 
@@ -492,7 +594,7 @@ export default function ProfilePage(): ReactElement {
                       <div className="w-8 h-8 rounded-lg bg-purple-50 flex items-center justify-center text-purple-600">
                         <Video size={15} />
                       </div>
-                      {completion?.completion?.video_verified ? (
+                      {completion?.completion?.video_intro ? (
                         <div className="flex items-center gap-1 text-[9px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100">
                           <CheckCircle2 size={10} /> Active
                         </div>
@@ -533,11 +635,11 @@ export default function ProfilePage(): ReactElement {
                       </div>
                       <h4 className="text-xs font-bold text-gray-800">Documents</h4>
                     </div>
-                    {completion?.completion?.documents_verified ? (
+                    {allDocumentsVerified ? (
                       <div className="flex items-center gap-1 text-[9px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100">
                         <CheckCircle2 size={10} /> All Verified
                       </div>
-                    ) : completion?.completion?.documents_uploaded ? (
+                    ) : hasDocuments ? (
                       <div className="flex items-center gap-1 text-[9px] font-black text-amber-600 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-100">
                         <Clock size={10} /> Pending
                       </div>
@@ -575,6 +677,7 @@ export default function ProfilePage(): ReactElement {
                         className="flex-1 text-xs border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-[#001A72] transition"
                       />
                       <button
+                        type="button"
                         onClick={handleAddTag}
                         className="text-[10px] font-black text-[#001A72] bg-[#001A72]/5 px-3 py-2 rounded-lg hover:bg-[#001A72]/10 transition"
                       >
@@ -588,7 +691,7 @@ export default function ProfilePage(): ReactElement {
                         {newDocTags.map((tag) => (
                           <span key={tag} className="inline-flex items-center gap-1 text-[9px] font-bold text-[#001A72] bg-[#001A72]/5 px-2 py-0.5 rounded-md border border-[#001A72]/10">
                             {tag}
-                            <button onClick={() => handleRemoveTag(tag)} className="hover:text-red-500 transition">
+                            <button type="button" onClick={() => handleRemoveTag(tag)} className="hover:text-red-500 transition">
                               <X size={10} />
                             </button>
                           </span>
@@ -611,10 +714,10 @@ export default function ProfilePage(): ReactElement {
                   </div>
 
                   {/* Uploaded Documents List */}
-                  {documentsQuery.data && documentsQuery.data.length > 0 && (
+                  {documents.length > 0 && (
                     <div className="space-y-2">
                       <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Uploaded Documents</p>
-                      {documentsQuery.data.map((doc) => (
+                      {documents.map((doc) => (
                         <div key={doc.id} className="flex items-center justify-between p-3 rounded-lg bg-gray-50 border border-gray-100/50">
                           <div className="flex items-center gap-3 min-w-0">
                             <FileText size={14} className="text-[#001A72] shrink-0" />
@@ -640,6 +743,7 @@ export default function ProfilePage(): ReactElement {
                               </span>
                             )}
                             <button
+                              type="button"
                               onClick={() => handleDeleteDocument(doc.id)}
                               className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition"
                             >

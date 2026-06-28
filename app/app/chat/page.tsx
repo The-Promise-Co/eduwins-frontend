@@ -17,7 +17,6 @@ export default function ChatPage() {
   const [warning, setWarning] = useState('');
   const [conversationTitle, setConversationTitle] = useState('Chat with Tutor');
 
-  // Fetch messages (mock for demo)
   const fetchMessages = async () => {
     try {
     } catch (err) {
@@ -36,7 +35,6 @@ export default function ChatPage() {
     if (!newMessage.trim()) return;
 
     try {
-      // For demo, add message locally
       const newMsg = {
         id: messages.length + 1,
         sender_id: 1,

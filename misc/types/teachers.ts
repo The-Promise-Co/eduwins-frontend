@@ -3,11 +3,11 @@ import { TeacherProfile } from '@/misc/types';
 export interface TeacherSearchResult extends Partial<TeacherProfile> {
   photo?: string | null;
   full_name?: string;
-  hourly_rate?: number;
-  baseHourlyRate?: number;
+  baseHourlyRate?: number | string;
   lga?: string;
   students?: number;
   fullName?: string;
   subject?: string;
+  ratingAvg?: number | string;
   id: string;
 }

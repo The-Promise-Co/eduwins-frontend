@@ -51,31 +51,36 @@ interface ResultCardProps {
   teacher: Partial<TeacherProfile> & {
     photo_url?: string;
     full_name?: string;
-    hourly_rate?: number;
-    baseHourlyRate?: number;
+    baseHourlyRate?: number | string;
     lga?: string;
     students?: number;
     fullName?: string;
     subject?: string;
+    ratingAvg?: number | string;
   };
 }
 
 function ResultCard({ teacher }: ResultCardProps) {
   const name = teacher.full_name || teacher.fullName || 'Tutor';
   const subject = teacher.subject || (teacher.subjects && teacher.subjects[0]) || '—';
-  const rate = teacher.hourly_rate ?? teacher.hourlyRate ?? teacher.baseHourlyRate ?? 0;
-  const location = teacher.lga || teacher.location || 'Lagos';
-  const rating = teacher.rating ?? 4.5;
+  const rate = teacher.hourlyRate ?? teacher.baseHourlyRate ?? 0;
+  const location = teacher.lga || teacher.location || '';
+  const rating = teacher.ratingAvg;
   const reviews = teacher.students ?? teacher.reviewsCount ?? 0;
   const color = pickColor(teacher.id);
+  const photo = teacher.photo || teacher.photoUrl || teacher.photo_url;
 
   return (
     <div className="group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-[#001A72]/20 transition overflow-hidden flex flex-col">
       {/* avatar header */}
       <div className={`bg-gradient-to-br ${color} p-6 flex flex-col items-center`}>
-        <div className="w-16 h-16 rounded-2xl bg-white/20 flex items-center justify-center text-white text-xl font-black mb-3 group-hover:scale-105 transition-transform">
-          {initials(name)}
-        </div>
+        {photo ? (
+          <img src={photo} alt={name} className="w-16 h-16 rounded-2xl object-cover mb-3 group-hover:scale-105 transition-transform" />
+        ) : (
+          <div className="w-16 h-16 rounded-2xl bg-white/20 flex items-center justify-center text-white text-xl font-black mb-3 group-hover:scale-105 transition-transform">
+            {initials(name)}
+          </div>
+        )}
         <p className="font-bold text-white text-sm text-center">{name}</p>
         <p className="text-white/80 text-xs text-center mt-0.5">{subject}</p>
       </div>
@@ -84,21 +89,25 @@ function ResultCard({ teacher }: ResultCardProps) {
       <div className="p-4 flex flex-col flex-1">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-1">
-            <Star size={13} className="fill-[#FFB81C] text-[#FFB81C]" />
-            <span className="font-black text-sm text-[#001A72]">{Number(rating).toFixed(1)}</span>
+            <Star size={13} className={rating ? 'fill-[#FFB81C] text-[#FFB81C]' : 'text-gray-300'} />
+            <span className="font-black text-sm text-[#001A72]">{rating ? Number(rating).toFixed(1) : 'New'}</span>
           </div>
           <span className="text-xs text-gray-400">{reviews} reviews</span>
         </div>
 
         <div className="space-y-1.5 mb-4 flex-1">
-          <div className="flex items-center gap-1.5 text-xs text-gray-600">
-            <Banknote size={12} className="text-gray-400" />
-            ₦{rate.toLocaleString()}/hr
-          </div>
-          <div className="flex items-center gap-1.5 text-xs text-gray-600">
-            <MapPin size={12} className="text-gray-400" />
-            {location}
-          </div>
+          {Number(rate) > 0 && (
+            <div className="flex items-center gap-1.5 text-xs text-gray-600">
+              <Banknote size={12} className="text-gray-400" />
+              ₦{Number(rate).toLocaleString()}/hr
+            </div>
+          )}
+          {location && (
+            <div className="flex items-center gap-1.5 text-xs text-gray-600">
+              <MapPin size={12} className="text-gray-400" />
+              {location}
+            </div>
+          )}
         </div>
 
         <div className="flex items-center gap-1.5 mb-3">
@@ -153,15 +162,7 @@ function SearchContent() {
     Object.fromEntries(Object.entries(submittedFilters).filter(([_, v]) => v))
   ).toString();
   const teachersQuery = useTeacherSearch(params);
-  const fallbackTeachers = [
-    { id: '1', full_name: 'Mr. Okonkwo', baseHourlyRate: 500, subjects: ['Mathematics'], location: 'Lagos Island', rating: 4.8, students: 45 },
-    { id: '2', full_name: 'Mrs. Adeyemi', baseHourlyRate: 400, subjects: ['English Language'], location: 'Lekki', rating: 4.9, students: 32 },
-    { id: '3', full_name: 'Dr. Chukwu', baseHourlyRate: 800, subjects: ['Physics', 'Chemistry'], location: 'Victoria Island', rating: 4.7, students: 28 },
-    { id: '4', full_name: 'Miss Inyene', baseHourlyRate: 550, subjects: ['Biology', 'Health'], location: 'Ikeja', rating: 4.8, students: 38 },
-    { id: '5', full_name: 'Mr. Afolabi', baseHourlyRate: 450, subjects: ['History', 'Civics'], location: 'Ikoyi', rating: 4.9, students: 52 },
-    { id: '6', full_name: 'Dr. Nwosu', baseHourlyRate: 700, subjects: ['Chemistry'], location: 'Surulere', rating: 4.6, students: 22 },
-  ];
-  const teachers = (teachersQuery.isError ? fallbackTeachers : teachersQuery.data?.data || []) as ResultCardProps['teacher'][];
+  const teachers = (teachersQuery.data?.data || []) as ResultCardProps['teacher'][];
   const loading = teachersQuery.isLoading || teachersQuery.isFetching;
 
   const handleSearch = (e: React.FormEvent) => {
