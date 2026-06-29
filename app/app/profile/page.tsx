@@ -2,7 +2,7 @@
 
 import { useState, useEffect, ReactElement, ChangeEvent, FormEvent, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { useProfileCompletion, useTeacherDocuments, useUploadDocument, useDeleteDocument } from '@/misc/hooks/api/uploads';
+import { useProfileCompletion } from '@/misc/hooks/api/uploads';
 import { useUpdateProfile } from '@/misc/hooks/api/auth';
 import { useUser } from '@/misc/context/UserContext';
 import { TeacherProfile } from '@/misc/types';
@@ -12,15 +12,7 @@ import {
   Mail,
   Phone,
   FileText,
-  Upload,
-  CheckCircle2,
-  Clock,
-  ShieldCheck,
   RefreshCw,
-  Tags,
-  Trash2,
-  X,
-  Plus,
 } from 'lucide-react';
 import PageHeader from '@/misc/components/PageHeader';
 import Button from '@/misc/components/Button';
@@ -101,21 +93,13 @@ export default function ProfilePage(): ReactElement {
   // Upload states
   const [uploading, setUploading] = useState<Record<string, boolean>>({});
 
-  // Document state
-  const [newDocName, setNewDocName] = useState('');
-  const [newDocTags, setNewDocTags] = useState<string[]>([]);
-  const [tagInput, setTagInput] = useState('');
-
   // Avatar Cropper States
   const [cropModalOpen, setCropModalOpen] = useState(false);
   const [imageSrc, setImageSrc] = useState<string>('');
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const completionQuery = useProfileCompletion();
-  const documentsQuery = useTeacherDocuments();
   const updateProfileMutation = useUpdateProfile();
-  const uploadDocMutation = useUploadDocument();
-  const deleteDocMutation = useDeleteDocument();
 
   const init = async () => {
     const token = localStorage.getItem('token');
@@ -234,70 +218,6 @@ export default function ProfilePage(): ReactElement {
     }
   };
 
-  /* ── Document Upload Handler (multi-document with tags) ── */
-  const handleDocumentUpload = async (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (file.type !== 'application/pdf') {
-      toast.error('Please upload a PDF document.');
-      return;
-    }
-
-    const sizeInMB = file.size / (1024 * 1024);
-    if (sizeInMB > 10) {
-      toast.error(`File is too large (${sizeInMB.toFixed(1)}MB). Max allowed is 10MB.`);
-      return;
-    }
-
-    if (!newDocName.trim()) {
-      toast.error('Please enter a document name.');
-      return;
-    }
-
-    setUploading((p) => ({ ...p, document: true }));
-
-    try {
-      await uploadDocMutation.mutateAsync({
-        file,
-        name: newDocName.trim(),
-        tags: newDocTags,
-      });
-
-      setNewDocName('');
-      setNewDocTags([]);
-      await refreshUser();
-      toast.success('Document uploaded successfully!');
-    } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Document upload failed');
-    } finally {
-      setUploading((p) => ({ ...p, document: false }));
-    }
-  };
-
-  const handleAddTag = () => {
-    const tag = tagInput.trim().toUpperCase();
-    if (tag && !newDocTags.includes(tag)) {
-      setNewDocTags((p) => [...p, tag]);
-    }
-    setTagInput('');
-  };
-
-  const handleRemoveTag = (tag: string) => {
-    setNewDocTags((p) => p.filter((t) => t !== tag));
-  };
-
-  const handleDeleteDocument = async (documentId: string) => {
-    if (!confirm('Delete this document?')) return;
-    try {
-      await deleteDocMutation.mutateAsync(documentId);
-      await refreshUser();
-      toast.success('Document deleted.');
-    } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Failed to delete document');
-    }
-  };
-
   const triggerAvatarUpload = () => {
     fileInputRef.current?.click();
   };
@@ -310,11 +230,7 @@ export default function ProfilePage(): ReactElement {
     );
   }
 
-  const isTeacher = user?.role === 'teacher';
   const completion = buildTutorCompletion(user, formData, completionQuery.data || null);
-  const documents = documentsQuery.data || [];
-  const hasDocuments = documents.length > 0;
-  const allDocumentsVerified = hasDocuments && documents.every((doc) => doc.verified);
   const saving = updateProfileMutation.isPending;
 
   return (
@@ -453,155 +369,6 @@ export default function ProfilePage(): ReactElement {
             </Field>
 
           </div>
-
-          {/* Teacher Upload & Verification */}
-          {isTeacher && (
-            <div className="rounded-2xl border border-gray-100 bg-gray-50/40 p-5 space-y-6">
-              <div className="flex items-center justify-between pb-3 border-b border-gray-50">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600">
-                    <ShieldCheck size={16} />
-                  </div>
-                  <h2 className="text-xs font-black text-gray-700 uppercase tracking-widest">Tutor Verification & Media</h2>
-                </div>
-
-              </div>
-
-              {/* Upload Grid */}
-              <div className="grid sm:grid-cols-2 gap-4">
-                {/* Documents Management Card */}
-                <div className="sm:col-span-2 p-4 rounded-xl border border-gray-100 bg-white flex flex-col space-y-4 hover:border-emerald-100 hover:shadow-md hover:shadow-emerald-50/20 transition-all duration-300">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600">
-                        <FileText size={15} />
-                      </div>
-                      <h4 className="text-xs font-bold text-gray-800">Documents</h4>
-                    </div>
-                    {allDocumentsVerified ? (
-                      <div className="flex items-center gap-1 text-[9px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100">
-                        <CheckCircle2 size={10} /> All Verified
-                      </div>
-                    ) : hasDocuments ? (
-                      <div className="flex items-center gap-1 text-[9px] font-black text-amber-600 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-100">
-                        <Clock size={10} /> Pending
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-1 text-[9px] font-black text-amber-600 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-100">
-                        <Clock size={10} /> Not Uploaded
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Upload Form */}
-                  <div className="space-y-3 bg-gray-50 rounded-xl p-4 border border-gray-100/50">
-                    <p className="text-[10px] text-gray-400 leading-normal">
-                      Submit TRCN, NIN or Teaching Certificates. PDF only. Max size: 10MB.
-                    </p>
-                    <div className="flex flex-col sm:flex-row gap-2">
-                      <input
-                        type="text"
-                        value={newDocName}
-                        onChange={(e) => setNewDocName(e.target.value)}
-                        placeholder="Document name (e.g. TRCN Certificate)"
-                        className="flex-1 text-xs border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-[#001A72] transition"
-                      />
-                    </div>
-
-                    {/* Tag Input */}
-                    <div className="flex items-center gap-2">
-                      <Tags size={12} className="text-gray-400 shrink-0" />
-                      <input
-                        type="text"
-                        value={tagInput}
-                        onChange={(e) => setTagInput(e.target.value)}
-                        onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddTag(); } }}
-                        placeholder="Add a tag (e.g. TRCN, NIN, DEGREE)"
-                        className="flex-1 text-xs border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-[#001A72] transition"
-                      />
-                      <button
-                        type="button"
-                        onClick={handleAddTag}
-                        className="text-[10px] font-black text-[#001A72] bg-[#001A72]/5 px-3 py-2 rounded-lg hover:bg-[#001A72]/10 transition"
-                      >
-                        <Plus size={14} />
-                      </button>
-                    </div>
-
-                    {/* Tags Display */}
-                    {newDocTags.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5">
-                        {newDocTags.map((tag) => (
-                          <span key={tag} className="inline-flex items-center gap-1 text-[9px] font-bold text-[#001A72] bg-[#001A72]/5 px-2 py-0.5 rounded-md border border-[#001A72]/10">
-                            {tag}
-                            <button type="button" onClick={() => handleRemoveTag(tag)} className="hover:text-red-500 transition">
-                              <X size={10} />
-                            </button>
-                          </span>
-                        ))}
-                      </div>
-                    )}
-
-                    <label className={`flex items-center justify-center gap-2 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest cursor-pointer transition select-none ${uploading.document ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-[#001A72] text-white hover:bg-[#001A72]/90 shadow-sm shadow-[#001A72]/5'
-                      }`}>
-                      <Upload size={12} />
-                      {uploading.document ? 'Uploading…' : 'Upload PDF'}
-                      <input
-                        type="file"
-                        accept=".pdf"
-                        onChange={handleDocumentUpload}
-                        className="hidden"
-                        disabled={uploading.document}
-                      />
-                    </label>
-                  </div>
-
-                  {/* Uploaded Documents List */}
-                  {documents.length > 0 && (
-                    <div className="space-y-2">
-                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Uploaded Documents</p>
-                      {documents.map((doc) => (
-                        <div key={doc.id} className="flex items-center justify-between p-3 rounded-lg bg-gray-50 border border-gray-100/50">
-                          <div className="flex items-center gap-3 min-w-0">
-                            <FileText size={14} className="text-[#001A72] shrink-0" />
-                            <div className="min-w-0">
-                              <p className="text-xs font-semibold text-gray-800 truncate">{doc.name}</p>
-                              <div className="flex flex-wrap gap-1 mt-0.5">
-                                {doc.tags.map((tag) => (
-                                  <span key={tag} className="text-[8px] font-bold text-gray-500 bg-gray-200/60 px-1.5 py-0.5 rounded">
-                                    {tag}
-                                  </span>
-                                ))}
-                              </div>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2 shrink-0">
-                            {doc.verified ? (
-                              <span className="flex items-center gap-1 text-[9px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100">
-                                <CheckCircle2 size={10} /> Verified
-                              </span>
-                            ) : (
-                              <span className="flex items-center gap-1 text-[9px] font-black text-amber-600 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-100">
-                                <Clock size={10} /> Pending
-                              </span>
-                            )}
-                            <button
-                              type="button"
-                              onClick={() => handleDeleteDocument(doc.id)}
-                              className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition"
-                            >
-                              <Trash2 size={12} />
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-
-            </div>
-          )}
         </div>
       </form>
 

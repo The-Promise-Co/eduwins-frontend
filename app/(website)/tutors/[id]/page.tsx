@@ -135,7 +135,6 @@ export default function TutorDetailPage() {
                         <h1 className="text-2xl md:text-3xl font-black text-gray-900">{name}</h1>
                         {t.isVerified && <CheckCircle2 size={19} className="text-emerald-500 shrink-0" />}
                       </div>
-                      <p className="text-sm text-gray-600 mt-1">{subject}</p>
                     </div>
                     {rate > 0 && (
                       <div className="text-left sm:text-right">

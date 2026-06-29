@@ -34,6 +34,7 @@ export default function AppHeader({ title, onToggleMobileMenu }: AppHeaderProps)
     .join('')
     .toUpperCase()
     .slice(0, 2);
+  const avatarUrl = (user as any)?.photo || (user as any)?.photoUrl || user?.avatarUrl || '';
 
   return (
     <>
@@ -67,9 +68,13 @@ export default function AppHeader({ title, onToggleMobileMenu }: AppHeaderProps)
               onClick={() => setDropdownOpen(!dropdownOpen)}
               className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl border border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition"
             >
-              <div className="w-7 h-7 rounded-full bg-[#001A72] flex items-center justify-center text-white text-[11px] font-bold shrink-0">
-                {initials}
-              </div>
+              {avatarUrl ? (
+                <img src={avatarUrl} alt="Profile" className="w-7 h-7 rounded-full object-cover shrink-0 border border-gray-100" />
+              ) : (
+                <div className="w-7 h-7 rounded-full bg-[#001A72] flex items-center justify-center text-white text-[11px] font-bold shrink-0">
+                  {initials}
+                </div>
+              )}
               <div className="text-left hidden sm:block">
                 <p className="text-xs font-semibold text-gray-800 leading-tight truncate max-w-[110px]">
                   {user?.fullName || user?.full_name || 'User'}
