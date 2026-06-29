@@ -7,6 +7,8 @@ import { User, Booking } from '@/misc/types';
 import { useChildren } from '@/misc/hooks/useChildren';
 import { usePendingLessons, useConfirmLesson } from '@/misc/hooks/useLessons';
 import { useMyWallets } from '@/misc/hooks/api/wallets';
+import { useProfileCompletion } from '@/misc/hooks/api/uploads';
+import { getNextProfileStep, getProfileCompletionHref } from '@/misc/utils/profileCompletion';
 import {
   Search,
   Calendar,
@@ -114,6 +116,7 @@ export default function DashboardPage() {
   const { data: children = [], isLoading: childrenLoading } = useChildren(user?.role);
   const { data: pendingLessons = [], isLoading: lessonsLoading } = usePendingLessons(user?.role);
   const walletsQuery = useMyWallets();
+  const completionQuery = useProfileCompletion();
   const confirmLessonMutation = useConfirmLesson();
 
   const [otpInput, setOtpInput] = useState<Record<string, string>>({});
@@ -175,6 +178,9 @@ export default function DashboardPage() {
   const wallets = walletsQuery.data?.wallets || [];
   const referralWallet = wallets.find((wallet) => wallet.walletType === 'referrals');
   const welfareWallet = wallets.find((wallet) => wallet.walletType === 'welfare');
+  const completion = completionQuery.data || null;
+  const nextProfileStep = getNextProfileStep(completion);
+  const profileHref = getProfileCompletionHref(completion);
 
 
   return (
@@ -188,18 +194,18 @@ export default function DashboardPage() {
               <UserCircle className="h-5 w-5 text-amber-600" />
             </div>
             <div>
-              <p className="font-bold text-sm text-amber-900">Complete your profile</p>
+              <p className="font-bold text-sm text-amber-900">Complete your profile{completion ? ` (${Math.round(completion.completionPercentage)}%)` : ''}</p>
               <p className="text-xs text-amber-700 mt-0.5 leading-relaxed">
-                Add your photo, bio, and contact details so {user?.role === 'teacher' ? 'students can find and book you.' : 'we can personalise your experience.'}
+                {nextProfileStep ? `Next required update: ${nextProfileStep.label}.` : `Add your photo, bio, and contact details so ${user?.role === 'teacher' ? 'students can find and book you.' : 'we can personalise your experience.'}`}
               </p>
             </div>
           </div>
           <div className="flex items-center gap-3 shrink-0">
             <Link
-              href="/app/profile"
+              href={profileHref}
               className="text-xs font-semibold bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-xl transition whitespace-nowrap"
             >
-              Set up profile
+              {nextProfileStep ? `Update ${nextProfileStep.label}` : 'Set up profile'}
             </Link>
             <button
               onClick={handleDismissProfileBanner}

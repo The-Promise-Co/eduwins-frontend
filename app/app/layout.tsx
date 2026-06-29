@@ -10,6 +10,8 @@ const PAGE_TITLES: Record<string, string> = {
   '/app/dashboard': 'Home',
   '/app/profile': 'Profile',
   '/app/profile/teaching': 'Teaching',
+  '/app/profile/certifications': 'Certifications',
+  '/app/profile/education': 'Education',
   '/app/premium-subscription': 'Premium',
   '/app/premium-content': 'My Content',
   '/app/welfare-fund': 'Welfare Fund',

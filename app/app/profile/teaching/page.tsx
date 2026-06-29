@@ -14,6 +14,7 @@ import { toast } from 'sonner';
 
 type TimeRange = { from: string; to: string };
 type AvailabilityConfig = Record<string, TimeRange[]>;
+type AvailabilityMode = 'all' | 'custom';
 
 const DAYS = [
   { key: 'sunday', short: 'S', label: 'Sunday' },
@@ -136,6 +137,9 @@ export default function TeachingSettingsPage(): ReactElement {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<TeacherProfile | null>(null);
   const [subjectSearch, setSubjectSearch] = useState('');
+  const [availabilityMode, setAvailabilityMode] = useState<AvailabilityMode>('custom');
+  const [copyMenuDay, setCopyMenuDay] = useState<string | null>(null);
+  const [copyTargets, setCopyTargets] = useState<string[]>([]);
   const [formData, setFormData] = useState({
     subjects: [] as string[],
     hourlyRate: '',
@@ -143,10 +147,28 @@ export default function TeachingSettingsPage(): ReactElement {
   });
   const timeOptions = useMemo(() => buildTimeOptions(30), []);
 
+  const subjectIdByName = useMemo(() => {
+    return (subjectsQuery.data || []).reduce<Record<string, string>>((acc, subject) => {
+      acc[subject.name.toLowerCase()] = subject.id;
+      return acc;
+    }, {});
+  }, [subjectsQuery.data]);
+
+  const subjectById = useMemo(() => {
+    return (subjectsQuery.data || []).reduce<Record<string, string>>((acc, subject) => {
+      acc[subject.id] = subject.name;
+      return acc;
+    }, {});
+  }, [subjectsQuery.data]);
+
+  const normalizeSubjectIds = (subjects: string[]) => {
+    return subjects.map((subject) => subjectIdByName[subject.toLowerCase()] || subject);
+  };
+
   const applyUser = (userData: TeacherProfile) => {
     setUser(userData);
     setFormData({
-      subjects: userData.subjects || [],
+      subjects: normalizeSubjectIds(userData.subjects || []),
       hourlyRate: String(userData.hourlyRate ?? userData.baseHourlyRate ?? ''),
       availabilityConfig: normalizeAvailability(userData.availabilityConfig),
     });
@@ -173,30 +195,34 @@ export default function TeachingSettingsPage(): ReactElement {
     } finally {
       setLoading(false);
     }
-  }, [router]);
+  }, [router, subjectIdByName]);
 
   useEffect(() => {
     if (!ctxUser || ctxUser.role !== 'teacher') return;
     applyUser(ctxUser);
-  }, [ctxUser]);
+  }, [ctxUser, subjectIdByName]);
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const addSubject = (subject: string) => {
-    const trimmed = subject.trim();
-    if (!trimmed || formData.subjects.includes(trimmed)) return;
-    setFormData((prev) => ({ ...prev, subjects: [...prev.subjects, trimmed] }));
+  const addSubject = (subjectId: string) => {
+    if (!subjectId || formData.subjects.includes(subjectId)) return;
+    setFormData((prev) => ({ ...prev, subjects: [...prev.subjects, subjectId] }));
     setSubjectSearch('');
   };
 
-  const removeSubject = (subject: string) => {
-    setFormData((prev) => ({ ...prev, subjects: prev.subjects.filter((item) => item !== subject) }));
+  const removeSubject = (subjectId: string) => {
+    setFormData((prev) => ({ ...prev, subjects: prev.subjects.filter((item) => item !== subjectId) }));
   };
 
   const addRange = (day: string) => {
+    if (availabilityMode === 'all') {
+      const ranges = formData.availabilityConfig.monday || [];
+      applyAllDays([...ranges, { ...DEFAULT_RANGE }]);
+      return;
+    }
     setFormData((prev) => ({
       ...prev,
       availabilityConfig: {
@@ -207,6 +233,11 @@ export default function TeachingSettingsPage(): ReactElement {
   };
 
   const removeRange = (day: string, index: number) => {
+    if (availabilityMode === 'all') {
+      const ranges = (formData.availabilityConfig.monday || []).filter((_, itemIndex) => itemIndex !== index);
+      applyAllDays(ranges);
+      return;
+    }
     setFormData((prev) => ({
       ...prev,
       availabilityConfig: {
@@ -217,6 +248,11 @@ export default function TeachingSettingsPage(): ReactElement {
   };
 
   const updateRange = (day: string, index: number, key: keyof TimeRange, value: string) => {
+    if (availabilityMode === 'all') {
+      const ranges = (formData.availabilityConfig.monday || []).map((range, itemIndex) => itemIndex === index ? { ...range, [key]: value } : range);
+      applyAllDays(ranges);
+      return;
+    }
     setFormData((prev) => ({
       ...prev,
       availabilityConfig: {
@@ -226,16 +262,47 @@ export default function TeachingSettingsPage(): ReactElement {
     }));
   };
 
-  const copyFirstAvailableDay = (targetDay: string) => {
-    const source = DAYS.find((day) => day.key !== targetDay && (formData.availabilityConfig[day.key] || []).length > 0);
-    if (!source) return;
+  const toggleCopyMenu = (day: string) => {
+    setCopyMenuDay((current) => current === day ? null : day);
+    setCopyTargets([]);
+  };
+
+  const toggleCopyTarget = (day: string) => {
+    setCopyTargets((current) => current.includes(day) ? current.filter((item) => item !== day) : [...current, day]);
+  };
+
+  const applyCopyTargets = (sourceDay: string) => {
     setFormData((prev) => ({
       ...prev,
       availabilityConfig: {
         ...prev.availabilityConfig,
-        [targetDay]: (prev.availabilityConfig[source.key] || []).map((range) => ({ ...range })),
+        ...copyTargets.reduce<AvailabilityConfig>((acc, targetDay) => {
+          if (targetDay !== sourceDay) {
+            acc[targetDay] = (prev.availabilityConfig[sourceDay] || []).map((range) => ({ ...range }));
+          }
+          return acc;
+        }, {}),
       },
     }));
+    setCopyMenuDay(null);
+  };
+
+  const applyAllDays = (ranges: TimeRange[]) => {
+    setFormData((prev) => ({
+      ...prev,
+      availabilityConfig: DAYS.reduce<AvailabilityConfig>((acc, day) => {
+        acc[day.key] = ranges.map((range) => ({ ...range }));
+        return acc;
+      }, {}),
+    }));
+  };
+
+  const setMode = (mode: AvailabilityMode) => {
+    setAvailabilityMode(mode);
+    if (mode === 'all') {
+      const source = DAYS.find((day) => (formData.availabilityConfig[day.key] || []).length > 0);
+      applyAllDays(source ? formData.availabilityConfig[source.key] : [{ ...DEFAULT_RANGE }]);
+    }
   };
 
   const handleSubmit = async (e: FormEvent) => {
@@ -277,8 +344,7 @@ export default function TeachingSettingsPage(): ReactElement {
 
   const saving = updateProfileMutation.isPending;
   const subjectOptions = (subjectsQuery.data || [])
-    .map((subject) => subject.name)
-    .filter((name) => name.toLowerCase().includes(subjectSearch.toLowerCase()) && !formData.subjects.includes(name));
+    .filter((subject) => subject.name.toLowerCase().includes(subjectSearch.toLowerCase()) && !formData.subjects.includes(subject.id));
   const visibleSubjectOptions = subjectOptions.slice(0, 12);
   const validationErrors = validateAvailability(formData.availabilityConfig);
 
@@ -289,7 +355,7 @@ export default function TeachingSettingsPage(): ReactElement {
         subtitle="Manage the subjects you teach, your hourly pay, and your weekly availability"
       />
 
-      <form onSubmit={handleSubmit} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden p-6 space-y-6">
+      <form onSubmit={handleSubmit} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-6">
         <div className="flex items-center gap-2 pb-3 border-b border-gray-50">
           <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-[#001A72]">
             <BookOpen size={16} />
@@ -319,11 +385,11 @@ export default function TeachingSettingsPage(): ReactElement {
                     {visibleSubjectOptions.map((subject) => (
                       <button
                         type="button"
-                        key={subject}
-                        onClick={() => addSubject(subject)}
+                        key={subject.id}
+                        onClick={() => addSubject(subject.id)}
                         className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-[10px] font-black text-gray-600 hover:border-[#001A72]/30 hover:text-[#001A72] transition"
                       >
-                        {subject}
+                        {subject.name}
                       </button>
                     ))}
                   </div>
@@ -333,10 +399,10 @@ export default function TeachingSettingsPage(): ReactElement {
               </div>
               {formData.subjects.length > 0 ? (
                 <div className="flex flex-wrap gap-2">
-                  {formData.subjects.map((subject) => (
-                    <div key={subject} className="inline-flex items-center gap-2 rounded-full border border-[#001A72]/10 bg-[#001A72]/5 px-3 py-1.5">
-                      <span className="text-[10px] font-black text-[#001A72]">{subject}</span>
-                      <button type="button" onClick={() => removeSubject(subject)} className="rounded-full text-[#001A72]/50 hover:text-red-500 transition" aria-label={`Remove ${subject}`}>
+                  {formData.subjects.map((subjectId) => (
+                    <div key={subjectId} className="inline-flex items-center gap-2 rounded-full border border-[#001A72]/10 bg-[#001A72]/5 px-3 py-1.5">
+                      <span className="text-[10px] font-black text-[#001A72]">{subjectById[subjectId] || subjectId}</span>
+                      <button type="button" onClick={() => removeSubject(subjectId)} className="rounded-full text-[#001A72]/50 hover:text-red-500 transition" aria-label={`Remove ${subjectById[subjectId] || subjectId}`}>
                         <X size={12} />
                       </button>
                     </div>
@@ -354,7 +420,16 @@ export default function TeachingSettingsPage(): ReactElement {
 
           <SettingsRow icon={<Calendar size={16} className="text-[#001A72]" />} label="Availability" sub="Add one or more available time ranges per day. Empty days are unavailable.">
             <div className="space-y-3">
-              {DAYS.map((day) => {
+              <div className="grid grid-cols-2 gap-2 rounded-xl bg-gray-50 p-1.5 border border-gray-100">
+                <button type="button" onClick={() => setMode('all')} className={`rounded-lg px-3 py-2 text-[10px] font-black uppercase tracking-wider transition ${availabilityMode === 'all' ? 'bg-white text-[#001A72] shadow-sm' : 'text-gray-400 hover:text-[#001A72]'}`}>
+                  All Days
+                </button>
+                <button type="button" onClick={() => setMode('custom')} className={`rounded-lg px-3 py-2 text-[10px] font-black uppercase tracking-wider transition ${availabilityMode === 'custom' ? 'bg-white text-[#001A72] shadow-sm' : 'text-gray-400 hover:text-[#001A72]'}`}>
+                  Custom Days
+                </button>
+              </div>
+
+              {(availabilityMode === 'all' ? [{ key: 'monday', short: 'A', label: 'All days' }] : DAYS).map((day) => {
                 const ranges = formData.availabilityConfig[day.key] || [];
                 return (
                   <div key={day.key} className="grid grid-cols-[30px_1fr] gap-3 items-start">
@@ -384,9 +459,47 @@ export default function TeachingSettingsPage(): ReactElement {
                                   <button type="button" onClick={() => addRange(day.key)} className="text-[#001A72] hover:text-[#FFB81C] transition" aria-label={`Add another ${day.label} range`}>
                                     <PlusCircle size={16} />
                                   </button>
-                                  <button type="button" onClick={() => copyFirstAvailableDay(day.key)} className="text-[#001A72] hover:text-[#FFB81C] transition" aria-label={`Copy availability to ${day.label}`}>
-                                    <Copy size={16} />
-                                  </button>
+                                  {availabilityMode === 'custom' && (
+                                    <div className="relative">
+                                      <button
+                                        type="button"
+                                        onClick={() => toggleCopyMenu(day.key)}
+                                        className={`w-9 h-9 rounded-full flex items-center justify-center transition ${copyMenuDay === day.key ? 'bg-[#001A72]/10 text-[#001A72]' : 'text-[#001A72] hover:bg-[#001A72]/5 hover:text-[#FFB81C]'}`}
+                                        aria-label={`Copy ${day.label} availability`}
+                                      >
+                                        <Copy size={16} />
+                                      </button>
+                                      {copyMenuDay === day.key && (
+                                        <div className="absolute right-0 top-11 z-40 w-52 rounded-xl border border-gray-100 bg-white p-4 shadow-xl">
+                                          <p className="mb-3 text-[10px] font-black uppercase tracking-wider text-[#001A72]/70">Copy times to...</p>
+                                          <div className="space-y-3">
+                                            {DAYS.map((targetDay) => {
+                                              const checked = targetDay.key === day.key || copyTargets.includes(targetDay.key);
+                                              return (
+                                                <label key={targetDay.key} className="flex items-center justify-between gap-3 text-sm font-medium text-[#001A72]">
+                                                  <span>{targetDay.label}</span>
+                                                  <input
+                                                    type="checkbox"
+                                                    checked={checked}
+                                                    disabled={targetDay.key === day.key}
+                                                    onChange={() => toggleCopyTarget(targetDay.key)}
+                                                    className="h-5 w-5 rounded border-gray-300 text-[#001A72] disabled:opacity-50"
+                                                  />
+                                                </label>
+                                              );
+                                            })}
+                                          </div>
+                                          <button
+                                            type="button"
+                                            onClick={() => applyCopyTargets(day.key)}
+                                            className="mt-4 w-full rounded-2xl bg-blue-600 px-4 py-3 text-sm font-black text-white hover:bg-blue-700 transition"
+                                          >
+                                            Apply
+                                          </button>
+                                        </div>
+                                      )}
+                                    </div>
+                                  )}
                                 </>
                               )}
                             </div>

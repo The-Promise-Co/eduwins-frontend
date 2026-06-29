@@ -18,6 +18,7 @@ import {
 import Link from 'next/link';
 import { useTeacherSearch } from '@/misc/hooks/api/teachers';
 import { TeacherProfile } from '@/misc/types';
+import { useSubjects } from '@/app/app/courses/misc/api';
 
 /* ─── colour helpers for avatar gradients ─── */
 const GRADIENT_COLORS = [
@@ -62,7 +63,12 @@ interface ResultCardProps {
 
 function ResultCard({ teacher }: ResultCardProps) {
   const name = teacher.full_name || teacher.fullName || 'Tutor';
-  const subject = teacher.subject || (teacher.subjects && teacher.subjects[0]) || '—';
+  const subjectsQuery = useSubjects();
+  const subjectNameById = (subjectsQuery.data || []).reduce<Record<string, string>>((acc, item) => {
+    acc[item.id] = item.name;
+    return acc;
+  }, {});
+  const subject = teacher.subject || (teacher.subjects && (subjectNameById[teacher.subjects[0]] || teacher.subjects[0])) || '—';
   const rate = teacher.hourlyRate ?? teacher.baseHourlyRate ?? 0;
   const location = teacher.lga || teacher.location || '';
   const rating = teacher.ratingAvg;

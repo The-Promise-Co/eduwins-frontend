@@ -25,6 +25,31 @@ export interface TeacherDocument {
   uploaded_at: string;
 }
 
+export interface TeacherCertification {
+  id?: string | number;
+  certificationName: string;
+  issuingOrganization: string;
+  credentialId?: string | null;
+  credentialUrl?: string | null;
+  imageUrl?: string | null;
+  issueDate?: string | null;
+  expiryDate?: string | null;
+  doesNotExpire?: boolean;
+  description?: string | null;
+}
+
+export interface TeacherEducation {
+  id?: string | number;
+  institutionName: string;
+  degree?: string | null;
+  fieldOfStudy?: string | null;
+  grade?: string | null;
+  startDate?: string | null;
+  endDate?: string | null;
+  isCurrent?: boolean;
+  description?: string | null;
+}
+
 export interface TeacherProfile extends Partial<User> {
   id: string;
   userId?: string;
@@ -53,7 +78,8 @@ export interface TeacherProfile extends Partial<User> {
   highestDegree?: string | null;
   institution?: string | null;
   yearsOfExperience?: number | null;
-  certifications?: string[];
+  certifications?: TeacherCertification[];
+  education?: TeacherEducation[];
   intro_video?: string | null;
   isVerified?: boolean;
   educationLevels?: string[];

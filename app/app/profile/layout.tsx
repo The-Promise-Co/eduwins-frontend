@@ -4,15 +4,23 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useUser } from '@/misc/context/UserContext';
-import { User, Shield, Bell, BookOpen } from 'lucide-react';
+import { User, Shield, Bell, BookOpen, Award, GraduationCap, CheckCircle2, Clock, Video } from 'lucide-react';
+import { useProfileCompletion } from '@/misc/hooks/api/uploads';
+import { PROFILE_COMPLETION_STEPS, getNextProfileStep } from '@/misc/utils/profileCompletion';
 
 export default function ProfileLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { user } = useUser();
+  const completionQuery = useProfileCompletion();
+  const completion = completionQuery.data || null;
+  const nextStep = getNextProfileStep(completion);
 
   const tabs = [
     { label: 'Profile Details', href: '/app/profile', icon: User },
     ...(user?.role === 'teacher' ? [{ label: 'Teaching', href: '/app/profile/teaching', icon: BookOpen }] : []),
+    ...(user?.role === 'teacher' ? [{ label: 'Video', href: '/app/profile/video', icon: Video }] : []),
+    ...(user?.role === 'teacher' ? [{ label: 'Certifications', href: '/app/profile/certifications', icon: Award }] : []),
+    ...(user?.role === 'teacher' ? [{ label: 'Education', href: '/app/profile/education', icon: GraduationCap }] : []),
     { label: 'Notifications', href: '/app/profile/notifications', icon: Bell },
     { label: 'Security & Account', href: '/app/profile/security', icon: Shield },
   ];
@@ -46,6 +54,33 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
               );
             })}
           </nav>
+          {user?.role === 'teacher' && completion && (
+            <div className="mt-4 rounded-2xl border border-[#001A72]/10 bg-[#001A72]/5 p-4">
+              <div className="flex items-center justify-between text-xs font-black text-[#001A72]">
+                <span>Profile completion</span>
+                <span>{Math.round(completion.completionPercentage)}%</span>
+              </div>
+              <div className="mt-2 h-2 overflow-hidden rounded-full bg-white">
+                <div className="h-full rounded-full bg-[#FFB81C]" style={{ width: `${completion.completionPercentage}%` }} />
+              </div>
+              <div className="mt-3 space-y-1.5">
+                {PROFILE_COMPLETION_STEPS.map((step) => {
+                  const done = Boolean((completion.completion as any)?.[step.key]);
+                  return (
+                    <div key={step.key} className="flex items-center gap-2 text-[10px] font-bold text-[#001A72]/70">
+                      {done ? <CheckCircle2 size={11} className="text-emerald-500" /> : <Clock size={11} className="text-amber-500" />}
+                      <span>{step.label}</span>
+                    </div>
+                  );
+                })}
+              </div>
+              {nextStep && (
+                <Link href={nextStep.href} className="mt-3 block rounded-xl bg-[#001A72] px-3 py-2 text-center text-[10px] font-black uppercase tracking-wider text-white">
+                  Update {nextStep.label}
+                </Link>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Mobile View: Horizontal Scrollable Tabs */}

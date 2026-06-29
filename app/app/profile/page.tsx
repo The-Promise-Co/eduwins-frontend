@@ -2,23 +2,19 @@
 
 import { useState, useEffect, ReactElement, ChangeEvent, FormEvent, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { useProfileCompletion, useUploadFile, useTeacherDocuments, useUploadDocument, useDeleteDocument } from '@/misc/hooks/api/uploads';
+import { useProfileCompletion, useTeacherDocuments, useUploadDocument, useDeleteDocument } from '@/misc/hooks/api/uploads';
 import { useUpdateProfile } from '@/misc/hooks/api/auth';
 import { useUser } from '@/misc/context/UserContext';
 import { TeacherProfile } from '@/misc/types';
 import {
   User as UserIcon,
   Camera,
-  Award,
-  GraduationCap,
   Mail,
   Phone,
   FileText,
   Upload,
   CheckCircle2,
   Clock,
-  Gem,
-  Video,
   ShieldCheck,
   RefreshCw,
   Tags,
@@ -100,9 +96,6 @@ export default function ProfilePage(): ReactElement {
     phone: '',
     bio: '',
     photo: '',
-    qualification: '',
-    highestDegree: '',
-    institution: '',
   });
 
   // Upload states
@@ -121,7 +114,6 @@ export default function ProfilePage(): ReactElement {
   const completionQuery = useProfileCompletion();
   const documentsQuery = useTeacherDocuments();
   const updateProfileMutation = useUpdateProfile();
-  const uploadDocumentMutation = useUploadFile();
   const uploadDocMutation = useUploadDocument();
   const deleteDocMutation = useDeleteDocument();
 
@@ -142,10 +134,7 @@ export default function ProfilePage(): ReactElement {
         email: userData.email || '',
         phone: userData.phone || '',
         bio: userData.bio || '',
-        photo: userData.photo || '',
-        qualification: userData.qualification || '',
-        highestDegree: userData.highestDegree || '',
-        institution: userData.institution || '',
+        photo: userData.photo || userData.photoUrl || '',
       });
     } catch (err) {
       console.error(err);
@@ -231,7 +220,7 @@ export default function ProfilePage(): ReactElement {
       });
 
       setFormData((prev) => ({ ...prev, photo: r2Url }));
-      const updated = { ...(user || {}), photo: r2Url } as TeacherProfile;
+      const updated = { ...(user || {}), photo: r2Url, photoUrl: r2Url } as TeacherProfile;
       localStorage.setItem('user', JSON.stringify(updated));
       setUser(updated);
 
@@ -242,47 +231,6 @@ export default function ProfilePage(): ReactElement {
       toast.error(err.message || err.response?.data?.error || 'Upload failed');
     } finally {
       setUploading((p) => ({ ...p, headshot: false }));
-    }
-  };
-
-  /* ── General File Upload Handlers (Video) ── */
-  const handleFileUpload = async (e: ChangeEvent<HTMLInputElement>, uploadType: string) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const sizeInMB = file.size / (1024 * 1024);
-    let maxSize = 5;
-
-    if (uploadType === 'videoIntro') {
-      maxSize = 50;
-      if (!file.type.startsWith('video/')) {
-        toast.error('Please select a valid video file.');
-        return;
-      }
-    }
-
-    if (sizeInMB > maxSize) {
-      toast.error(`File is too large (${sizeInMB.toFixed(1)}MB). Max allowed is ${maxSize}MB.`);
-      return;
-    }
-
-    setUploading((p) => ({ ...p, [uploadType]: true }));
-
-    try {
-      const uploadData = new FormData();
-      uploadData.append(uploadType, file);
-
-      const res = await uploadDocumentMutation.mutateAsync({
-        endpoint: '/uploads/video-intro',
-        data: uploadData,
-      });
-
-      await refreshUser();
-      toast.success(res.message || 'File uploaded successfully!');
-    } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Upload failed');
-    } finally {
-      setUploading((p) => ({ ...p, [uploadType]: false }));
     }
   };
 
@@ -373,9 +321,9 @@ export default function ProfilePage(): ReactElement {
     <div className="space-y-6 max-w-4xl mx-auto pb-12">
       <PageHeader title="Profile Details" subtitle="Manage your personal information, profile media, and credentials" />
 
-      <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
         {/* LEFT COLUMN: Basic Information */}
-        <div className="lg:col-span-5 bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-6">
+        <div className="lg:col-span-5 space-y-6">
           <div className="flex items-center gap-2 pb-3 border-b border-gray-50">
             <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-[#001A72]">
               <UserIcon size={16} />
@@ -439,7 +387,7 @@ export default function ProfilePage(): ReactElement {
         {/* RIGHT COLUMN: Bio, Headshot & Verification */}
         <div className="lg:col-span-7 space-y-6">
           {/* Bio & Avatar Container */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-6">
+          <div className="space-y-6">
             <div className="flex items-center gap-2 pb-3 border-b border-gray-50">
               <div className="w-8 h-8 rounded-lg bg-purple-50 flex items-center justify-center text-purple-600">
                 <FileText size={16} />
@@ -504,48 +452,11 @@ export default function ProfilePage(): ReactElement {
               />
             </Field>
 
-            {isTeacher && (
-              <div className="grid sm:grid-cols-2 gap-4">
-                <Field label="Certification">
-                  <div className="relative">
-                    <input
-                      name="qualification"
-                      value={formData.qualification}
-                      onChange={handleChange}
-                      className={INPUT + ' pl-10'}
-                      placeholder="TRCN, PGDE, professional certificate"
-                    />
-                    <Award size={14} className="absolute left-3.5 top-3.5 text-gray-400" />
-                  </div>
-                </Field>
-                <Field label="Education">
-                  <div className="relative">
-                    <input
-                      name="highestDegree"
-                      value={formData.highestDegree}
-                      onChange={handleChange}
-                      className={INPUT + ' pl-10'}
-                      placeholder="B.Sc Mathematics"
-                    />
-                    <GraduationCap size={14} className="absolute left-3.5 top-3.5 text-gray-400" />
-                  </div>
-                </Field>
-                <Field label="Institution">
-                  <input
-                    name="institution"
-                    value={formData.institution}
-                    onChange={handleChange}
-                    className={INPUT}
-                    placeholder="University or school attended"
-                  />
-                </Field>
-              </div>
-            )}
           </div>
 
           {/* Teacher Upload & Verification */}
           {isTeacher && (
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-6">
+            <div className="rounded-2xl border border-gray-100 bg-gray-50/40 p-5 space-y-6">
               <div className="flex items-center justify-between pb-3 border-b border-gray-50">
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600">
@@ -554,78 +465,10 @@ export default function ProfilePage(): ReactElement {
                   <h2 className="text-xs font-black text-gray-700 uppercase tracking-widest">Tutor Verification & Media</h2>
                 </div>
 
-                {completion && (
-                  <span className="text-xs font-black text-[#FFB81C] bg-[#FFB81C]/5 px-2.5 py-1 rounded-lg border border-[#FFB81C]/10">
-                    {Math.round(completion.completionPercentage)}% Completed
-                  </span>
-                )}
               </div>
-
-              {/* Progress Bar */}
-              {completion && (
-                <div className="space-y-1.5 p-4 rounded-xl bg-gray-50 border border-gray-100/50">
-                  <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-wider text-gray-400">
-                    <span>Profile Readiness</span>
-                    <span className="text-gray-500 font-bold normal-case">{completion.nextStep}</span>
-                  </div>
-                  <div className="w-full bg-gray-200/80 rounded-full h-2.5 overflow-hidden">
-                    <div
-                      className="bg-gradient-to-r from-[#001A72] to-[#FFB81C] h-2.5 rounded-full transition-all duration-700"
-                      style={{ width: `${completion.completionPercentage}%` }}
-                    />
-                  </div>
-                  <div className="grid sm:grid-cols-2 gap-2 pt-2">
-                    {PROFILE_STEPS.map((step) => (
-                      <div key={step.key} className="flex items-center gap-2 text-[10px] font-bold text-gray-600">
-                        {completion.completion[step.key] ? <CheckCircle2 size={12} className="text-emerald-500" /> : <Clock size={12} className="text-amber-500" />}
-                        {step.label}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
 
               {/* Upload Grid */}
               <div className="grid sm:grid-cols-2 gap-4">
-                {/* Video Intro Card */}
-                <div className="p-4 rounded-xl border border-gray-100 bg-white flex flex-col justify-between space-y-4 hover:border-purple-100 hover:shadow-md hover:shadow-purple-50/20 transition-all duration-300">
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <div className="w-8 h-8 rounded-lg bg-purple-50 flex items-center justify-center text-purple-600">
-                        <Video size={15} />
-                      </div>
-                      {completion?.completion?.video_intro ? (
-                        <div className="flex items-center gap-1 text-[9px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100">
-                          <CheckCircle2 size={10} /> Active
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-1 text-[9px] font-black text-amber-600 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-100">
-                          <Clock size={10} /> Pending
-                        </div>
-                      )}
-                    </div>
-                    <div>
-                      <h4 className="text-xs font-bold text-gray-800">1-Minute Video Intro</h4>
-                      <p className="text-[10px] text-gray-400 leading-normal mt-0.5">
-                        Introduce your classes. Format: MP4/WebM. Max size: 50MB.
-                      </p>
-                    </div>
-                  </div>
-
-                  <label className={`flex items-center justify-center gap-2 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest cursor-pointer transition select-none ${uploading.videoIntro ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-[#001A72] text-white hover:bg-[#001A72]/90 shadow-sm shadow-[#001A72]/5'
-                    }`}>
-                    <Upload size={12} />
-                    {uploading.videoIntro ? 'Uploading…' : 'Choose Video'}
-                    <input
-                      type="file"
-                      accept="video/*"
-                      onChange={(e) => handleFileUpload(e, 'videoIntro')}
-                      className="hidden"
-                      disabled={uploading.videoIntro}
-                    />
-                  </label>
-                </div>
-
                 {/* Documents Management Card */}
                 <div className="sm:col-span-2 p-4 rounded-xl border border-gray-100 bg-white flex flex-col space-y-4 hover:border-emerald-100 hover:shadow-md hover:shadow-emerald-50/20 transition-all duration-300">
                   <div className="flex items-center justify-between">
@@ -757,43 +600,6 @@ export default function ProfilePage(): ReactElement {
                 </div>
               </div>
 
-              {/* Verification Path Roadmap */}
-              <div className="bg-[#001A72] rounded-xl p-5 text-white space-y-4">
-                <div>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-white/40">Tutor Verification Journey</p>
-                  <p className="text-[9px] text-white/60 leading-normal mt-0.5">
-                    Verified profiles enjoy higher visibility, digital vault listing tools, and custom premium payouts.
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-3 gap-4 border-t border-white/10 pt-4">
-                  {[
-                    { n: '1', title: 'Get Verified', text: 'Upload files to verify identity.', active: true },
-                    { n: '2', title: 'Go Premium', text: 'Activate marketplace features.', active: completion?.completionPercentage === 100 },
-                    { n: '3', title: 'Passive Earnings', text: 'Upload premium material vault.', active: completion?.isPremium },
-                  ].map((s) => (
-                    <div key={s.n} className={`space-y-1.5 ${s.active ? 'opacity-100' : 'opacity-35'}`}>
-                      <div className={`w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-black ${s.active ? 'bg-[#FFB81C] text-[#001A72]' : 'bg-white/10 text-white'}`}>
-                        {s.n}
-                      </div>
-                      <div>
-                        <p className="text-[10px] font-black leading-tight">{s.title}</p>
-                        <p className="text-[8px] text-white/50 leading-relaxed mt-0.5">{s.text}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {completion?.completionPercentage === 100 && !completion.isPremium && (
-                  <button
-                    type="button"
-                    onClick={() => router.push('/app/premium-subscription')}
-                    className="w-full flex items-center justify-center gap-2 bg-[#FFB81C] text-[#001A72] py-2.5 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-[#FFB81C]/90 transition"
-                  >
-                    <Gem size={13} /> Upgrade to Premium
-                  </button>
-                )}
-              </div>
             </div>
           )}
         </div>

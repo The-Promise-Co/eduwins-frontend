@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { useTeacherProfile } from '@/misc/hooks/api/teachers';
 import { TeacherProfile } from '@/misc/types';
+import { useSubjects } from '@/app/app/courses/misc/api';
 
 const GRADIENT_COLORS = [
   'from-blue-600 to-blue-800',
@@ -54,6 +55,7 @@ function initials(name: string | undefined) {
 export default function TutorDetailPage() {
   const { id } = useParams<{ id: string }>();
   const teacherQuery = useTeacherProfile(id);
+  const subjectsQuery = useSubjects();
   const teacher = teacherQuery.data || null;
   const loading = teacherQuery.isLoading || teacherQuery.isPending;
 
@@ -88,7 +90,11 @@ export default function TutorDetailPage() {
   const reviews = t.students ?? t.reviewsCount ?? t.reviewCount ?? 0;
   const color = pickColor(t.id);
   const firstName = name.split(' ')[0] || 'this tutor';
-  const subjects = t.subjects?.length ? t.subjects : [subject];
+  const subjectNameById = (subjectsQuery.data || []).reduce<Record<string, string>>((acc, item) => {
+    acc[item.id] = item.name;
+    return acc;
+  }, {});
+  const subjects = t.subjects?.length ? t.subjects.map((item) => subjectNameById[item] || item) : [subject];
   const bio = t.bio || '';
   const availabilityConfig = t.availabilityConfig || null;
   const availabilityEntries = availabilityConfig
