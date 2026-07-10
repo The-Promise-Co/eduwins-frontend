@@ -1,5 +1,6 @@
 'use client';
 
+import { useRef } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -25,6 +26,8 @@ import {
 import { useTeacherProfile } from '@/misc/hooks/api/teachers';
 import { TeacherProfile } from '@/misc/types';
 import { useSubjects } from '@/app/app/courses/misc/api';
+import VideoPlayer from '@/misc/components/VideoPlayer';
+import TutorSchedulePicker, { TutorSchedulePickerRef } from '@/misc/components/TutorSchedulePicker';
 
 const GRADIENT_COLORS = [
   'from-blue-600 to-blue-800',
@@ -54,6 +57,7 @@ function initials(name: string | undefined) {
 
 export default function TutorDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const schedulePickerRef = useRef<TutorSchedulePickerRef>(null);
   const teacherQuery = useTeacherProfile(id);
   const subjectsQuery = useSubjects();
   const teacher = teacherQuery.data || null;
@@ -171,8 +175,8 @@ export default function TutorDetailPage() {
 
             <ProfileSection title="Video Intro" icon={Video}>
               {t.intro_video ? (
-                <div className="aspect-video bg-gray-100 rounded-xl overflow-hidden">
-                  <video src={t.intro_video} controls className="w-full h-full object-cover" />
+                <div className="aspect-video bg-black rounded-2xl overflow-hidden">
+                  <VideoPlayer src={t.intro_video} title={`${name} intro video`} onProgress={() => undefined} onComplete={() => undefined} />
                 </div>
               ) : (
                 <div className="aspect-video rounded-xl bg-gradient-to-br from-[#001A72] to-[#0040c8] flex flex-col items-center justify-center text-white text-center px-6">
@@ -185,20 +189,7 @@ export default function TutorDetailPage() {
 
             <ProfileSection title="Schedule" icon={Calendar}>
               {hasAvailability ? (
-                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                  {availabilityEntries.map(([day, ranges]) => (
-                    <div key={day} className="rounded-xl border border-emerald-100 bg-emerald-50 p-3">
-                      <p className="text-[10px] text-emerald-600 font-bold uppercase mb-2">{day}</p>
-                      <div className="space-y-1">
-                        {ranges.map((range) => (
-                          <p key={`${day}-${range.from}-${range.to}`} className="text-xs font-black text-gray-800">
-                            {range.from} - {range.to}
-                          </p>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                <TutorSchedulePicker ref={schedulePickerRef} availabilityConfig={availabilityConfig} teacherId={t.id} hourlyRate={rate} subject={subjects[0]} />
               ) : (
                 <EmptyPanel text="This tutor has not published an availability schedule yet." />
               )}
@@ -225,9 +216,9 @@ export default function TutorDetailPage() {
                     <p className="text-xs text-gray-400 mt-1">based on {reviews} reviews</p>
                 </div>
               </div>
-              <Link href="/login" className="flex items-center justify-center gap-2 w-full bg-[#001A72] text-white py-3 rounded-xl font-black text-sm hover:bg-[#0028a8] transition">
+              <button type="button" onClick={() => schedulePickerRef.current?.openBooking()} className="flex items-center justify-center gap-2 w-full bg-[#001A72] text-white py-3 rounded-xl font-black text-sm hover:bg-[#0028a8] transition">
                 <Calendar size={15} /> Book Now
-              </Link>
+              </button>
               <button className="mt-3 flex items-center justify-center gap-2 w-full border border-gray-200 text-[#001A72] py-3 rounded-xl font-bold text-sm hover:border-[#001A72] transition">
                 <MessageCircle size={15} /> Message Tutor
               </button>

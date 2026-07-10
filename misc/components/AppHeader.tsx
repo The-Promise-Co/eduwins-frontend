@@ -11,8 +11,10 @@ import {
   Calendar,
   Wallet,
   Settings,
-  LogOut
+  LogOut,
+  ClipboardList
 } from 'lucide-react';
+import { useNotifications } from '@/misc/hooks/api/notifications';
 
 interface AppHeaderProps {
   title: string;
@@ -23,6 +25,8 @@ export default function AppHeader({ title, onToggleMobileMenu }: AppHeaderProps)
   const { user, logout } = useUser();
   const router = useRouter();
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const notificationsQuery = useNotifications();
+  const unreadCount = notificationsQuery.data?.unreadCount || 0;
 
   const handleLogout = () => {
     logout();
@@ -57,10 +61,10 @@ export default function AppHeader({ title, onToggleMobileMenu }: AppHeaderProps)
         {/* Right */}
         <div className="flex items-center gap-3">
           {/* Bell */}
-          <button className="relative w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition">
+          <Link href="/app/profile/notifications" className="relative w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition">
             <Bell size={18} className="text-gray-600" />
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-white" />
-          </button>
+            {unreadCount > 0 && <span className="absolute -top-1 -right-1 min-w-5 h-5 px-1 rounded-full bg-red-500 border-2 border-white text-[10px] font-black text-white flex items-center justify-center">{unreadCount > 9 ? '9+' : unreadCount}</span>}
+          </Link>
 
           {/* User pill */}
           <div className="relative">
@@ -100,6 +104,9 @@ export default function AppHeader({ title, onToggleMobileMenu }: AppHeaderProps)
                     </Link>
                     <Link href="/app/schedule" onClick={() => setDropdownOpen(false)} className="flex items-center gap-3 px-4 py-2.5 text-xs text-gray-700 hover:bg-gray-50 transition">
                       <Calendar size={14} className="text-gray-400" /> My Schedule
+                    </Link>
+                    <Link href="/app/booking-requests" onClick={() => setDropdownOpen(false)} className="flex items-center gap-3 px-4 py-2.5 text-xs text-gray-700 hover:bg-gray-50 transition">
+                      <ClipboardList size={14} className="text-gray-400" /> Booking Requests
                     </Link>
                     <Link href="/app/earnings" onClick={() => setDropdownOpen(false)} className="flex items-center gap-3 px-4 py-2.5 text-xs text-gray-700 hover:bg-gray-50 transition">
                       <Wallet size={14} className="text-gray-400" /> Earnings

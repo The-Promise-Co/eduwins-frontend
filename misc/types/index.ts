@@ -100,17 +100,49 @@ export interface TeacherProfile extends Partial<User> {
 
 export interface Booking {
   id: string;
+  parentId?: string;
   teacherId: string;
+  childId?: string | null;
   teacherName?: string;
   parentEmail?: string;
   totalSessions: number;
   totalCost: number;
+  totalAmount?: string | number;
   status: string;
   subject?: string;
   ratePerHour?: number;
+  bookingFor?: 'self' | 'children';
+  scheduledDate?: string;
+  startTime?: string;
+  endTime?: string;
+  durationHours?: string | number;
+  note?: string | null;
   scheduled_time?: string;
   lesson_id?: string | number;
   teacher_name?: string;
+  parent?: {
+    id: string;
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+    phone?: string | null;
+  } | null;
+  teacher?: {
+    id: string;
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+    phone?: string | null;
+  } | null;
+  children?: Array<{
+    id: string;
+    firstName?: string;
+    lastName?: string;
+    grade?: string | null;
+    school?: string | null;
+  }>;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface Transaction {

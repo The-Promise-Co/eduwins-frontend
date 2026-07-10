@@ -16,6 +16,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/app/premium-content': 'My Content',
   '/app/welfare-fund': 'Welfare Fund',
   '/app/schedule': 'Schedule',
+  '/app/booking-requests': 'Booking Requests',
   '/app/earnings': 'Earnings',
   '/app/progress': 'Progress Report',
   '/app/profile/notifications': 'Notifications',

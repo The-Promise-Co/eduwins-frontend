@@ -20,7 +20,7 @@ export const useR2 = () => {
         contentType: file.type,
         folder,
       });
-
+      console.log(data, "SIGN DATA")
       const { uploadUrl, publicUrl } = data;
 
       if (!uploadUrl || !publicUrl) {
@@ -49,6 +49,7 @@ export const useR2 = () => {
       setError(null);
     },
     onError: (err: any) => {
+      // console.log(err, "ERROR")
       console.error('R2 upload error:', err);
       const msg = err.response?.data?.error || err.message || 'Upload failed';
       setError(msg);
