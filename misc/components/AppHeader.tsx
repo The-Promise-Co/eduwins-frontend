@@ -1,20 +1,21 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useUser } from '@/misc/context/UserContext';
 import {
   Bell,
+  Check,
   ChevronDown,
   UserCog,
   Calendar,
   Wallet,
   Settings,
   LogOut,
-  ClipboardList
+  ClipboardList,
+  Loader2
 } from 'lucide-react';
-import { useNotifications } from '@/misc/hooks/api/notifications';
+import { useNotifications, useMarkAllNotificationsRead } from '@/misc/hooks/api/notifications';
 
 interface AppHeaderProps {
   title: string;
@@ -23,10 +24,12 @@ interface AppHeaderProps {
 
 export default function AppHeader({ title, onToggleMobileMenu }: AppHeaderProps) {
   const { user, logout } = useUser();
-  const router = useRouter();
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
   const notificationsQuery = useNotifications();
+  const markAllRead = useMarkAllNotificationsRead();
   const unreadCount = notificationsQuery.data?.unreadCount || 0;
+  const recentNotifications = (notificationsQuery.data?.notifications || []).slice(0, 5);
 
   const handleLogout = () => {
     logout();
@@ -39,6 +42,12 @@ export default function AppHeader({ title, onToggleMobileMenu }: AppHeaderProps)
     .toUpperCase()
     .slice(0, 2);
   const avatarUrl = (user as any)?.photo || (user as any)?.photoUrl || user?.avatarUrl || '';
+
+  const formatDate = (value?: string) => {
+    if (!value) return '';
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? value : date.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+  };
 
   return (
     <>
@@ -61,10 +70,76 @@ export default function AppHeader({ title, onToggleMobileMenu }: AppHeaderProps)
         {/* Right */}
         <div className="flex items-center gap-3">
           {/* Bell */}
-          <Link href="/app/profile/notifications" className="relative w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition">
-            <Bell size={18} className="text-gray-600" />
-            {unreadCount > 0 && <span className="absolute -top-1 -right-1 min-w-5 h-5 px-1 rounded-full bg-red-500 border-2 border-white text-[10px] font-black text-white flex items-center justify-center">{unreadCount > 9 ? '9+' : unreadCount}</span>}
-          </Link>
+          <div className="relative">
+            <button
+              onClick={() => setNotifOpen(!notifOpen)}
+              className="relative w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition"
+            >
+              <Bell size={18} className="text-gray-600" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 min-w-5 h-5 px-1 rounded-full bg-red-500 border-2 border-white text-[10px] font-black text-white flex items-center justify-center">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
+            </button>
+
+            {notifOpen && (
+              <>
+                <div className="fixed inset-0 z-10" onClick={() => setNotifOpen(false)} />
+                <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-2xl shadow-lg border border-gray-100 z-20 overflow-hidden">
+                  <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+                    <p className="text-xs font-black text-gray-900">Notifications</p>
+                    {unreadCount > 0 && (
+                      <button
+                        onClick={() => markAllRead.mutate()}
+                        disabled={markAllRead.isPending}
+                        className="text-[10px] font-bold text-[#001A72] hover:underline disabled:opacity-60"
+                      >
+                        {markAllRead.isPending ? 'Marking...' : 'Mark all read'}
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="max-h-80 overflow-y-auto">
+                    {notificationsQuery.isLoading ? (
+                      <div className="py-8 flex items-center justify-center text-gray-400">
+                        <Loader2 size={16} className="animate-spin mr-2" /> Loading...
+                      </div>
+                    ) : recentNotifications.length === 0 ? (
+                      <div className="py-8 text-center">
+                        <p className="text-xs font-bold text-gray-500">No notifications yet</p>
+                      </div>
+                    ) : (
+                      recentNotifications.map((n) => (
+                        <div key={n.id} className="px-4 py-3 border-b border-gray-50 last:border-0 hover:bg-gray-50 transition">
+                          <div className="flex items-start gap-3">
+                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${n.read ? 'bg-gray-50 text-gray-400' : 'bg-amber-50 text-[#FFB81C]'}`}>
+                              {n.read ? <Check size={14} /> : <Bell size={14} />}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-bold text-gray-900">{n.title || 'Notification'}</p>
+                              <p className="text-[10px] text-gray-500 mt-0.5 leading-relaxed line-clamp-2">{n.message}</p>
+                              {n.createdAt && (
+                                <p className="text-[10px] text-gray-400 mt-1">{formatDate(n.createdAt)}</p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+
+                  <Link
+                    href="/app/profile/notifications"
+                    onClick={() => setNotifOpen(false)}
+                    className="block px-4 py-3 text-center text-xs font-black text-[#001A72] hover:bg-gray-50 transition border-t border-gray-100"
+                  >
+                    See all notifications
+                  </Link>
+                </div>
+              </>
+            )}
+          </div>
 
           {/* User pill */}
           <div className="relative">

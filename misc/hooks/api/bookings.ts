@@ -58,13 +58,92 @@ export const useAcceptBookingRequest = () => {
   });
 };
 
+export interface DenyBookingRequestInput {
+  bookingId: string;
+  denialReason?: string;
+}
+
 export const useDenyBookingRequest = () => {
   const queryClient = useQueryClient();
-  return useMutation<{ booking: Booking }, unknown, string>({
-    mutationFn: async (bookingId) => {
-      const response = await api.patch<{ booking: Booking }>(`/bookings/${bookingId}/deny`);
+  return useMutation<{ booking: Booking }, unknown, DenyBookingRequestInput>({
+    mutationFn: async ({ bookingId, denialReason }) => {
+      const response = await api.patch<{ booking: Booking }>(`/bookings/${bookingId}/deny`, {
+        denialReason,
+      });
       return response.data;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['bookings', 'requests'] }),
+  });
+};
+
+export interface CancelBookingRequestInput {
+  bookingId: string;
+  reason?: string;
+}
+
+export const useCancelBookingRequest = () => {
+  const queryClient = useQueryClient();
+  return useMutation<{ booking: Booking }, unknown, CancelBookingRequestInput>({
+    mutationFn: async ({ bookingId, reason }) => {
+      const response = await api.patch<{ booking: Booking }>(`/bookings/${bookingId}/cancel`, {
+        reason,
+      });
+      return response.data;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['bookings', 'requests'] }),
+  });
+};
+
+export const useBlockedSlots = (teacherId: string | undefined, date: string | null) => {
+  return useQuery<{ startTime: string; endTime: string }[]>({
+    queryKey: ['bookings', 'blocked-slots', teacherId, date],
+    queryFn: async () => {
+      const response = await api.get('/bookings/blocked-slots', {
+        params: { teacherId, date },
+      });
+      return response.data.blockedSlots;
+    },
+    enabled: !!teacherId && !!date,
+  });
+};
+
+export const useStartSession = () => {
+  const queryClient = useQueryClient();
+  return useMutation<{ booking: Booking }, unknown, string>({
+    mutationFn: async (bookingId) => {
+      const response = await api.patch<{ booking: Booking }>(`/bookings/${bookingId}/start-session`);
+      return response.data;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['bookings'] }),
+  });
+};
+
+export const useEndSession = () => {
+  const queryClient = useQueryClient();
+  return useMutation<{ booking: Booking }, unknown, string>({
+    mutationFn: async (bookingId) => {
+      const response = await api.patch<{ booking: Booking }>(`/bookings/${bookingId}/end-session`);
+      return response.data;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['bookings'] }),
+  });
+};
+
+export interface EscrowBreakdown {
+  bookingId: string;
+  totalAmount: number;
+  tutorAmount: number;
+  platformFee: number;
+  welfareAmount: number;
+}
+
+export const useEscrowBreakdown = (bookingId: string | undefined) => {
+  return useQuery<EscrowBreakdown>({
+    queryKey: ['bookings', 'escrow-breakdown', bookingId],
+    queryFn: async () => {
+      const response = await api.get<EscrowBreakdown>(`/bookings/${bookingId}/escrow-breakdown`);
+      return response.data;
+    },
+    enabled: !!bookingId,
   });
 };

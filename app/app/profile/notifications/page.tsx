@@ -1,10 +1,26 @@
 'use client';
 
 import { ReactElement } from 'react';
-import { Bell, Check, Clock, Loader2 } from 'lucide-react';
+import Link from 'next/link';
+import { Bell, Check, Clock, ChevronRight, Loader2 } from 'lucide-react';
 import Button from '@/misc/components/Button';
 import PageHeader from '@/misc/components/PageHeader';
-import { AppNotification, useMarkNotificationRead, useNotifications } from '@/misc/hooks/api/notifications';
+import { AppNotification, useMarkNotificationRead, useMarkAllNotificationsRead, useNotifications } from '@/misc/hooks/api/notifications';
+
+const NOTIFICATION_ACTIONS: Record<string, { href: string; label: string }> = {
+  booking_request_pending: { href: '/app/booking-requests', label: 'View Request' },
+  booking_request_accepted: { href: '/app/booking-requests', label: 'View Booking' },
+  booking_request_denied: { href: '/app/booking-requests', label: 'View Request' },
+  booking_cancelled: { href: '/app/booking-requests', label: 'View Booking' },
+  booking_auto_cancelled: { href: '/app/booking-requests', label: 'View Booking' },
+  booking_payment_confirmed: { href: '/app/booking-requests', label: 'View Booking' },
+  booking_paid_escrow: { href: '/app/booking-requests', label: 'View Booking' },
+  course_payment: { href: '/app/courses', label: 'View Course' },
+  withdrawal_initiated: { href: '/app/earnings', label: 'View Earnings' },
+  withdrawal_completed: { href: '/app/earnings', label: 'View Earnings' },
+};
+
+const getNotificationAction = (type: string) => NOTIFICATION_ACTIONS[type] || null;
 
 const formatDate = (value?: string) => {
   if (!value) return '';
@@ -15,7 +31,9 @@ const formatDate = (value?: string) => {
 export default function NotificationsSettingsPage(): ReactElement {
   const notificationsQuery = useNotifications();
   const markRead = useMarkNotificationRead();
+  const markAllRead = useMarkAllNotificationsRead();
   const notifications = notificationsQuery.data?.notifications || [];
+  const unreadCount = notificationsQuery.data?.unreadCount || 0;
 
   return (
     <div className="space-y-6 max-w-3xl mx-auto pb-12">
@@ -29,12 +47,23 @@ export default function NotificationsSettingsPage(): ReactElement {
           <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-[#001A72]">
             <Bell size={16} />
           </div>
-          <div>
+          <div className="flex-1">
             <h2 className="text-xs font-black text-gray-700 uppercase tracking-widest">Recent Notifications</h2>
             <p className="text-[10px] text-gray-400 mt-0.5 leading-normal">
-              {notificationsQuery.data?.unreadCount || 0} unread notification{notificationsQuery.data?.unreadCount === 1 ? '' : 's'}.
+              {unreadCount} unread notification{unreadCount === 1 ? '' : 's'}.
             </p>
           </div>
+          {unreadCount > 0 && (
+            <Button
+              fullWidth={false}
+              variant="ghost"
+              onClick={() => markAllRead.mutate()}
+              disabled={markAllRead.isPending}
+              className="px-3 py-2 text-[10px] font-black uppercase tracking-wider"
+            >
+              {markAllRead.isPending ? 'Marking...' : 'Mark all as read'}
+            </Button>
+          )}
         </div>
 
         {notificationsQuery.isLoading ? (
@@ -53,31 +82,44 @@ export default function NotificationsSettingsPage(): ReactElement {
           </div>
         ) : (
           <div className="divide-y divide-gray-50">
-            {notifications.map((notification: AppNotification) => (
-              <div key={notification.id} className="py-4 flex items-start gap-3">
-                <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${notification.read ? 'bg-gray-50 text-gray-400' : 'bg-amber-50 text-[#FFB81C]'}`}>
-                  {notification.read ? <Check size={16} /> : <Bell size={16} />}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <h3 className="text-sm font-black text-gray-900">{notification.title || 'Notification'}</h3>
-                      <p className="text-xs text-gray-500 mt-1 leading-relaxed">{notification.message}</p>
+            {notifications.map((notification: AppNotification) => {
+              const action = getNotificationAction(notification.type || '');
+              return (
+                <div key={notification.id} className="py-4 flex items-start gap-3">
+                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${notification.read ? 'bg-gray-50 text-gray-400' : 'bg-amber-50 text-[#FFB81C]'}`}>
+                    {notification.read ? <Check size={16} /> : <Bell size={16} />}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <h3 className="text-sm font-black text-gray-900">{notification.title || 'Notification'}</h3>
+                        <p className="text-xs text-gray-500 mt-1 leading-relaxed">{notification.message}</p>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        {action && (
+                          <Link
+                            href={action.href}
+                            className="inline-flex items-center gap-1 rounded-lg bg-[#001A72]/5 px-3 py-2 text-[10px] font-black uppercase tracking-wider text-[#001A72] hover:bg-[#001A72]/10 transition"
+                          >
+                            {action.label} <ChevronRight size={12} />
+                          </Link>
+                        )}
+                        {!notification.read && (
+                          <Button fullWidth={false} variant="ghost" onClick={() => markRead.mutate(notification.id)} disabled={markRead.isPending} className="px-3 py-2 text-[10px] font-black uppercase tracking-wider">
+                            Mark read
+                          </Button>
+                        )}
+                      </div>
                     </div>
-                    {!notification.read && (
-                      <Button fullWidth={false} variant="ghost" onClick={() => markRead.mutate(notification.id)} disabled={markRead.isPending} className="px-3 py-2 text-[10px] font-black uppercase tracking-wider">
-                        Mark read
-                      </Button>
+                    {notification.createdAt && (
+                      <p className="text-[10px] text-gray-400 mt-2 flex items-center gap-1">
+                        <Clock size={12} /> {formatDate(notification.createdAt)}
+                      </p>
                     )}
                   </div>
-                  {notification.createdAt && (
-                    <p className="text-[10px] text-gray-400 mt-2 flex items-center gap-1">
-                      <Clock size={12} /> {formatDate(notification.createdAt)}
-                    </p>
-                  )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

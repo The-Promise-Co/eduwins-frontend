@@ -27,13 +27,8 @@ function CoursePaymentConfirmContent() {
       try {
         const result = await verifyPaymentMutation.mutateAsync(reference);
 
-        if (result.status !== 'success') {
-          setError('Payment was not successful. Please try again.');
-          return;
-        }
-
         if (!result.course_id) {
-          setError('Payment verified, but no course was attached to this payment.');
+          setError('Payment was not successful. Please try again.');
           return;
         }
 
@@ -46,7 +41,7 @@ function CoursePaymentConfirmContent() {
     verify();
   }, [reference, router, verifyPaymentMutation]);
 
-  const success = verifyPaymentMutation.data?.status === 'success' && verifyPaymentMutation.data?.course_id;
+  const success = !!verifyPaymentMutation.data?.course_id;
 
   return (
     <div className="min-h-[70vh] flex items-center justify-center bg-gradient-to-b from-white to-[#F8FAFC] px-4">

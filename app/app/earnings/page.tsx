@@ -93,7 +93,7 @@ export default function EarningsPage(): ReactElement {
   const isTeacher = user?.role === 'teacher';
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <div className="space-y-6">
       <PageHeader
         title="Earnings"
         subtitle={isTeacher ? 'Track your income, splits, and wallet status' : 'Track your spending and transaction history'}

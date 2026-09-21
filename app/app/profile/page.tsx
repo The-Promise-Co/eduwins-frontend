@@ -13,12 +13,15 @@ import {
   Phone,
   FileText,
   RefreshCw,
+  MapPin,
 } from 'lucide-react';
 import PageHeader from '@/misc/components/PageHeader';
 import Button from '@/misc/components/Button';
 import ImageCropModal from '@/misc/components/ImageCropModal';
 import { useR2 } from '@/misc/hooks/useR2';
 import { toast } from 'sonner';
+import { useStates, useLgas } from '@/misc/hooks/api/locations';
+import LocationAreaInput from '@/misc/components/LocationAreaInput';
 import type { ProfileCompletion as ApiProfileCompletion } from '@/misc/types/uploads';
 
 type CompletionKey = 'photo' | 'bio' | 'subjects' | 'video_intro' | 'schedule' | 'hourly_pay' | 'certification' | 'education';
@@ -88,6 +91,9 @@ export default function ProfilePage(): ReactElement {
     phone: '',
     bio: '',
     photo: '',
+    locationState: '',
+    locationLga: '',
+    locationArea: '',
   });
 
   // Upload states
@@ -100,6 +106,11 @@ export default function ProfilePage(): ReactElement {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const completionQuery = useProfileCompletion();
   const updateProfileMutation = useUpdateProfile();
+
+  const statesQuery = useStates();
+  const lgasQuery = useLgas(formData.locationState);
+  const states = statesQuery.data || [];
+  const lgas = lgasQuery.data || [];
 
   const init = async () => {
     const token = localStorage.getItem('token');
@@ -119,6 +130,9 @@ export default function ProfilePage(): ReactElement {
         phone: userData.phone || '',
         bio: userData.bio || '',
         photo: userData.photo || userData.photoUrl || '',
+        locationState: userData.locationState || '',
+        locationLga: userData.locationLga || '',
+        locationArea: userData.locationArea || '',
       });
     } catch (err) {
       console.error(err);
@@ -293,6 +307,56 @@ export default function ProfilePage(): ReactElement {
             </Field>
           </div>
 
+          {user?.role === 'teacher' && (
+            <div className="space-y-4 pt-4 border-t border-gray-50">
+              <div className="flex items-center gap-2 pb-2">
+                <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600">
+                  <MapPin size={16} />
+                </div>
+                <h2 className="text-xs font-black text-gray-700 uppercase tracking-widest">Location</h2>
+              </div>
+
+              <Field label="State">
+                <select
+                  value={formData.locationState}
+                  onChange={(e) => {
+                    const state = e.target.value;
+                    setFormData((p) => ({ ...p, locationState: state, locationLga: '', locationArea: '' }));
+                  }}
+                  className={INPUT}
+                >
+                  <option value="">Select state</option>
+                  {states.map((s) => (
+                    <option key={s} value={s}>{s}</option>
+                  ))}
+                </select>
+              </Field>
+
+              <Field label="LGA">
+                <select
+                  value={formData.locationLga}
+                  onChange={(e) => setFormData((p) => ({ ...p, locationLga: e.target.value, locationArea: '' }))}
+                  disabled={!formData.locationState}
+                  className={INPUT + ' disabled:bg-gray-50 disabled:cursor-not-allowed'}
+                >
+                  <option value="">Select LGA</option>
+                  {lgas.map((l) => (
+                    <option key={l} value={l}>{l}</option>
+                  ))}
+                </select>
+              </Field>
+
+              <Field label="Area (optional)">
+                <LocationAreaInput
+                  value={formData.locationArea}
+                  onChange={(v) => setFormData((p) => ({ ...p, locationArea: v }))}
+                  state={formData.locationState}
+                  lga={formData.locationLga}
+                />
+              </Field>
+            </div>
+          )}
+
           <div className="pt-2">
             <Button type="submit" isLoading={saving} loadingText="Saving..." className="w-full py-3.5 text-xs font-black uppercase tracking-wider">
               Save Changes
@@ -364,7 +428,11 @@ export default function ProfilePage(): ReactElement {
                 onChange={handleChange}
                 rows={5}
                 className={INPUT + ' resize-none'}
-                placeholder="Share your qualifications, teaching methodology, achievements, and what students should expect..."
+                placeholder={
+                  user?.role === 'parent'
+                    ? "Tell tutors about your child's learning needs, goals, and any preferences for tutoring..."
+                    : 'Share your qualifications, teaching methodology, achievements, and what students should expect...'
+                }
               />
             </Field>
 

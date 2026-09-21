@@ -322,7 +322,7 @@ export default function ChildDetailPage() {
   const color = AVATAR_COLORS[child.id.charCodeAt(0) % AVATAR_COLORS.length];
 
   return (
-    <div className="space-y-5 max-w-4xl mx-auto">
+    <div className="space-y-5">
       {/* Back + Header */}
       <div className="flex items-start gap-4">
         <button

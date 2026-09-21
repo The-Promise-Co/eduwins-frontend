@@ -140,7 +140,7 @@ export default function ChildrenPage() {
 
   /* ── Render ────────────────────────────────────────────────────────────── */
   return (
-    <div className="space-y-6 max-w-5xl mx-auto">
+    <div className="space-y-6">
 
       {/* Page title + add button */}
       <div className="flex items-end justify-between gap-4">

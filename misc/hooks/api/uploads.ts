@@ -3,13 +3,14 @@ import api from '@/misc/services/api';
 import type { ProfileCompletion } from '@/misc/types/uploads';
 import type { TeacherDocument } from '@/misc/types';
 
-export const useProfileCompletion = () => {
+export const useProfileCompletion = (enabled = true) => {
   return useQuery<ProfileCompletion>({
     queryKey: ['uploads', 'profile-completion'],
     queryFn: async () => {
       const response = await api.get<ProfileCompletion>('/uploads/profile-completion');
       return response.data;
     },
+    enabled,
   });
 };
 

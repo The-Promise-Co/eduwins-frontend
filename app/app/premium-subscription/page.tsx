@@ -141,7 +141,7 @@ export default function PremiumSubscriptionPage(): ReactElement {
   const daysRemaining = subscription?.daysRemaining;
 
   return (
-    <div className="space-y-8 max-w-5xl mx-auto">
+    <div className="space-y-8">
       <PageHeader
         title="Premium"
         subtitle="Unlock exclusive features, monetize your content, and reach more students"

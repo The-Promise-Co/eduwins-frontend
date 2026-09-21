@@ -103,7 +103,7 @@ export default function CoursesPage() {
   }
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <div className="space-y-6">
       <PageHeader
         title="Courses"
         subtitle={isTeacher ? (teacherTab === 'created' ? 'Manage and track your created courses' : 'Courses you have purchased') : isParent ? 'Courses you have purchased' : 'Explore available courses'}

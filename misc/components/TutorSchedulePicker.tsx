@@ -4,9 +4,11 @@ import { forwardRef, useEffect, useImperativeHandle, useMemo, useState } from 'r
 import { useRouter } from 'next/navigation';
 import { Calendar, ChevronLeft, ChevronRight, User, Users } from 'lucide-react';
 import Modal from '@/misc/components/Modal';
+import BookingSuccessModal from '@/misc/components/BookingSuccessModal';
 import { useUser } from '@/misc/context/UserContext';
 import { useChildren } from '@/misc/hooks/useChildren';
-import { useCreateBookingRequest } from '@/misc/hooks/api/bookings';
+import { useCreateBookingRequest, useBlockedSlots } from '@/misc/hooks/api/bookings';
+import type { Booking } from '@/misc/types';
 import { toast } from 'sonner';
 
 type AvailabilityRange = { from: string; to: string };
@@ -116,6 +118,43 @@ const buildSelectedTimes = (startTime: string, endTime: string) => {
 
 const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
 
+type SlotVisualState = 'from' | 'to' | 'middle' | 'booked' | null;
+
+const isSlotBlocked = (slot: string, blockedSlots: { startTime: string; endTime: string }[]) => {
+  const slotMin = toMinutes(slot);
+  return blockedSlots.some((b) => {
+    const bStart = toMinutes(b.startTime);
+    const bEnd = toMinutes(b.endTime);
+    return slotMin >= bStart && slotMin < bEnd;
+  });
+};
+
+const getSlotVisualState = (slot: string, selectedTimes: string[], blockedSlots: { startTime: string; endTime: string }[]): SlotVisualState => {
+  if (isSlotBlocked(slot, blockedSlots)) return 'booked';
+  if (selectedTimes.length === 0) return null;
+
+  const sorted = selectedTimes.slice().sort((a, b) => toMinutes(a) - toMinutes(b));
+  if (slot === sorted[0]) return 'from';
+  if (slot === sorted[sorted.length - 1] && sorted.length > 1) return 'to';
+  if (sorted.includes(slot)) return 'middle';
+  return null;
+};
+
+const getTruncatedRange = (fromSlot: string, toSlot: string, availableSlots: string[], blockedSlots: { startTime: string; endTime: string }[]): string[] => {
+  const fromMin = toMinutes(fromSlot);
+  const toMin = toMinutes(toSlot);
+  const result: string[] = [];
+
+  for (const slot of availableSlots) {
+    const slotMin = toMinutes(slot);
+    if (slotMin < fromMin || slotMin > toMin) continue;
+    if (isSlotBlocked(slot, blockedSlots)) break;
+    result.push(slot);
+  }
+
+  return result;
+};
+
 const PENDING_BOOKING_KEY = 'pendingTutorBookingRequest';
 
 const TutorSchedulePicker = forwardRef<TutorSchedulePickerRef, TutorSchedulePickerProps>(function TutorSchedulePicker({ availabilityConfig, bookHref = '/login', teacherId, hourlyRate = 0, subject }, ref) {
@@ -123,7 +162,13 @@ const TutorSchedulePicker = forwardRef<TutorSchedulePickerRef, TutorSchedulePick
   const { user, isAuthenticated } = useUser();
   const childrenQuery = useChildren(user?.role);
   const createBookingRequest = useCreateBookingRequest();
-  const [weekStart, setWeekStart] = useState(() => buildDate());
+  const DEV_ANY_DATE = process.env.NEXT_PUBLIC_DEV_ALLOW_ANY_DATE === 'true';
+  const [weekStart, setWeekStart] = useState(() => {
+    if (DEV_ANY_DATE) return buildDate();
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return buildDate(tomorrow);
+  });
   const [monthPickerOpen, setMonthPickerOpen] = useState(false);
   const [pickerYear, setPickerYear] = useState(() => new Date().getFullYear());
   const scheduleDates = useMemo(() => buildScheduleDates(weekStart, availabilityConfig), [availabilityConfig, weekStart]);
@@ -134,6 +179,9 @@ const TutorSchedulePicker = forwardRef<TutorSchedulePickerRef, TutorSchedulePick
   const [selectedChildIds, setSelectedChildIds] = useState<string[]>([]);
   const [bookingNote, setBookingNote] = useState('');
   const [bookingStep, setBookingStep] = useState<BookingStep>('recipient');
+  const [successBooking, setSuccessBooking] = useState<Booking | null>(null);
+  const [successModalOpen, setSuccessModalOpen] = useState(false);
+  const { data: blockedSlots = [] } = useBlockedSlots(teacherId, selectedDateKey || null);
 
   useEffect(() => {
     const firstAvailable = scheduleDates.find((item) => item.slots.length > 0);
@@ -160,6 +208,12 @@ const TutorSchedulePicker = forwardRef<TutorSchedulePickerRef, TutorSchedulePick
     setWeekStart((current) => {
       const next = new Date(current);
       next.setDate(current.getDate() + direction * 7);
+      if (!DEV_ANY_DATE) {
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        tomorrow.setHours(0, 0, 0, 0);
+        if (next.getTime() < tomorrow.getTime()) return current;
+      }
       return next;
     });
     setSelectedDateKey('');
@@ -167,32 +221,41 @@ const TutorSchedulePicker = forwardRef<TutorSchedulePickerRef, TutorSchedulePick
   };
   const selectMonth = (monthIndex: number) => {
     const next = new Date(pickerYear, monthIndex, 1);
+    if (!DEV_ANY_DATE) {
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      tomorrow.setHours(0, 0, 0, 0);
+      if (next.getTime() < tomorrow.getTime()) return;
+    }
     setWeekStart(next);
     setSelectedDateKey('');
     setSelectedTimes([]);
     setMonthPickerOpen(false);
   };
   const selectSlot = (slot: string) => {
+    if (isSlotBlocked(slot, blockedSlots)) return;
+
     setSelectedTimes((current) => {
       if (current.length === 0) return [slot];
 
       const sorted = current.slice().sort((a, b) => toMinutes(a) - toMinutes(b));
       const first = sorted[0];
       const last = sorted[sorted.length - 1];
-      const slotMinutes = toMinutes(slot);
-      const firstMinutes = toMinutes(first);
-      const lastMinutes = toMinutes(last);
 
-      if (current.includes(slot)) {
-        if (current.length === 1) return current;
-        if (slot === first) return sorted.slice(1);
-        if (slot === last) return sorted.slice(0, -1);
-        return [slot];
-      }
+      if (sorted.length === 1 && slot === first) return current;
 
-      if (slotMinutes === firstMinutes - 60) return [slot, ...sorted];
-      if (slotMinutes === lastMinutes + 60) return [...sorted, slot];
-      return [slot];
+      if (sorted.length > 1 && slot === last) return [first];
+
+      if (slot === first && sorted.length > 1) return [last];
+
+      const slotMin = toMinutes(slot);
+      const firstMin = toMinutes(first);
+      const lastMin = toMinutes(last);
+      if (slotMin > firstMin && slotMin < lastMin) return [slot];
+
+      const fromSlot = slotMin < firstMin ? slot : first;
+      const toSlot = slotMin < firstMin ? last : slot;
+      return getTruncatedRange(fromSlot, toSlot, selectedSlots, blockedSlots);
     });
   };
   const toggleChild = (childId: string) => {
@@ -264,10 +327,11 @@ const TutorSchedulePicker = forwardRef<TutorSchedulePickerRef, TutorSchedulePick
     }
 
     try {
-      await createBookingRequest.mutateAsync(payload);
-      toast.success('Booking request sent successfully.');
+      const { booking } = await createBookingRequest.mutateAsync(payload);
       setBookingModalOpen(false);
       setBookingNote('');
+      setSuccessBooking(booking);
+      setSuccessModalOpen(true);
     } catch (err: any) {
       toast.error(err.response?.data?.error || 'Failed to send booking request.');
     }
@@ -317,12 +381,31 @@ const TutorSchedulePicker = forwardRef<TutorSchedulePickerRef, TutorSchedulePick
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
         {selectedSlots.map((slot) => {
-          const isSelected = selectedTimes.includes(slot);
-          return <button key={`modal-${selectedDate?.key}-${slot}`} type="button" onClick={() => selectSlot(slot)} className={`rounded-2xl px-4 py-3 text-xs font-black transition ${isSelected ? 'border border-[#001A72] bg-[#001A72]/5 text-[#001A72]' : 'border border-transparent bg-gray-50 text-gray-700 hover:border-[#001A72]/10 hover:bg-[#001A72]/5'}`}>{slot}</button>;
+          const visual = getSlotVisualState(slot, selectedTimes, blockedSlots);
+          return (
+            <button
+              key={`modal-${selectedDate?.key}-${slot}`}
+              type="button"
+              disabled={visual === 'booked'}
+              onClick={() => selectSlot(slot)}
+              className={`rounded-2xl px-4 py-3 text-xs font-black transition ${
+                visual === 'from' || visual === 'to'
+                  ? 'border-2 border-[#001A72] bg-[#001A72] text-white shadow-sm'
+                  : visual === 'middle'
+                  ? 'border border-[#001A72]/30 bg-[#001A72]/10 text-[#001A72]'
+                  : visual === 'booked'
+                  ? 'border border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed line-through'
+                  : 'border border-transparent bg-gray-50 text-gray-700 hover:border-[#001A72]/10 hover:bg-[#001A72]/5'
+              }`}
+            >
+              {slot}
+              {visual === 'booked' && <span className="block text-[8px] mt-0.5 line-through opacity-60">Taken</span>}
+            </button>
+          );
         })}
       </div>
       <div className="rounded-2xl border border-[#FFB81C]/40 bg-[#FFB81C]/10 px-4 py-3 text-xs font-black text-[#001A72]">
-        {selectedDate && startTime && endTime ? `${formatSummaryDate(selectedDate.date)} | ${startTime} - ${endTime}` : 'Choose a date and time'}
+        {selectedDate && startTime && endTime ? `${formatSummaryDate(selectedDate.date)} | ${startTime} - ${endTime} (${durationHours}hr${durationHours > 1 ? 's' : ''})` : 'Choose a date and time'}
       </div>
     </div>
   );
@@ -333,7 +416,7 @@ const TutorSchedulePicker = forwardRef<TutorSchedulePickerRef, TutorSchedulePick
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-gray-100 pb-4">
         <p className="text-sm font-semibold text-gray-500">Choose date and time</p>
         <div className="relative flex items-center gap-2 self-start sm:self-auto">
-          <button type="button" onClick={() => goToWeek(-1)} className="flex h-9 w-9 items-center justify-center rounded-full border border-gray-100 bg-white text-[#001A72] hover:bg-[#001A72]/5 transition" aria-label="Previous week">
+          <button type="button" onClick={() => goToWeek(-1)} className="flex h-9 w-9 items-center justify-center rounded-full border border-gray-100 bg-white text-[#001A72] hover:bg-[#001A72]/5 transition disabled:opacity-30 disabled:cursor-not-allowed" aria-label="Previous week" disabled={!DEV_ANY_DATE && (() => { const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1); tomorrow.setHours(0,0,0,0); return weekStart.getTime() <= tomorrow.getTime(); })()}>
             <ChevronLeft size={16} />
           </button>
           <button type="button" onClick={() => { setPickerYear(weekStart.getFullYear()); setMonthPickerOpen((open) => !open); }} className="inline-flex items-center gap-2 rounded-full bg-[#001A72]/5 px-3 py-2 text-xs font-black text-[#001A72] hover:bg-[#001A72]/10 transition">
@@ -357,12 +440,18 @@ const TutorSchedulePicker = forwardRef<TutorSchedulePickerRef, TutorSchedulePick
               <div className="mt-3 grid grid-cols-3 gap-2">
                 {MONTHS.map((month, index) => {
                   const active = pickerYear === weekStart.getFullYear() && index === weekStart.getMonth();
+                  const monthDate = new Date(pickerYear, index, 1);
+                  const tomorrow = new Date();
+                  tomorrow.setDate(tomorrow.getDate() + 1);
+                  tomorrow.setHours(0, 0, 0, 0);
+                  const isPast = !DEV_ANY_DATE && monthDate.getTime() < tomorrow.getTime();
                   return (
                     <button
                       key={month}
                       type="button"
+                      disabled={isPast}
                       onClick={() => selectMonth(index)}
-                      className={`rounded-2xl px-3 py-2.5 text-xs font-black transition ${active ? 'bg-[#001A72] text-white shadow-sm' : 'bg-gray-50 text-gray-600 hover:bg-[#001A72]/5 hover:text-[#001A72]'}`}
+                      className={`rounded-2xl px-3 py-2.5 text-xs font-black transition ${active ? 'bg-[#001A72] text-white shadow-sm' : isPast ? 'bg-gray-50 text-gray-300 cursor-not-allowed' : 'bg-gray-50 text-gray-600 hover:bg-[#001A72]/5 hover:text-[#001A72]'}`}
                     >
                       {month}
                     </button>
@@ -406,19 +495,26 @@ const TutorSchedulePicker = forwardRef<TutorSchedulePickerRef, TutorSchedulePick
 
       <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-2">
         {selectedSlots.length > 0 ? selectedSlots.map((slot) => {
-          const isSelected = selectedTimes.includes(slot);
+          const visual = getSlotVisualState(slot, selectedTimes, blockedSlots);
 
           return (
             <button
               key={`${selectedDate?.key}-${slot}`}
               type="button"
+              disabled={visual === 'booked'}
               onClick={() => selectSlot(slot)}
-              className={`rounded-2xl px-4 py-3 text-xs font-black transition ${isSelected
-                ? 'border border-[#001A72] bg-[#001A72]/5 text-[#001A72] shadow-sm'
-                : 'border border-transparent bg-gray-50 text-gray-700 hover:border-[#001A72]/10 hover:bg-[#001A72]/5'
-                }`}
+              className={`rounded-2xl px-4 py-3 text-xs font-black transition ${
+                visual === 'from' || visual === 'to'
+                  ? 'border-2 border-[#001A72] bg-[#001A72] text-white shadow-sm'
+                  : visual === 'middle'
+                  ? 'border border-[#001A72]/30 bg-[#001A72]/10 text-[#001A72]'
+                  : visual === 'booked'
+                  ? 'border border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed line-through'
+                  : 'border border-transparent bg-gray-50 text-gray-700 hover:border-[#001A72]/10 hover:bg-[#001A72]/5'
+              }`}
             >
               {slot}
+              {visual === 'booked' && <span className="block text-[8px] mt-0.5 line-through opacity-60">Taken</span>}
             </button>
           );
         }) : (
@@ -430,7 +526,7 @@ const TutorSchedulePicker = forwardRef<TutorSchedulePickerRef, TutorSchedulePick
 
       <div className="mt-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-2xl border border-[#FFB81C]/40 bg-[#FFB81C]/10 px-4 py-3">
         <p className="text-xs font-black text-[#001A72]">
-          {selectedDate && startTime && endTime ? `${formatSummaryDate(selectedDate.date)} | ${startTime} - ${endTime}` : 'Choose a date and time'}
+          {selectedDate && startTime && endTime ? `${formatSummaryDate(selectedDate.date)} | ${startTime} - ${endTime} (${durationHours}hr${durationHours > 1 ? 's' : ''})` : 'Choose a date and time'}
         </p>
         <button type="button" onClick={openBooking} className="inline-flex items-center justify-center rounded-2xl bg-[#FFB81C] px-8 py-3 text-xs font-black uppercase tracking-wider text-[#001A72] hover:bg-[#ffc94d] transition">
           Book
@@ -499,7 +595,7 @@ const TutorSchedulePicker = forwardRef<TutorSchedulePickerRef, TutorSchedulePick
             </div>
             <div className="flex items-center justify-between gap-4 text-sm">
               <span className="font-bold text-gray-500">Session</span>
-              <span className="font-black text-[#001A72] text-right">{selectedDate && startTime && endTime ? `${formatSummaryDate(selectedDate.date)} | ${startTime} - ${endTime}` : 'Not selected'}</span>
+              <span className="font-black text-[#001A72] text-right">{selectedDate && startTime && endTime ? `${formatSummaryDate(selectedDate.date)} | ${startTime} - ${endTime} (${durationHours}hr${durationHours > 1 ? 's' : ''})` : 'Not selected'}</span>
             </div>
             <div className="flex items-center justify-between gap-4 text-sm">
               <span className="font-bold text-gray-500">Duration</span>
@@ -529,6 +625,12 @@ const TutorSchedulePicker = forwardRef<TutorSchedulePickerRef, TutorSchedulePick
           </div>}
         </div>
       </Modal>
+
+      <BookingSuccessModal
+        isOpen={successModalOpen}
+        onClose={() => { setSuccessModalOpen(false); setSuccessBooking(null); }}
+        booking={successBooking}
+      />
     </>
   );
 });

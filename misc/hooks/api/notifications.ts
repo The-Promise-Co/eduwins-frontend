@@ -31,3 +31,14 @@ export const useMarkNotificationRead = () => {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['notifications'] }),
   });
 };
+
+export const useMarkAllNotificationsRead = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      const response = await api.patch('/notifications/read-all');
+      return response.data;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['notifications'] }),
+  });
+};

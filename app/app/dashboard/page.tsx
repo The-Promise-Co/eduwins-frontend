@@ -116,7 +116,7 @@ export default function DashboardPage() {
   const { data: children = [], isLoading: childrenLoading } = useChildren(user?.role);
   const { data: pendingLessons = [], isLoading: lessonsLoading } = usePendingLessons(user?.role);
   const walletsQuery = useMyWallets();
-  const completionQuery = useProfileCompletion();
+  const completionQuery = useProfileCompletion(user?.role === 'teacher');
   const confirmLessonMutation = useConfirmLesson();
 
   const [otpInput, setOtpInput] = useState<Record<string, string>>({});
@@ -125,7 +125,7 @@ export default function DashboardPage() {
   const [profileBannerVisible, setProfileBannerVisible] = useState(false);
 
   useEffect(() => {
-    if (!userLoading && user?.id) {
+    if (!userLoading && user?.id && user?.role === 'teacher') {
       const dismissed = localStorage.getItem(`profileSetupDismissed_${user.id}`);
       if (!dismissed) {
         setProfileBannerVisible(true);
@@ -184,10 +184,10 @@ export default function DashboardPage() {
 
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <div className="space-y-6">
 
-      {/* Profile Completion Banner */}
-      {profileBannerVisible && (
+      {/* Profile Completion Banner — teachers only */}
+      {user?.role === 'teacher' && profileBannerVisible && (
         <div className="relative flex items-start sm:items-center justify-between gap-4 rounded-2xl border border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50 px-5 py-4 shadow-sm">
           <div className="flex items-start sm:items-center gap-3">
             <div className="shrink-0 w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center">

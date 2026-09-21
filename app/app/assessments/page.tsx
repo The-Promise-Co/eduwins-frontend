@@ -42,7 +42,7 @@ export default function AssessmentsPage(): ReactElement {
     : 0;
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
+    <div className="space-y-6">
       <PageHeader
         title="Assessments"
         subtitle="Track your quizzes, tests, and performance scores"

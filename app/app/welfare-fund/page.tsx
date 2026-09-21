@@ -107,7 +107,7 @@ export default function WelfareFundPage(): ReactElement {
   }
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto">
+    <div className="space-y-6">
       <PageHeader
         title="Welfare Fund"
         subtitle="Your protected savings — 10% of every lesson payment goes here automatically"

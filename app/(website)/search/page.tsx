@@ -19,6 +19,7 @@ import Link from 'next/link';
 import { useTeacherSearch } from '@/misc/hooks/api/teachers';
 import { TeacherProfile } from '@/misc/types';
 import { useSubjects } from '@/app/app/courses/misc/api';
+import { useStates, useLgas } from '@/misc/hooks/api/locations';
 
 /* ─── colour helpers for avatar gradients ─── */
 const GRADIENT_COLORS = [
@@ -70,7 +71,7 @@ function ResultCard({ teacher }: ResultCardProps) {
   }, {});
   const subject = teacher.subject || (teacher.subjects && (subjectNameById[teacher.subjects[0]] || teacher.subjects[0])) || '—';
   const rate = teacher.hourlyRate ?? teacher.baseHourlyRate ?? 0;
-  const location = teacher.lga || teacher.location || '';
+  const location = teacher.locationArea || teacher.locationLga || teacher.lga || teacher.location || '';
   const rating = teacher.ratingAvg;
   const reviews = teacher.students ?? teacher.reviewsCount ?? 0;
   const color = pickColor(teacher.id);
@@ -159,7 +160,8 @@ function SearchContent() {
   const searchParams = useSearchParams();
   const [filters, setFilters] = useState({
     subject: searchParams.get('subject') ?? '',
-    lga: '',
+    locationState: '',
+    locationLga: '',
     maxRate: '',
   });
   const [submittedFilters, setSubmittedFilters] = useState(filters);
@@ -171,12 +173,17 @@ function SearchContent() {
   const teachers = (teachersQuery.data?.data || []) as ResultCardProps['teacher'][];
   const loading = teachersQuery.isLoading || teachersQuery.isFetching;
 
+  const statesQuery = useStates();
+  const lgasQuery = useLgas(filters.locationState);
+  const states = statesQuery.data || [];
+  const lgas = lgasQuery.data || [];
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     setSubmittedFilters(filters);
   };
 
-  const clearFilter = (key: 'subject' | 'lga' | 'maxRate') =>
+  const clearFilter = (key: 'subject' | 'locationState' | 'locationLga' | 'maxRate') =>
     setFilters((f) => ({ ...f, [key]: '' }));
 
   const activeFilters = Object.entries(filters).filter(([_, v]) => v);
@@ -247,21 +254,33 @@ function SearchContent() {
 
           {/* expanded filters */}
           {showFilters && (
-            <div className="mt-4 grid sm:grid-cols-2 gap-3 max-w-2xl">
-              <div className="flex items-center gap-3 bg-white rounded-2xl px-4 py-3.5 shadow-lg">
-                <MapPin size={16} className="text-[#001A72] shrink-0" />
-                <input
-                  type="text"
-                  value={filters.lga}
-                  onChange={(e) => setFilters((f) => ({ ...f, lga: e.target.value }))}
-                  placeholder="Location / LGA"
-                  className="flex-1 text-sm text-gray-800 placeholder-gray-400 bg-transparent outline-none"
-                />
-                {filters.lga && (
-                  <button type="button" onClick={() => clearFilter('lga')} className="text-gray-300 hover:text-gray-500 transition">
-                    <X size={14} />
-                  </button>
-                )}
+            <div className="mt-4 grid sm:grid-cols-3 gap-3 max-w-3xl">
+              <div className="relative">
+                <MapPin size={16} className="absolute left-3.5 top-3.5 text-[#001A72] shrink-0 pointer-events-none" />
+                <select
+                  value={filters.locationState}
+                  onChange={(e) => setFilters((f) => ({ ...f, locationState: e.target.value, locationLga: '' }))}
+                  className="w-full bg-white rounded-2xl pl-10 pr-4 py-3.5 text-sm text-gray-800 border border-white/20 shadow-lg outline-none appearance-none cursor-pointer"
+                >
+                  <option value="">All States</option>
+                  {states.map((s) => (
+                    <option key={s} value={s}>{s}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="relative">
+                <MapPin size={16} className="absolute left-3.5 top-3.5 text-[#001A72] shrink-0 pointer-events-none" />
+                <select
+                  value={filters.locationLga}
+                  onChange={(e) => setFilters((f) => ({ ...f, locationLga: e.target.value }))}
+                  disabled={!filters.locationState}
+                  className="w-full bg-white rounded-2xl pl-10 pr-4 py-3.5 text-sm text-gray-800 border border-white/20 shadow-lg outline-none appearance-none cursor-pointer disabled:bg-gray-100 disabled:cursor-not-allowed"
+                >
+                  <option value="">All LGAs</option>
+                  {lgas.map((l) => (
+                    <option key={l} value={l}>{l}</option>
+                  ))}
+                </select>
               </div>
               <div className="flex items-center gap-3 bg-white rounded-2xl px-4 py-3.5 shadow-lg">
                 <Banknote size={16} className="text-[#001A72] shrink-0" />
@@ -296,17 +315,25 @@ function SearchContent() {
         {/* active filter chips */}
         {activeFilters.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-6">
-            {activeFilters.map(([key, value]) => (
-              <span
-                key={key}
-                className="flex items-center gap-1.5 bg-[#001A72]/5 border border-[#001A72]/10 text-[#001A72] text-xs font-semibold px-3 py-1.5 rounded-full"
-              >
-                {value}
-                <button onClick={() => clearFilter(key as any)} className="hover:text-red-500 transition">
-                  <X size={12} />
-                </button>
-              </span>
-            ))}
+            {activeFilters.map(([key, value]) => {
+              const labels: Record<string, string> = {
+                subject: 'Subject',
+                locationState: 'State',
+                locationLga: 'LGA',
+                maxRate: 'Max Rate',
+              };
+              return (
+                <span
+                  key={key}
+                  className="flex items-center gap-1.5 bg-[#001A72]/5 border border-[#001A72]/10 text-[#001A72] text-xs font-semibold px-3 py-1.5 rounded-full"
+                >
+                  {labels[key] || key}: {value}
+                  <button onClick={() => clearFilter(key as any)} className="hover:text-red-500 transition">
+                    <X size={12} />
+                  </button>
+                </span>
+              );
+            })}
           </div>
         )}
 

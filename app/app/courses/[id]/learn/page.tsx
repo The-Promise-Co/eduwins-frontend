@@ -113,7 +113,7 @@ export default function CourseLearnPage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto space-y-5">
+    <div className="space-y-5">
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-3 min-w-0">
           <Link href="/app/courses" className="w-10 h-10 rounded-xl border border-gray-200 bg-white flex items-center justify-center hover:bg-gray-50 transition shrink-0">

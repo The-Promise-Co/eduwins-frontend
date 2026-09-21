@@ -25,6 +25,17 @@ export const useTeacherSearch = (params: string = '') => {
   });
 };
 
+export const useTeacherAreas = (state: string, lga: string) => {
+  return useQuery<string[]>({
+    queryKey: ['teachers', 'areas', state, lga],
+    queryFn: async () => {
+      const response = await api.get<{ areas: string[] }>(`/teachers/areas?state=${encodeURIComponent(state)}&lga=${encodeURIComponent(lga)}`);
+      return response.data.areas || [];
+    },
+    enabled: !!state && !!lga,
+  });
+};
+
 export const useUploadPhoto = () => {
   return useMutation<{ photoUrl: string }, unknown, FormData>({
     mutationFn: async (data) => {

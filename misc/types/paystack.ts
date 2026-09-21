@@ -13,11 +13,17 @@ export interface InitializeCoursePaymentPayload {
 }
 
 export interface VerifyPaymentResponse {
-  status: string;
-  reference: string;
   course_id?: string;
+  booking_id?: string;
   user_id?: string;
   enrolled?: boolean;
   alreadyEnrolled?: boolean;
-  metadata?: Record<string, unknown>;
+  enrollment?: Record<string, unknown> | null;
+}
+
+export interface InitializeBookingPaymentPayload {
+  email: string;
+  amount: number;
+  booking_id: string;
+  callback_url?: string;
 }
