@@ -10,9 +10,10 @@ interface ChatMessageProps {
 }
 
 export default function ChatMessage({ message, isOwn, showAvatar }: ChatMessageProps) {
-  const time = new Date(message.createdAt).toLocaleTimeString('en-NG', {
-    hour: '2-digit',
+  const time = new Date(message.createdAt).toLocaleTimeString('en-US', {
+    hour: 'numeric',
     minute: '2-digit',
+    hour12: true,
   });
 
   return (

@@ -33,11 +33,12 @@ import {
 interface AppSidebarProps {
   collapsed: boolean;
   onToggle: () => void;
+  locked?: boolean;
   isMobileOpen?: boolean;
   onCloseMobile?: () => void;
 }
 
-export default function AppSidebar({ collapsed, onToggle, isMobileOpen, onCloseMobile }: AppSidebarProps) {
+export default function AppSidebar({ collapsed, onToggle, locked = false, isMobileOpen, onCloseMobile }: AppSidebarProps) {
   const { user, logout } = useUser();
   const pathname = usePathname();
 
@@ -87,7 +88,7 @@ export default function AppSidebar({ collapsed, onToggle, isMobileOpen, onCloseM
       )}
 
       {/* Desktop Collapse toggle */}
-      {!isMobile && (
+      {!isMobile && !locked && (
         <button
           onClick={onToggle}
           className="absolute top-16 -right-3 w-6 h-6 bg-[#001A72] border-2 border-white/20 rounded-full flex items-center justify-center text-white text-xs hover:bg-[#FFB81C] hover:text-[#001A72] transition z-50"

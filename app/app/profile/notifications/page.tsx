@@ -25,7 +25,7 @@ const getNotificationAction = (type: string) => NOTIFICATION_ACTIONS[type] || nu
 const formatDate = (value?: string) => {
   if (!value) return '';
   const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? value : date.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+  return Number.isNaN(date.getTime()) ? value : date.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true });
 };
 
 export default function NotificationsSettingsPage(): ReactElement {

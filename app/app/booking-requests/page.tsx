@@ -12,6 +12,7 @@ import { useSendChatRequest } from '@/misc/hooks/api/chat';
 import { useInitializeBookingPayment } from '@/misc/hooks/api/paystack';
 import { Booking } from '@/misc/types';
 import { computeSessionTiming, formatCountdown } from '@/misc/utils/sessionTiming';
+import { formatTimeRange } from '@/misc/utils/time';
 import api from '@/misc/services/api';
 import { toast } from 'sonner';
 
@@ -29,7 +30,7 @@ const formatDate = (value?: string) => {
 const formatDateTime = (value?: string | null) => {
   if (!value) return '';
   const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? value : date.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+  return Number.isNaN(date.getTime()) ? value : date.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true });
 };
 
 const statusClass = (status: string) => {
@@ -122,7 +123,7 @@ function TimingCountdown({ booking }: { booking: Booking }) {
         {formatCountdown(timing.timeUntilStart)}
       </p>
       <p className="text-[10px] text-amber-600 mt-1">
-        {timing.joinWindowOpen.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
+        {timing.joinWindowOpen.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
       </p>
     </div>
   );
@@ -132,7 +133,7 @@ const paymentDeadlineText = (booking: Booking) => {
   if (booking.paymentDueAt) return formatDateTime(booking.paymentDueAt);
   if (booking.acceptedAt && booking.paymentWindowHours) {
     const due = new Date(new Date(booking.acceptedAt).getTime() + Number(booking.paymentWindowHours) * 60 * 60 * 1000);
-    return Number.isNaN(due.getTime()) ? '' : due.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    return Number.isNaN(due.getTime()) ? '' : due.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true });
   }
   return '';
 };
@@ -463,7 +464,7 @@ export default function BookingRequestsPage() {
                       <Calendar size={14} className="text-[#001A72]" /> {formatDate(booking.scheduledDate)}
                     </div>
                     <div className="flex items-center gap-2 bg-gray-50 rounded-xl px-3 py-2">
-                      <Clock size={14} className="text-[#001A72]" /> {booking.startTime || '--:--'} - {booking.endTime || '--:--'}
+                      <Clock size={14} className="text-[#001A72]" /> {formatTimeRange(booking.startTime, booking.endTime)}
                     </div>
                     <div className="flex items-center gap-2 bg-gray-50 rounded-xl px-3 py-2">
                       <BookOpen size={14} className="text-[#001A72]" /> {Number(booking.durationHours || 0).toLocaleString()} hour{Number(booking.durationHours || 0) === 1 ? '' : 's'}
@@ -684,7 +685,7 @@ export default function BookingRequestsPage() {
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-500">Time</span>
-                <span className="font-bold text-gray-800">{paymentConfirmBooking.startTime} - {paymentConfirmBooking.endTime}</span>
+                <span className="font-bold text-gray-800">{formatTimeRange(paymentConfirmBooking.startTime, paymentConfirmBooking.endTime)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-500">Duration</span>
@@ -724,7 +725,7 @@ export default function BookingRequestsPage() {
                 </div>
                 <div>
                   <p className="text-gray-400">Time</p>
-                  <p className="font-bold text-gray-800">{detailsBooking.startTime} - {detailsBooking.endTime}</p>
+                  <p className="font-bold text-gray-800">{formatTimeRange(detailsBooking.startTime, detailsBooking.endTime)}</p>
                 </div>
                 <div>
                   <p className="text-gray-400">Duration</p>

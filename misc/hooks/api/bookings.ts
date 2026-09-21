@@ -17,12 +17,26 @@ export interface BookingRequestsResponse {
   bookings: Booking[];
 }
 
+interface BookingDetailResponse {
+  booking?: Booking;
+  parent?: Booking['parent'];
+  teacher?: Booking['teacher'];
+  children?: Booking['children'];
+}
+
 export const useBooking = (bookingId: string | undefined) => {
   return useQuery<Booking>({
     queryKey: ['bookings', bookingId],
     queryFn: async () => {
-      const response = await api.get<Booking>(`/bookings/${bookingId}`);
-      return response.data;
+      const response = await api.get<BookingDetailResponse & Booking>(`/bookings/${bookingId}`);
+      const payload = response.data;
+      const booking = payload.booking ?? payload;
+      return {
+        ...booking,
+        parent: payload.parent ?? booking.parent ?? null,
+        teacher: payload.teacher ?? booking.teacher ?? null,
+        children: payload.children ?? booking.children ?? [],
+      };
     },
     enabled: !!bookingId,
   });

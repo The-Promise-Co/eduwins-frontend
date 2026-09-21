@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useUser } from '@/misc/context/UserContext';
+import { SessionUiProvider, useSessionUi } from '@/misc/context/SessionUiContext';
 import AppSidebar from '@/misc/components/AppSidebar';
 import AppHeader from '@/misc/components/AppHeader';
 
@@ -35,31 +36,39 @@ const PAGE_TITLES: Record<string, string> = {
   '/app/children': 'My Children',
 };
 
-export default function AppLayout({ children }: { children: React.ReactNode }) {
+function getPageTitle(path: string): string {
+  if (PAGE_TITLES[path]) return PAGE_TITLES[path];
+  if (path.startsWith('/app/courses/create')) return 'Create Course';
+  if (path.match(/^\/app\/courses\/[^/]+\/edit/)) return 'Edit Course';
+  if (path.match(/^\/app\/courses\/[^/]+\/learn/)) return 'Course Player';
+  if (path.match(/^\/app\/courses\/[^/]+/)) return 'Course Details';
+  if (path.match(/^\/app\/vault\/[^/]+/)) return 'Vault Item';
+  if (path.match(/^\/app\/children\/[^/]+/)) return 'Child Profile';
+  return 'Dashboard';
+}
+
+function AppLayoutInner({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const { user, isAuthenticated, loading } = useUser();
+  const { inCall } = useSessionUi();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  const getPageTitle = (path: string): string => {
-    if (PAGE_TITLES[path]) return PAGE_TITLES[path];
-    if (path.startsWith('/app/courses/create')) return 'Create Course';
-    if (path.match(/^\/app\/courses\/[^/]+\/edit/)) return 'Edit Course';
-    if (path.match(/^\/app\/courses\/[^/]+\/learn/)) return 'Course Player';
-    if (path.match(/^\/app\/courses\/[^/]+/)) return 'Course Details';
-    if (path.match(/^\/app\/vault\/[^/]+/)) return 'Vault Item';
-    if (path.match(/^\/app\/children\/[^/]+/)) return 'Child Profile';
-    return 'Dashboard';
-  };
-
   const pageTitle = getPageTitle(pathname);
-
 
   // Close mobile menu on path change for responsive view
   useEffect(() => {
     setIsMobileMenuOpen(false);
   }, [pathname]);
+
+  // While a session is live, lock the nav collapsed and close the mobile menu
+  useEffect(() => {
+    if (inCall) {
+      setSidebarCollapsed(true);
+      setIsMobileMenuOpen(false);
+    }
+  }, [inCall]);
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
@@ -83,20 +92,30 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex h-screen overflow-hidden bg-primary md:py-2 md:pr-2">
       <AppSidebar
-        collapsed={sidebarCollapsed}
+        collapsed={inCall || sidebarCollapsed}
         onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
+        locked={inCall}
         isMobileOpen={isMobileMenuOpen}
         onCloseMobile={() => setIsMobileMenuOpen(false)}
       />
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden m-0 md:m-2 rounded-none md:rounded-[1.4rem] bg-[#F4F5F7]">
         <AppHeader
           title={pageTitle}
+          menuDisabled={inCall}
           onToggleMobileMenu={() => setIsMobileMenuOpen(true)}
         />
-        <main className="flex-1 overflow-y-auto p-4 md:p-6">
+        <main className={inCall ? 'flex-1 flex flex-col overflow-hidden p-0' : 'flex-1 overflow-y-auto p-4 md:p-6'}>
           {children}
         </main>
       </div>
     </div>
+  );
+}
+
+export default function AppLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <SessionUiProvider>
+      <AppLayoutInner>{children}</AppLayoutInner>
+    </SessionUiProvider>
   );
 }

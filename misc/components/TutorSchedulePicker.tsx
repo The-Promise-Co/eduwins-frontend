@@ -9,6 +9,7 @@ import { useUser } from '@/misc/context/UserContext';
 import { useChildren } from '@/misc/hooks/useChildren';
 import { useCreateBookingRequest, useBlockedSlots } from '@/misc/hooks/api/bookings';
 import type { Booking } from '@/misc/types';
+import { formatTime, formatTimeRange } from '@/misc/utils/time';
 import { toast } from 'sonner';
 
 type AvailabilityRange = { from: string; to: string };
@@ -398,14 +399,14 @@ const TutorSchedulePicker = forwardRef<TutorSchedulePickerRef, TutorSchedulePick
                   : 'border border-transparent bg-gray-50 text-gray-700 hover:border-[#001A72]/10 hover:bg-[#001A72]/5'
               }`}
             >
-              {slot}
+              {formatTime(slot)}
               {visual === 'booked' && <span className="block text-[8px] mt-0.5 line-through opacity-60">Taken</span>}
             </button>
           );
         })}
       </div>
       <div className="rounded-2xl border border-[#FFB81C]/40 bg-[#FFB81C]/10 px-4 py-3 text-xs font-black text-[#001A72]">
-        {selectedDate && startTime && endTime ? `${formatSummaryDate(selectedDate.date)} | ${startTime} - ${endTime} (${durationHours}hr${durationHours > 1 ? 's' : ''})` : 'Choose a date and time'}
+        {selectedDate && startTime && endTime ? `${formatSummaryDate(selectedDate.date)} | ${formatTimeRange(startTime, endTime)} (${durationHours}hr${durationHours > 1 ? 's' : ''})` : 'Choose a date and time'}
       </div>
     </div>
   );
@@ -513,7 +514,7 @@ const TutorSchedulePicker = forwardRef<TutorSchedulePickerRef, TutorSchedulePick
                   : 'border border-transparent bg-gray-50 text-gray-700 hover:border-[#001A72]/10 hover:bg-[#001A72]/5'
               }`}
             >
-              {slot}
+              {formatTime(slot)}
               {visual === 'booked' && <span className="block text-[8px] mt-0.5 line-through opacity-60">Taken</span>}
             </button>
           );
@@ -526,7 +527,7 @@ const TutorSchedulePicker = forwardRef<TutorSchedulePickerRef, TutorSchedulePick
 
       <div className="mt-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-2xl border border-[#FFB81C]/40 bg-[#FFB81C]/10 px-4 py-3">
         <p className="text-xs font-black text-[#001A72]">
-          {selectedDate && startTime && endTime ? `${formatSummaryDate(selectedDate.date)} | ${startTime} - ${endTime} (${durationHours}hr${durationHours > 1 ? 's' : ''})` : 'Choose a date and time'}
+          {selectedDate && startTime && endTime ? `${formatSummaryDate(selectedDate.date)} | ${formatTimeRange(startTime, endTime)} (${durationHours}hr${durationHours > 1 ? 's' : ''})` : 'Choose a date and time'}
         </p>
         <button type="button" onClick={openBooking} className="inline-flex items-center justify-center rounded-2xl bg-[#FFB81C] px-8 py-3 text-xs font-black uppercase tracking-wider text-[#001A72] hover:bg-[#ffc94d] transition">
           Book
@@ -595,7 +596,7 @@ const TutorSchedulePicker = forwardRef<TutorSchedulePickerRef, TutorSchedulePick
             </div>
             <div className="flex items-center justify-between gap-4 text-sm">
               <span className="font-bold text-gray-500">Session</span>
-              <span className="font-black text-[#001A72] text-right">{selectedDate && startTime && endTime ? `${formatSummaryDate(selectedDate.date)} | ${startTime} - ${endTime} (${durationHours}hr${durationHours > 1 ? 's' : ''})` : 'Not selected'}</span>
+              <span className="font-black text-[#001A72] text-right">{selectedDate && startTime && endTime ? `${formatSummaryDate(selectedDate.date)} | ${formatTimeRange(startTime, endTime)} (${durationHours}hr${durationHours > 1 ? 's' : ''})` : 'Not selected'}</span>
             </div>
             <div className="flex items-center justify-between gap-4 text-sm">
               <span className="font-bold text-gray-500">Duration</span>

@@ -20,9 +20,10 @@ import { useNotifications, useMarkAllNotificationsRead } from '@/misc/hooks/api/
 interface AppHeaderProps {
   title: string;
   onToggleMobileMenu: () => void;
+  menuDisabled?: boolean;
 }
 
-export default function AppHeader({ title, onToggleMobileMenu }: AppHeaderProps) {
+export default function AppHeader({ title, onToggleMobileMenu, menuDisabled = false }: AppHeaderProps) {
   const { user, logout } = useUser();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
@@ -46,7 +47,7 @@ export default function AppHeader({ title, onToggleMobileMenu }: AppHeaderProps)
   const formatDate = (value?: string) => {
     if (!value) return '';
     const date = new Date(value);
-    return Number.isNaN(date.getTime()) ? value : date.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    return Number.isNaN(date.getTime()) ? value : date.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true });
   };
 
   return (
@@ -54,12 +55,14 @@ export default function AppHeader({ title, onToggleMobileMenu }: AppHeaderProps)
       {/* Mobile Header (Hidden on md and up) */}
       <header className="md:hidden h-16 bg-[#001A72] flex items-center justify-between px-6 shrink-0 z-40">
         <h2 className="text-xl font-bold text-white">{title}</h2>
-        <button
-          onClick={onToggleMobileMenu}
-          className="px-4 py-2 bg-white/10 text-white rounded-xl font-bold text-xs hover:bg-white/20 transition"
-        >
-          Menu
-        </button>
+        {!menuDisabled && (
+          <button
+            onClick={onToggleMobileMenu}
+            className="px-4 py-2 bg-white/10 text-white rounded-xl font-bold text-xs hover:bg-white/20 transition"
+          >
+            Menu
+          </button>
+        )}
       </header>
 
       {/* Desktop Header (Hidden on mobile) */}

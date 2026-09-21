@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { CheckCircle2 } from 'lucide-react';
 import Modal from '@/misc/components/Modal';
 import type { Booking } from '@/misc/types';
+import { formatTimeRange } from '@/misc/utils/time';
 
 interface BookingSuccessModalProps {
   isOpen: boolean;
@@ -67,7 +68,7 @@ export default function BookingSuccessModal({ isOpen, onClose, booking }: Bookin
         {booking.scheduledDate && booking.startTime && booking.endTime && (
           <div className="rounded-2xl border border-[#001A72]/10 bg-[#001A72]/5 px-4 py-3">
             <p className="text-sm font-black text-[#001A72]">
-              {formatDate(booking.scheduledDate)} | {booking.startTime} - {booking.endTime}
+              {formatDate(booking.scheduledDate)} | {formatTimeRange(booking.startTime, booking.endTime)}
             </p>
           </div>
         )}
