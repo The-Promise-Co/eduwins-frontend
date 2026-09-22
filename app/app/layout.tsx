@@ -51,7 +51,7 @@ function AppLayoutInner({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const { user, isAuthenticated, loading } = useUser();
-  const { inCall } = useSessionUi();
+  const { inCall, isFullscreen, isDarkMode } = useSessionUi();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -90,21 +90,41 @@ function AppLayoutInner({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-primary md:py-2 md:pr-2">
-      <AppSidebar
-        collapsed={inCall || sidebarCollapsed}
-        onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
-        locked={inCall}
-        isMobileOpen={isMobileMenuOpen}
-        onCloseMobile={() => setIsMobileMenuOpen(false)}
-      />
-      <div className="flex flex-col flex-1 min-w-0 overflow-hidden m-0 md:m-2 rounded-none md:rounded-[1.4rem] bg-[#F4F5F7]">
-        <AppHeader
-          title={pageTitle}
-          menuDisabled={inCall}
-          onToggleMobileMenu={() => setIsMobileMenuOpen(true)}
+    <div
+      className={`flex h-screen overflow-hidden ${
+        isFullscreen ? 'bg-black p-0' : 'bg-primary md:py-2 md:pr-2'
+      }`}
+    >
+      {!isFullscreen && (
+        <AppSidebar
+          collapsed={inCall || sidebarCollapsed}
+          onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
+          locked={inCall}
+          isMobileOpen={isMobileMenuOpen}
+          onCloseMobile={() => setIsMobileMenuOpen(false)}
         />
-        <main className={inCall ? 'flex-1 flex flex-col overflow-hidden p-0' : 'flex-1 overflow-y-auto p-4 md:p-6'}>
+      )}
+      <div
+        className={`flex flex-col flex-1 min-w-0 overflow-hidden ${
+          isFullscreen
+            ? 'm-0 rounded-none bg-black'
+            : `m-0 md:m-2 rounded-none md:rounded-[1.4rem] ${isDarkMode ? 'bg-gray-950' : 'bg-[#F4F5F7]'}`
+        }`}
+      >
+        {!isFullscreen && (
+          <AppHeader
+            title={pageTitle}
+            menuDisabled={inCall}
+            onToggleMobileMenu={() => setIsMobileMenuOpen(true)}
+          />
+        )}
+        <main
+          className={
+            inCall || isFullscreen
+              ? 'flex-1 flex flex-col overflow-hidden p-0'
+              : 'flex-1 overflow-y-auto p-4 md:p-6'
+          }
+        >
           {children}
         </main>
       </div>

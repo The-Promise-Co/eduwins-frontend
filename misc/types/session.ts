@@ -59,3 +59,34 @@ export interface SessionTiming {
   timeUntilStart: number;
   timeUntilEnd: number;
 }
+
+export type StickyNoteColor = 'yellow' | 'blue' | 'green' | 'pink' | 'purple';
+
+export interface NoteItem {
+  id: string;
+  title: string;
+  content: string;
+  color?: StickyNoteColor;
+  authorRole?: 'parent' | 'teacher' | 'child';
+  authorName?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface WhiteboardSnapshotItem {
+  id: string;
+  title: string;
+  svg: string;
+  timestamp: string; // Formatted time string e.g. "10:15 AM" or ISO
+  authorName?: string;
+  authorRole?: 'parent' | 'teacher' | 'child';
+  createdAt: string;
+}
+
+export interface SessionNotes {
+  personalNotes: NoteItem[];
+  sharedNotes: NoteItem[];
+  whiteboardSnapshots?: WhiteboardSnapshotItem[];
+  updatedAt?: string;
+}
+

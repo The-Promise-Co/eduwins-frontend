@@ -2,10 +2,11 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { AlertCircle, ArrowUpDown, BookOpen, Calendar, Check, ChevronDown, Clock, CreditCard, Info, Loader2, MessageSquare, MessageSquareText, ShieldCheck, User, Users, Video, X } from 'lucide-react';
+import { AlertCircle, ArrowUpDown, BookOpen, Calendar, Check, ChevronDown, Clock, CreditCard, FileText, Info, Loader2, MessageSquare, MessageSquareText, ShieldCheck, User, Users, Video, X } from 'lucide-react';
 import Button from '@/misc/components/Button';
 import Modal from '@/misc/components/Modal';
 import PageHeader from '@/misc/components/PageHeader';
+import SessionNotesModal from '@/misc/components/SessionNotesModal';
 import { useUser } from '@/misc/context/UserContext';
 import { useAcceptBookingRequest, useBookingRequests, useCancelBookingRequest, useDenyBookingRequest, useEscrowBreakdown } from '@/misc/hooks/api/bookings';
 import { useSendChatRequest } from '@/misc/hooks/api/chat';
@@ -57,20 +58,45 @@ const statusLabel = (status: string, isTeacher: boolean) => {
   return status.replace('_', ' ');
 };
 
-const isDatePast = (booking: Booking) => {
-  if (!booking.scheduledDate) return false;
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+/**
+ * Returns true if the booking's session window has fully passed:
+ * - Scheduled date is before today, OR
+ * - Scheduled date is today AND endTime (HH:MM:SS) has already elapsed
+ */
+const isSessionWindowPast = (booking?: Booking | null): boolean => {
+  if (!booking || !booking.scheduledDate) return false;
+  const now = new Date();
+  const todayMidnight = new Date();
+  todayMidnight.setHours(0, 0, 0, 0);
   const scheduled = new Date(`${booking.scheduledDate}T00:00:00`);
-  return scheduled.getTime() < today.getTime();
+  if (Number.isNaN(scheduled.getTime())) return false;
+  // Date is strictly before today
+  if (scheduled.getTime() < todayMidnight.getTime()) return true;
+  // Date is today — check whether endTime has elapsed
+  if (scheduled.getTime() === todayMidnight.getTime() && booking.endTime) {
+    const [h, m, s] = booking.endTime.split(':').map(Number);
+    const sessionEnd = new Date();
+    sessionEnd.setHours(h || 0, m || 0, s || 0, 0);
+    return now >= sessionEnd;
+  }
+  return false;
 };
 
-const isDatePresent = (booking: Booking) => {
-  if (!booking.scheduledDate) return true;
+// Legacy alias — used for "Past" tab filtering (date-level only)
+const isDatePast = (booking?: Booking | null): boolean => {
+  if (!booking || !booking.scheduledDate) return false;
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const scheduled = new Date(`${booking.scheduledDate}T00:00:00`);
-  return scheduled.getTime() >= today.getTime();
+  return !Number.isNaN(scheduled.getTime()) && scheduled.getTime() < today.getTime();
+};
+
+const isDatePresent = (booking?: Booking | null): boolean => {
+  if (!booking || !booking.scheduledDate) return true;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const scheduled = new Date(`${booking.scheduledDate}T00:00:00`);
+  return Number.isNaN(scheduled.getTime()) || scheduled.getTime() >= today.getTime();
 };
 
 function EscrowBreakdownCard({ bookingId }: { bookingId: string }) {
@@ -104,17 +130,18 @@ function EscrowBreakdownCard({ bookingId }: { bookingId: string }) {
   );
 }
 
-function TimingCountdown({ booking }: { booking: Booking }) {
+function TimingCountdown({ booking }: { booking?: Booking | null }) {
   const [timing, setTiming] = useState(() => computeSessionTiming(booking));
 
   useEffect(() => {
+    if (!booking) return;
     const interval = setInterval(() => {
       setTiming(computeSessionTiming(booking));
     }, 1000);
     return () => clearInterval(interval);
   }, [booking]);
 
-  if (timing.canJoin || timing.isEnded) return null;
+  if (!timing || timing.canJoin || timing.isEnded) return null;
 
   return (
     <div className="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-3 w-full">
@@ -129,7 +156,8 @@ function TimingCountdown({ booking }: { booking: Booking }) {
   );
 }
 
-const paymentDeadlineText = (booking: Booking) => {
+const paymentDeadlineText = (booking?: Booking | null) => {
+  if (!booking) return '';
   if (booking.paymentDueAt) return formatDateTime(booking.paymentDueAt);
   if (booking.acceptedAt && booking.paymentWindowHours) {
     const due = new Date(new Date(booking.acceptedAt).getTime() + Number(booking.paymentWindowHours) * 60 * 60 * 1000);
@@ -202,12 +230,13 @@ export default function BookingRequestsPage() {
   const [joinSessionBooking, setJoinSessionBooking] = useState<Booking | null>(null);
   const [joinSessionError, setJoinSessionError] = useState('');
   const [joiningSessionId, setJoiningSessionId] = useState<string | null>(null);
+  const [notesBooking, setNotesBooking] = useState<Booking | null>(null);
 
-  const presentBookings = bookings.filter((b) => isDatePresent(b));
-  const pastBookings = bookings.filter((b) => isDatePast(b));
+  const presentBookings = bookings.filter((b) => Boolean(b && isDatePresent(b)));
+  const pastBookings = bookings.filter((b) => Boolean(b && isDatePast(b)));
   const baseBookings = timePeriod === 'present' ? presentBookings : pastBookings;
-  const filteredBookings = statusFilter === 'all' ? baseBookings : baseBookings.filter((b) => b.status === statusFilter);
-  const statusCounts = baseBookings.reduce<Record<string, number>>((acc, b) => { acc[b.status] = (acc[b.status] || 0) + 1; return acc; }, {});
+  const filteredBookings = statusFilter === 'all' ? baseBookings : baseBookings.filter((b) => b && b.status === statusFilter);
+  const statusCounts = baseBookings.reduce<Record<string, number>>((acc, b) => { if (b?.status) acc[b.status] = (acc[b.status] || 0) + 1; return acc; }, {});
 
   const [sortOption, setSortOption] = useState<SortOption>('newest');
   const [sortOpen, setSortOpen] = useState(false);
@@ -430,7 +459,8 @@ export default function BookingRequestsPage() {
             const hasChildren = booking.bookingFor === 'children';
             const deadline = isAccepted ? paymentDeadlineText(booking) : '';
             const learnerNames = booking.children?.map((child) => fullName(child)).join(', ');
-            const datePast = isDatePast(booking);
+            const sessionWindowPast = isSessionWindowPast(booking);
+            const sessionEndedToday = sessionWindowPast && !isDatePast(booking);
             return (
               <div key={booking.id} className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm space-y-4">
                 <div className="flex-1 space-y-3">
@@ -524,13 +554,31 @@ export default function BookingRequestsPage() {
                   )}
                 </div>
 
-                {datePast ? (
-                  <div className="rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-xs text-gray-500 flex items-center gap-2">
-                    <Clock size={14} className="text-gray-400 shrink-0" />
-                    <p className="font-bold">Session date has passed.</p>
+                {sessionWindowPast ? (
+                  <div className="flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-gray-50">
+                    <div className="rounded-2xl border border-gray-200 bg-gray-50 px-3.5 py-2 text-xs text-gray-500 flex items-center gap-2">
+                      <Clock size={14} className="text-gray-400 shrink-0" />
+                      <p className="font-bold">{sessionEndedToday ? 'Session has ended.' : 'Session date has passed.'}</p>
+                    </div>
+                    <Button
+                      fullWidth={false}
+                      variant="outline"
+                      onClick={() => router.push(`/app/booking-requests/${booking.id}`)}
+                      className="px-4 py-2 text-xs font-black border-[#001A72] text-[#001A72] hover:bg-[#001A72]/5"
+                    >
+                      <BookOpen size={14} /> View Details
+                    </Button>
                   </div>
                 ) : (
                 <div className="flex flex-wrap justify-end gap-2 pt-3 border-t border-gray-50">
+                  <Button
+                    fullWidth={false}
+                    variant="outline"
+                    onClick={() => router.push(`/app/booking-requests/${booking.id}`)}
+                    className="px-3.5 py-2 text-xs font-black border-gray-200 text-gray-700 hover:bg-gray-50"
+                  >
+                    <BookOpen size={14} /> Details
+                  </Button>
                   {isTeacher && isPending && (
                     <>
                       <Button fullWidth={false} variant="outline" onClick={() => openCancel(booking)} disabled={isUpdating} className="px-4 py-2 text-xs font-black border-gray-200 text-gray-500 hover:bg-gray-50">
@@ -709,9 +757,27 @@ export default function BookingRequestsPage() {
         subtitle={detailsBooking?.subject || 'Tutoring session'}
         size="md"
         footer={
-          <button type="button" onClick={() => setDetailsBooking(null)} className="rounded-xl bg-[#001A72] px-5 py-2.5 text-xs font-black uppercase tracking-wider text-white hover:bg-[#001A72]/90 transition">
-            Close
-          </button>
+          <div className="w-full flex items-center justify-between gap-2">
+            <div>
+              {Boolean(detailsBooking && (detailsBooking.status === 'paid_escrow' || detailsBooking.status === 'accepted' || isDatePast(detailsBooking))) && (
+                <Button
+                  fullWidth={false}
+                  variant="outline"
+                  onClick={() => {
+                    const b = detailsBooking;
+                    setDetailsBooking(null);
+                    setNotesBooking(b);
+                  }}
+                  className="px-3.5 py-2 text-xs font-black border-gray-200 text-[#001A72] hover:bg-[#001A72]/5"
+                >
+                  <FileText size={14} /> View Notes
+                </Button>
+              )}
+            </div>
+            <button type="button" onClick={() => setDetailsBooking(null)} className="rounded-xl bg-[#001A72] px-5 py-2.5 text-xs font-black uppercase tracking-wider text-white hover:bg-[#001A72]/90 transition">
+              Close
+            </button>
+          </div>
         }
       >
         {detailsBooking && (
@@ -851,6 +917,19 @@ export default function BookingRequestsPage() {
             <p className="text-xs text-gray-400">Redirecting to Paystack</p>
           </div>
         </div>
+      )}
+
+      {/* Session Notes Modal */}
+      {notesBooking && (
+        <SessionNotesModal
+          isOpen={!!notesBooking}
+          onClose={() => setNotesBooking(null)}
+          bookingId={notesBooking.id}
+          bookingSubject={notesBooking.subject}
+          partnerName={isTeacher ? fullName(notesBooking.parent) : fullName(notesBooking.teacher)}
+          scheduledDate={formatDate(notesBooking.scheduledDate)}
+          participantRole={isTeacher ? 'teacher' : 'parent'}
+        />
       )}
     </div>
   );

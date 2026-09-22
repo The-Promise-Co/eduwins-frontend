@@ -2,13 +2,16 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { AlertCircle, ArrowLeft, BookOpen, Calendar, CheckCircle, ChevronDown, Clock, Copy, Loader2, Mic, MicOff, Users, Video, VideoOff } from 'lucide-react';
+import { AlertCircle, ArrowLeft, BookOpen, Calendar, Check, CheckCircle, ChevronDown, ChevronRight, Clock, Copy, Download, FileText, Lock, Loader2, Mic, MicOff, Save, Users, Video, VideoOff } from 'lucide-react';
+import Button from '@/misc/components/Button';
 import LiveKitSession from '@/misc/components/LiveKitSession';
 import SessionCountdownBanner from '@/misc/components/SessionCountdownBanner';
 import { useBooking } from '@/misc/hooks/api/bookings';
 import { useLiveKitToken, useSessionChildCodes, useSessionEvents } from '@/misc/hooks/api/session';
+import { useSavePersonalNotes, useSaveSharedNotes, useSessionNotes } from '@/misc/hooks/api/notes';
 import { useUser } from '@/misc/context/UserContext';
 import { useSessionUi } from '@/misc/context/SessionUiContext';
+import { Booking } from '@/misc/types';
 import { computeSessionTiming } from '@/misc/utils/sessionTiming';
 import { formatTimeRange } from '@/misc/utils/time';
 import { toast } from 'sonner';
@@ -267,6 +270,7 @@ export default function SessionPage() {
 
   const handleJoin = () => {
     if (!tokenQuery.data) return;
+    stopPreview();
     setJoinState('connecting');
     setTimeout(() => setJoinState('connected'), 500);
   };
@@ -301,45 +305,44 @@ export default function SessionPage() {
     );
   }
 
-  // --- DISCONNECTED ---
-  if (disconnected) {
+  // --- POST SESSION (Disconnected or Timing Ended) ---
+  if (disconnected || timing?.isEnded) {
     return (
-      <div className="h-screen flex flex-col items-center justify-center bg-gray-50 gap-4">
-        <CheckCircle size={40} className="text-emerald-500" />
-        <p className="text-sm font-bold text-gray-700">Session ended</p>
-        <p className="text-xs text-gray-500">You have left the session.</p>
-        <button onClick={() => router.push('/app/booking-requests')} className="text-xs font-bold text-[#001A72] underline mt-2">
-          Return to Bookings
-        </button>
-      </div>
-    );
-  }
-
-  // --- ENDED ---
-  if (timing?.isEnded) {
-    return (
-      <div className="h-screen flex flex-col items-center justify-center bg-gray-50 gap-4">
-        <CheckCircle size={40} className="text-gray-400" />
-        <p className="text-sm font-bold text-gray-700">Session has ended</p>
-        <p className="text-xs text-gray-500">This session has concluded.</p>
-        <button onClick={() => router.push('/app/booking-requests')} className="text-xs font-bold text-[#001A72] underline mt-2">
-          Return to Bookings
-        </button>
-      </div>
+      <PostSessionView
+        booking={booking}
+        bookingId={bookingId}
+        participantRole={participantRole}
+        isTeacher={isTeacher}
+        isSessionEnded={!!timing?.isEnded}
+        onRejoin={() => {
+          setDisconnected(false);
+          setJoinState('idle');
+          void tokenQuery.refetch();
+        }}
+        onReturn={() => router.push('/app/booking-requests')}
+      />
     );
   }
 
   // --- CONNECTED → SESSION VIEW ---
   if (joinState === 'connected' && tokenQuery.data) {
     return (
-      <div className="flex-1 min-h-0 w-full bg-gray-950">
+      <div className="flex-1 min-h-0 w-full h-full">
         <LiveKitSession
           serverUrl={tokenQuery.data.server_url}
           token={tokenQuery.data.participant_token}
           bookingId={bookingId}
           participantName={participantName}
           participantRole={participantRole}
-          onDisconnected={() => setDisconnected(true)}
+          teacherName={fullName(booking.teacher)}
+          parentName={fullName(booking.parent)}
+          initialCameraEnabled={cameraEnabled}
+          initialMicEnabled={micEnabled}
+          onDisconnected={() => {
+            // Leaving only disconnects this participant. The booking remains active
+            // until its scheduled end and is completed by the overdue-session cron.
+            setDisconnected(true);
+          }}
         />
       </div>
     );
@@ -616,6 +619,157 @@ export default function SessionPage() {
           <p className="text-xs text-gray-400">Please wait</p>
         </div>
       )}
+    </div>
+  );
+}
+
+interface PostSessionViewProps {
+  booking: Booking;
+  bookingId: string;
+  participantRole: 'parent' | 'teacher';
+  isTeacher: boolean;
+  isSessionEnded: boolean;
+  onRejoin: () => void;
+  onReturn: () => void;
+}
+
+function PostSessionView({
+  booking,
+  bookingId,
+  participantRole,
+  isTeacher,
+  isSessionEnded,
+  onRejoin,
+  onReturn,
+}: PostSessionViewProps) {
+  const router = useRouter();
+
+  return (
+    <div className="space-y-6 pb-12">
+      {/* Back button */}
+      <div className="flex items-center justify-between">
+        <button
+          onClick={onReturn}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-200 bg-white text-xs font-bold text-gray-700 hover:bg-gray-50 transition shadow-sm"
+        >
+          <ArrowLeft size={16} />
+          <span>Return to Bookings</span>
+        </button>
+
+        <div className="flex items-center gap-2">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-100">
+            <CheckCircle size={14} />
+            <span>{isSessionEnded ? 'Session Concluded' : 'You left the session'}</span>
+          </span>
+        </div>
+      </div>
+
+      {/* Main 2-column Grid */}
+      <div className="grid gap-6 lg:grid-cols-5">
+        {/* Left column: Session Summary (2/5) */}
+        <div className="space-y-5 lg:col-span-2">
+          <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-[#001A72]/5 flex items-center justify-center text-[#001A72]">
+                <BookOpen size={22} />
+              </div>
+              <div>
+                <h2 className="text-base font-black text-gray-900">{booking.subject || 'Tutoring session'}</h2>
+                <p className="text-xs text-gray-500">
+                  {isTeacher ? `With ${fullName(booking.parent)}` : `With ${fullName(booking.teacher)}`}
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-2.5 text-xs text-gray-600 pt-2 border-t border-gray-100">
+              <div className="flex items-center gap-2 bg-gray-50 rounded-xl px-3 py-2.5">
+                <Calendar size={14} className="text-[#001A72]" />
+                <span className="font-medium">{formatDate(booking.scheduledDate)}</span>
+              </div>
+              <div className="flex items-center gap-2 bg-gray-50 rounded-xl px-3 py-2.5">
+                <Clock size={14} className="text-[#001A72]" />
+                <span className="font-medium">{formatTimeRange(booking.startTime, booking.endTime)} ({Number(booking.durationHours || 1)} hr)</span>
+              </div>
+              <div className="flex items-center gap-2 bg-gray-50 rounded-xl px-3 py-2.5">
+                <Users size={14} className="text-[#001A72]" />
+                <span className="font-medium">
+                  {booking.bookingFor === 'children'
+                    ? booking.children?.map((c) => fullName(c)).join(', ') || 'Children'
+                    : 'Parent learner'}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Action to Details */}
+          <button
+            onClick={() => router.push(`/app/booking-requests/${bookingId}`)}
+            className="w-full p-4 rounded-2xl bg-[#001A72] text-white flex items-center justify-between hover:bg-[#001A72]/90 transition shadow-sm group"
+          >
+            <div className="flex items-center gap-3 text-left">
+              <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center">
+                <BookOpen size={18} />
+              </div>
+              <div>
+                <p className="text-xs font-black">View Session Details & Notes</p>
+                <p className="text-[10px] text-white/70">Sticky notes, summaries & whiteboard snapshots</p>
+              </div>
+            </div>
+            <ChevronRight size={18} className="group-hover:translate-x-1 transition" />
+          </button>
+        </div>
+
+        {/* Right column: Highlights and Next Steps */}
+        <div className="lg:col-span-3 space-y-4">
+          <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                <CheckCircle size={22} />
+              </div>
+              <div>
+                <h3 className="text-sm font-black text-gray-900">{isSessionEnded ? 'Session Successfully Concluded' : 'You can still rejoin this session'}</h3>
+                <p className="text-xs text-gray-500">{isSessionEnded ? 'Thank you for participating!' : 'The booking remains active until its scheduled end time.'}</p>
+              </div>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-gray-50 border border-gray-100 text-xs text-gray-600 space-y-2">
+              <p className="font-bold text-gray-800">What happens next?</p>
+              <ul className="list-disc pl-4 space-y-1 text-gray-600">
+                <li>All notes taken during this session are saved and accessible anytime.</li>
+                <li>Any whiteboard snapshots taken have been saved to the session details gallery.</li>
+                <li>You can review the complete session breakdown from your Booking Requests dashboard.</li>
+              </ul>
+            </div>
+
+            <div className="pt-2 flex flex-wrap items-center gap-3">
+              {!isSessionEnded && (
+                <Button
+                  fullWidth={false}
+                  onClick={onRejoin}
+                  className="px-5 py-2.5 text-xs font-black"
+                >
+                  <Video size={14} /> Rejoin Session
+                </Button>
+              )}
+              <Button
+                fullWidth={false}
+                onClick={() => router.push(`/app/booking-requests/${bookingId}`)}
+                className="px-5 py-2.5 text-xs font-black"
+              >
+                <BookOpen size={14} /> Open Full Session Details
+              </Button>
+              <Button
+                fullWidth={false}
+                variant="outline"
+                onClick={onReturn}
+                className="px-4 py-2.5 text-xs font-black border-gray-200 text-gray-600 hover:bg-gray-50"
+              >
+                Return to Bookings
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

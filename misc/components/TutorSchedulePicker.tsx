@@ -145,12 +145,15 @@ const getTruncatedRange = (fromSlot: string, toSlot: string, availableSlots: str
   const fromMin = toMinutes(fromSlot);
   const toMin = toMinutes(toSlot);
   const result: string[] = [];
+  let prevMin = Number.NEGATIVE_INFINITY;
 
   for (const slot of availableSlots) {
     const slotMin = toMinutes(slot);
     if (slotMin < fromMin || slotMin > toMin) continue;
     if (isSlotBlocked(slot, blockedSlots)) break;
+    if (result.length > 0 && slotMin !== prevMin + 60) break;
     result.push(slot);
+    prevMin = slotMin;
   }
 
   return result;
@@ -243,17 +246,16 @@ const TutorSchedulePicker = forwardRef<TutorSchedulePickerRef, TutorSchedulePick
       const first = sorted[0];
       const last = sorted[sorted.length - 1];
 
-      if (sorted.length === 1 && slot === first) return current;
+      if (sorted.length === 1 && slot === first) return [];
 
-      if (sorted.length > 1 && slot === last) return [first];
+      if (slot === first) return sorted.slice(1);
 
-      if (slot === first && sorted.length > 1) return [last];
+      if (slot === last) return sorted.slice(0, -1);
+
+      if (sorted.includes(slot)) return [slot];
 
       const slotMin = toMinutes(slot);
       const firstMin = toMinutes(first);
-      const lastMin = toMinutes(last);
-      if (slotMin > firstMin && slotMin < lastMin) return [slot];
-
       const fromSlot = slotMin < firstMin ? slot : first;
       const toSlot = slotMin < firstMin ? last : slot;
       return getTruncatedRange(fromSlot, toSlot, selectedSlots, blockedSlots);
@@ -405,8 +407,13 @@ const TutorSchedulePicker = forwardRef<TutorSchedulePickerRef, TutorSchedulePick
           );
         })}
       </div>
-      <div className="rounded-2xl border border-[#FFB81C]/40 bg-[#FFB81C]/10 px-4 py-3 text-xs font-black text-[#001A72]">
-        {selectedDate && startTime && endTime ? `${formatSummaryDate(selectedDate.date)} | ${formatTimeRange(startTime, endTime)} (${durationHours}hr${durationHours > 1 ? 's' : ''})` : 'Choose a date and time'}
+      <div className="flex items-center justify-between gap-2 rounded-2xl border border-[#FFB81C]/40 bg-[#FFB81C]/10 px-4 py-3 text-xs font-black text-[#001A72]">
+        <p>{selectedDate && startTime && endTime ? `${formatSummaryDate(selectedDate.date)} | ${formatTimeRange(startTime, endTime)} (${durationHours}hr${durationHours > 1 ? 's' : ''})` : 'Choose a date and time'}</p>
+        {selectedTimes.length > 0 && (
+          <button type="button" onClick={() => setSelectedTimes([])} className="shrink-0 text-[10px] font-black uppercase tracking-wider text-[#001A72] underline hover:text-[#001A72]/70 transition">
+            Reset
+          </button>
+        )}
       </div>
     </div>
   );
@@ -529,9 +536,16 @@ const TutorSchedulePicker = forwardRef<TutorSchedulePickerRef, TutorSchedulePick
         <p className="text-xs font-black text-[#001A72]">
           {selectedDate && startTime && endTime ? `${formatSummaryDate(selectedDate.date)} | ${formatTimeRange(startTime, endTime)} (${durationHours}hr${durationHours > 1 ? 's' : ''})` : 'Choose a date and time'}
         </p>
-        <button type="button" onClick={openBooking} className="inline-flex items-center justify-center rounded-2xl bg-[#FFB81C] px-8 py-3 text-xs font-black uppercase tracking-wider text-[#001A72] hover:bg-[#ffc94d] transition">
-          Book
-        </button>
+        <div className="flex items-center gap-2">
+          {selectedTimes.length > 0 && (
+            <button type="button" onClick={() => setSelectedTimes([])} className="inline-flex items-center justify-center rounded-2xl border border-[#001A72]/20 px-4 py-3 text-xs font-black uppercase tracking-wider text-[#001A72] hover:bg-[#001A72]/5 transition">
+              Reset
+            </button>
+          )}
+          <button type="button" onClick={openBooking} className="inline-flex items-center justify-center rounded-2xl bg-[#FFB81C] px-8 py-3 text-xs font-black uppercase tracking-wider text-[#001A72] hover:bg-[#ffc94d] transition">
+            Book
+          </button>
+        </div>
       </div>
     </div>
 

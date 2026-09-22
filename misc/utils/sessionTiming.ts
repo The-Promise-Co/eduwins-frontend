@@ -1,7 +1,19 @@
 import { SessionTiming, JOIN_WINDOW_MINUTES, END_NOTIFICATION_THRESHOLDS } from '@/misc/types/session';
 import { Booking } from '@/misc/types';
 
-export function computeSessionTiming(booking: Booking): SessionTiming {
+export function computeSessionTiming(booking?: Booking | null): SessionTiming {
+  if (!booking || !booking.scheduledDate || !booking.startTime) {
+    const now = new Date();
+    return {
+      scheduledStart: now,
+      scheduledEnd: now,
+      joinWindowOpen: now,
+      canJoin: false,
+      isEnded: false,
+      timeUntilStart: 0,
+      timeUntilEnd: 0,
+    };
+  }
   const start = new Date(`${booking.scheduledDate}T${booking.startTime}`);
   const durationMs = Number(booking.durationHours || 1) * 60 * 60 * 1000;
   const end = new Date(start.getTime() + durationMs);

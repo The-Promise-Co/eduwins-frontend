@@ -125,7 +125,7 @@ export const useStartSession = () => {
   const queryClient = useQueryClient();
   return useMutation<{ booking: Booking }, unknown, string>({
     mutationFn: async (bookingId) => {
-      const response = await api.patch<{ booking: Booking }>(`/bookings/${bookingId}/start-session`);
+      const response = await api.patch<{ booking: Booking }>(`/sessions/${bookingId}/start-session`);
       return response.data;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['bookings'] }),
@@ -136,7 +136,7 @@ export const useEndSession = () => {
   const queryClient = useQueryClient();
   return useMutation<{ booking: Booking }, unknown, string>({
     mutationFn: async (bookingId) => {
-      const response = await api.patch<{ booking: Booking }>(`/bookings/${bookingId}/end-session`);
+      const response = await api.patch<{ booking: Booking }>(`/sessions/${bookingId}/end-session`);
       return response.data;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['bookings'] }),
