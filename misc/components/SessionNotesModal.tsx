@@ -15,6 +15,7 @@ interface SessionNotesModalProps {
   partnerName?: string;
   scheduledDate?: string;
   participantRole: 'parent' | 'teacher' | 'child';
+  readOnly?: boolean;
 }
 
 /** Extract a single plaintext string from a NoteItem array (uses first note's content) */
@@ -55,6 +56,7 @@ export default function SessionNotesModal({
   partnerName,
   scheduledDate,
   participantRole,
+  readOnly = false,
 }: SessionNotesModalProps) {
   const { data: notes, isLoading } = useSessionNotes(isOpen ? bookingId : undefined);
   const savePersonalMutation = useSavePersonalNotes(bookingId);
@@ -78,6 +80,7 @@ export default function SessionNotesModal({
   }, [notes]);
 
   const handlePersonalChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    if (readOnly) return;
     const value = e.target.value;
     setPersonalContent(value);
     setSaveStatus('saving');
@@ -91,6 +94,7 @@ export default function SessionNotesModal({
   };
 
   const handleSharedChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    if (readOnly) return;
     const value = e.target.value;
     setSharedContent(value);
     setSaveStatus('saving');
@@ -214,6 +218,12 @@ export default function SessionNotesModal({
           </span>
         </div>
 
+        {readOnly && (
+          <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] text-amber-800">
+            Notes are read-only until the live session starts. You can create or edit notes during or after the session.
+          </div>
+        )}
+
         {/* Textarea editor */}
         <div className="min-h-[260px] flex flex-col">
           {isLoading ? (
@@ -226,7 +236,9 @@ export default function SessionNotesModal({
               onChange={handleSharedChange}
               placeholder="Shared notes, key takeaways, homework assignments, or lesson goals..."
               rows={12}
-              className="w-full flex-1 p-4 rounded-2xl border border-gray-200 bg-white text-xs text-gray-900 placeholder-gray-400 outline-none leading-relaxed resize-none focus:border-[#001A72] focus:ring-4 focus:ring-[#001A72]/10 transition"
+              disabled={readOnly}
+              readOnly={readOnly}
+              className="w-full flex-1 p-4 rounded-2xl border border-gray-200 bg-white text-xs text-gray-900 placeholder-gray-400 outline-none leading-relaxed resize-none focus:border-[#001A72] focus:ring-4 focus:ring-[#001A72]/10 transition disabled:cursor-not-allowed disabled:opacity-60"
             />
           ) : (
             <textarea
@@ -234,7 +246,9 @@ export default function SessionNotesModal({
               onChange={handlePersonalChange}
               placeholder="Your private thoughts, reminders, student evaluations, or session notes..."
               rows={12}
-              className="w-full flex-1 p-4 rounded-2xl border border-gray-200 bg-white text-xs text-gray-900 placeholder-gray-400 outline-none leading-relaxed resize-none focus:border-[#001A72] focus:ring-4 focus:ring-[#001A72]/10 transition"
+              disabled={readOnly}
+              readOnly={readOnly}
+              className="w-full flex-1 p-4 rounded-2xl border border-gray-200 bg-white text-xs text-gray-900 placeholder-gray-400 outline-none leading-relaxed resize-none focus:border-[#001A72] focus:ring-4 focus:ring-[#001A72]/10 transition disabled:cursor-not-allowed disabled:opacity-60"
             />
           )}
         </div>

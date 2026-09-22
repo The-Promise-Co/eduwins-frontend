@@ -21,6 +21,7 @@ interface SessionWhiteboardProps {
   onBroadcastChanges?: (changes: WhiteboardChanges) => void;
   onGetSnapshot?: (snapshot: any) => void;
   onTakeSnapshot?: (snapshot: WhiteboardSnapshotItem) => void;
+  onWbMounted?: () => void;
   participantName?: string;
   participantRole?: 'parent' | 'teacher' | 'child';
   remoteChanges?: WhiteboardChanges | null;
@@ -36,6 +37,7 @@ export default function SessionWhiteboard({
   onBroadcastChanges,
   onGetSnapshot,
   onTakeSnapshot,
+  onWbMounted,
   remoteChanges,
   remoteSnapshot,
   theme,
@@ -44,6 +46,13 @@ export default function SessionWhiteboard({
 }: SessionWhiteboardProps) {
   const editorRef = useRef<Editor | null>(null);
   const [mounted, setMounted] = useState(false);
+
+  // Sync state: baseline-first buffering, snapshot deduplication, and clobber guard
+  const hasBaselineRef = useRef(false);
+  const pendingDiffsRef = useRef<WhiteboardChanges[]>([]);
+  const appliedSnapshotRef = useRef<any>(null);
+  const hasLocalEditsRef = useRef(false);
+  const snapshotTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -60,20 +69,26 @@ export default function SessionWhiteboard({
       const isReadonly = !isTeacher && !allowCollaboration;
       editor.updateInstanceState({ isReadonly });
 
-      // If there's an initial remote snapshot (e.g. from teacher), load it
       if (remoteSnapshot) {
         try {
           editor.loadSnapshot(remoteSnapshot);
+          appliedSnapshotRef.current = remoteSnapshot;
+          hasBaselineRef.current = true;
         } catch {
           // ignore snapshot load error
         }
       }
 
-      if (isTeacher && onGetSnapshot) {
-        onGetSnapshot(editor.getSnapshot());
+      if (isTeacher) {
+        hasBaselineRef.current = true;
+        if (onGetSnapshot) {
+          onGetSnapshot(editor.getSnapshot());
+        }
       }
+
+      onWbMounted?.();
     },
-    [theme, isTeacher, allowCollaboration, remoteSnapshot, onGetSnapshot],
+    [theme, isTeacher, allowCollaboration, remoteSnapshot, onGetSnapshot, onWbMounted],
   );
 
   // Keep dark/light mode in sync
@@ -105,6 +120,7 @@ export default function SessionWhiteboard({
           removed: Object.keys(entry.changes.removed),
         };
         if (changes.added.length || changes.updated.length || changes.removed.length) {
+          hasLocalEditsRef.current = true;
           onBroadcastChanges(changes);
         }
       },
@@ -114,22 +130,81 @@ export default function SessionWhiteboard({
     return () => cleanup();
   }, [onBroadcastChanges]);
 
-  // Merge incoming remote changes from LiveKit data channel
+  // Debounced host snapshot refresh on ANY document change (local + remote merges).
+  // The teacher's editor accumulates every peer's diffs, so its snapshot becomes the
+  // fully merged board that late joiners and snapshot requests receive.
   useEffect(() => {
-    if (!remoteChanges || !editorRef.current) return;
     const editor = editorRef.current;
+    if (!editor || !onGetSnapshot || !isTeacher) return;
+
+    const cleanup = editor.store.listen(
+      () => {
+        if (snapshotTimerRef.current) clearTimeout(snapshotTimerRef.current);
+        snapshotTimerRef.current = setTimeout(() => {
+          onGetSnapshot(editor.getSnapshot());
+        }, 250);
+      },
+      { scope: 'document' },
+    );
+
+    return () => {
+      if (snapshotTimerRef.current) clearTimeout(snapshotTimerRef.current);
+      snapshotTimerRef.current = null;
+      cleanup();
+    };
+  }, [isTeacher, onGetSnapshot]);
+
+  // Apply incoming remote diffs (buffered until a snapshot baseline exists)
+  const applyRemoteChanges = useCallback((changes: WhiteboardChanges) => {
+    const editor = editorRef.current;
+    if (!editor) return;
     editor.store.mergeRemoteChanges(() => {
-      if (remoteChanges.added?.length) {
-        editor.store.put(remoteChanges.added);
+      if (changes.added?.length) {
+        editor.store.put(changes.added);
       }
-      if (remoteChanges.updated?.length) {
-        editor.store.put(remoteChanges.updated);
+      if (changes.updated?.length) {
+        editor.store.put(changes.updated);
       }
-      if (remoteChanges.removed?.length) {
-        editor.store.remove(remoteChanges.removed as any);
+      if (changes.removed?.length) {
+        editor.store.remove(changes.removed as any);
       }
     });
-  }, [remoteChanges]);
+  }, []);
+
+  const flushPendingChanges = useCallback(() => {
+    const queued = pendingDiffsRef.current;
+    pendingDiffsRef.current = [];
+    for (const changes of queued) {
+      applyRemoteChanges(changes);
+    }
+  }, [applyRemoteChanges]);
+
+  useEffect(() => {
+    if (!remoteChanges || !editorRef.current) return;
+    if (!hasBaselineRef.current) {
+      pendingDiffsRef.current.push(remoteChanges);
+      return;
+    }
+    applyRemoteChanges(remoteChanges);
+  }, [remoteChanges, applyRemoteChanges]);
+
+  // Apply a full snapshot that arrives after mount (e.g. reply to a late join /
+  // remount request). Never clobbers content this user drew on this board.
+  useEffect(() => {
+    if (isTeacher) return;
+    const editor = editorRef.current;
+    if (!editor || !remoteSnapshot) return;
+    if (appliedSnapshotRef.current === remoteSnapshot) return;
+    if (hasLocalEditsRef.current) return;
+    try {
+      editor.loadSnapshot(remoteSnapshot);
+      appliedSnapshotRef.current = remoteSnapshot;
+      hasBaselineRef.current = true;
+      flushPendingChanges();
+    } catch {
+      // ignore snapshot load error
+    }
+  }, [isTeacher, remoteSnapshot, flushPendingChanges]);
 
   // Clear board (teacher action)
   const handleClearBoard = useCallback(() => {

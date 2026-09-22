@@ -104,6 +104,7 @@ interface ParticipantStageProps {
   remoteWbSnapshot: any;
   onGetWbSnapshot?: (snapshot: any) => void;
   onTakeSnapshot?: (snapshot: WhiteboardSnapshotItem) => void;
+  onWbMounted?: () => void;
   participantName?: string;
   participantRole?: 'parent' | 'teacher' | 'child';
 }
@@ -122,6 +123,7 @@ function ParticipantStage({
   remoteWbSnapshot,
   onGetWbSnapshot,
   onTakeSnapshot,
+  onWbMounted,
   participantName,
   participantRole,
 }: ParticipantStageProps) {
@@ -206,6 +208,7 @@ function ParticipantStage({
                 onBroadcastChanges={onBroadcastWbChanges}
                 onGetSnapshot={onGetWbSnapshot}
                 onTakeSnapshot={onTakeSnapshot}
+                onWbMounted={onWbMounted}
                 participantName={participantName}
                 participantRole={participantRole}
                 remoteChanges={remoteWbChanges}
@@ -302,6 +305,7 @@ function ParticipantStage({
             onBroadcastChanges={onBroadcastWbChanges}
             onGetSnapshot={onGetWbSnapshot}
             onTakeSnapshot={onTakeSnapshot}
+            onWbMounted={onWbMounted}
             participantName={participantName}
             participantRole={participantRole}
             remoteChanges={remoteWbChanges}
@@ -1262,8 +1266,10 @@ function RoomContent({
         } else if (data.type === 'wb-diff') {
           setRemoteWbChanges(data.changes);
         } else if (data.type === 'wb-snapshot') {
-          setRemoteWbSnapshot(data.snapshot);
-        } else if (data.type === 'wb-request-snapshot' && isTeacher && wbSnapshotRef.current) {
+          if (data.snapshot) {
+            setRemoteWbSnapshot(data.snapshot);
+          }
+        } else if (data.type === 'wb-request-snapshot' && isTeacher && whiteboardActive) {
           const encoder = new TextEncoder();
           void room.localParticipant.publishData(
             encoder.encode(JSON.stringify({ type: 'wb-snapshot', snapshot: wbSnapshotRef.current })),
@@ -1358,6 +1364,7 @@ function RoomContent({
           type: 'wb-state',
           active: true,
           allowCollaboration: next,
+          snapshot: wbSnapshotRef.current,
         }),
       ),
       { reliable: true },
@@ -1397,9 +1404,41 @@ function RoomContent({
     [room],
   );
 
-  const handleGetWbSnapshot = useCallback((snapshot: any) => {
-    wbSnapshotRef.current = snapshot;
-  }, []);
+  const handleGetWbSnapshot = useCallback(
+    (snapshot: any) => {
+      wbSnapshotRef.current = snapshot;
+      // Mirror the teacher's fresh snapshot so its own board can be restored on remount
+      // (tab switch / reopen), and so late joiners re-receive the fully merged board.
+      if (isTeacher) setRemoteWbSnapshot(snapshot);
+    },
+    [isTeacher],
+  );
+
+  // Called once a whiteboard has finished mounting/restoring: the teacher re-advertises
+  // the current full board to every participant; students re-request the latest snapshot.
+  const handleWbMounted = useCallback(() => {
+    if (!room?.localParticipant || room.state !== ConnectionState.Connected) return;
+    const encoder = new TextEncoder();
+    if (isTeacher) {
+      if (!whiteboardActive) return;
+      void room.localParticipant.publishData(
+        encoder.encode(
+          JSON.stringify({
+            type: 'wb-state',
+            active: true,
+            allowCollaboration,
+            snapshot: wbSnapshotRef.current,
+          }),
+        ),
+        { reliable: true },
+      );
+    } else {
+      void room.localParticipant.publishData(
+        encoder.encode(JSON.stringify({ type: 'wb-request-snapshot' })),
+        { reliable: true },
+      );
+    }
+  }, [room, isTeacher, whiteboardActive, allowCollaboration]);
 
   // Hand raise toggle
   const handleToggleHandRaise = useCallback(() => {
@@ -1488,6 +1527,7 @@ function RoomContent({
           remoteWbSnapshot={remoteWbSnapshot}
           onGetWbSnapshot={handleGetWbSnapshot}
           onTakeSnapshot={handleTakeWhiteboardSnapshot}
+          onWbMounted={handleWbMounted}
           participantName={participantName}
           participantRole={participantRole}
         />

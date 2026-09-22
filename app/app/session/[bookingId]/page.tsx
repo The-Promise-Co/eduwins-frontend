@@ -613,7 +613,7 @@ export default function SessionPage() {
 
       {/* Loading Overlay */}
       {joinState === 'connecting' && (
-        <div className="fixed inset-0 z-50 bg-white/90 backdrop-blur-sm flex flex-col items-center justify-center gap-4">
+        <div className="fixed inset-0 m-0 z-50 bg-white/90 backdrop-blur-sm flex flex-col items-center justify-center gap-4">
           <Loader2 size={32} className="animate-spin text-[#001A72]" />
           <p className="text-sm font-bold text-[#001A72]">Connecting to session...</p>
           <p className="text-xs text-gray-400">Please wait</p>

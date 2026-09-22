@@ -264,6 +264,9 @@ export default function BookingDetailPage() {
 
   const colorConfig = currentNote ? STICKY_COLORS.find((c) => c.color === currentNote.color) || STICKY_COLORS[0] : STICKY_COLORS[0];
   const timing = computeSessionTiming(booking);
+  const notesBlocked = booking.status === 'pending' || booking.status === 'denied' || booking.status === 'cancelled';
+  const sessionStarted = Boolean(booking.sessionStartedAt) || Date.now() >= timing.joinWindowOpen.getTime();
+  const canCreateNotes = !notesBlocked && sessionStarted;
 
   return (
     <div className="space-y-6 pb-12">
@@ -278,7 +281,7 @@ export default function BookingDetailPage() {
         </button>
 
         <div className="flex items-center gap-2">
-          {timing.canJoin && (
+          {timing.canJoin && booking.status === 'paid_escrow' && (
             <Button
               fullWidth={false}
               onClick={() => router.push(`/app/session/${booking.id}`)}
@@ -287,7 +290,15 @@ export default function BookingDetailPage() {
               <Video size={14} /> Join Active Call
             </Button>
           )}
-          <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider bg-blue-50 text-[#001A72] border border-blue-100">
+          <span
+            className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider border ${
+              booking.status === 'completed' || booking.status === 'accepted'
+                ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
+                : booking.status === 'denied' || booking.status === 'cancelled'
+                  ? 'bg-red-50 text-red-700 border-red-100'
+                  : 'bg-blue-50 text-[#001A72] border-blue-100'
+            }`}
+          >
             {booking.status.replace('_', ' ')}
           </span>
         </div>
@@ -411,7 +422,8 @@ export default function BookingDetailPage() {
               <div className="flex items-center gap-2">
                 <button
                   onClick={handleAddNote}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#001A72] text-white text-xs font-bold hover:bg-[#001A72]/90 transition shadow-sm"
+                  disabled={!canCreateNotes}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#001A72] text-white text-xs font-bold hover:bg-[#001A72]/90 transition shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   <Plus size={13} />
                   <span>New Note</span>
@@ -427,6 +439,14 @@ export default function BookingDetailPage() {
                 </button>
               </div>
             </div>
+
+            {!canCreateNotes && (
+              <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-800">
+                {notesBlocked
+                  ? 'Notes are not available for this booking. Live sessions and note-taking are only available once a booking is paid and the session is active.'
+                  : 'Notes are read-only until the live session starts. You can create or edit notes during or after the session.'}
+              </div>
+            )}
 
             {/* Note Scope Tabs */}
             <div className="grid grid-cols-2 p-1 rounded-xl bg-gray-100 border border-gray-200">
@@ -464,7 +484,8 @@ export default function BookingDetailPage() {
                 <p className="text-xs font-bold text-gray-500">No {activeTab} notes recorded for this session yet.</p>
                 <button
                   onClick={handleAddNote}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#001A72] text-white text-xs font-bold shadow-sm"
+                  disabled={!canCreateNotes}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#001A72] text-white text-xs font-bold shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   <Plus size={14} /> Create First Note
                 </button>
@@ -502,7 +523,8 @@ export default function BookingDetailPage() {
                     {!isEditingNote ? (
                       <button
                         onClick={() => setIsEditingNote(true)}
-                        className="px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-xs font-bold text-gray-700 hover:bg-gray-50 transition shadow-sm"
+                        disabled={!canCreateNotes}
+                        className="px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-xs font-bold text-gray-700 hover:bg-gray-50 transition shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
                       >
                         Edit Note
                       </button>

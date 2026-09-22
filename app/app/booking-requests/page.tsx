@@ -37,6 +37,7 @@ const formatDateTime = (value?: string | null) => {
 const statusClass = (status: string) => {
   switch (status) {
     case 'accepted':
+    case 'completed':
       return 'bg-emerald-50 text-emerald-700 border-emerald-100';
     case 'denied':
     case 'cancelled':
@@ -360,6 +361,12 @@ export default function BookingRequestsPage() {
     }
   };
 
+  const canCreateNotesFor = (b: Booking) => {
+    if (!b || b.status === 'pending' || b.status === 'denied' || b.status === 'cancelled') return false;
+    const timing = computeSessionTiming(b);
+    return Boolean(b.sessionStartedAt) || Date.now() >= timing.joinWindowOpen.getTime();
+  };
+
   return (
     <div className="space-y-6 pb-12">
       <PageHeader
@@ -456,6 +463,7 @@ export default function BookingRequestsPage() {
             const isPaid = booking.status === 'paid_escrow';
             const isDenied = booking.status === 'denied';
             const isCancelled = booking.status === 'cancelled';
+            const isCompleted = booking.status === 'completed';
             const hasChildren = booking.bookingFor === 'children';
             const deadline = isAccepted ? paymentDeadlineText(booking) : '';
             const learnerNames = booking.children?.map((child) => fullName(child)).join(', ');
@@ -470,9 +478,11 @@ export default function BookingRequestsPage() {
                     </span>
                     <span className="text-[10px] font-black uppercase tracking-wider text-gray-400">{booking.bookingFor === 'children' ? 'For children' : 'For me'}</span>
                     <div className="ml-auto flex items-center gap-2">
-                      <button onClick={() => setDetailsBooking(booking)} className="inline-flex items-center gap-1.5 rounded-lg bg-gray-50 px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-gray-500 hover:bg-gray-100 transition">
-                        <Info size={12} /> Details
-                      </button>
+                      {(isPaid || isCompleted) && (
+                        <button onClick={() => setDetailsBooking(booking)} className="inline-flex items-center gap-1.5 rounded-lg bg-gray-50 px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-gray-500 hover:bg-gray-100 transition">
+                          <Info size={12} /> Details
+                        </button>
+                      )}
                       {(isAccepted || isPaid) && (
                         <button onClick={() => handleChat(booking)} disabled={sendChatRequest.isPending} className="inline-flex items-center gap-1.5 rounded-lg bg-[#001A72]/5 px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-[#001A72] hover:bg-[#001A72]/10 transition disabled:opacity-60">
                           <MessageSquare size={12} /> Chat
@@ -560,25 +570,29 @@ export default function BookingRequestsPage() {
                       <Clock size={14} className="text-gray-400 shrink-0" />
                       <p className="font-bold">{sessionEndedToday ? 'Session has ended.' : 'Session date has passed.'}</p>
                     </div>
+                    {(isPaid || isCompleted) && (
+                      <Button
+                        fullWidth={false}
+                        variant="outline"
+                        onClick={() => router.push(`/app/booking-requests/${booking.id}`)}
+                        className="px-4 py-2 text-xs font-black border-[#001A72] text-[#001A72] hover:bg-[#001A72]/5"
+                      >
+                        <BookOpen size={14} /> View Details
+                      </Button>
+                    )}
+                  </div>
+                ) : (
+                <div className="flex flex-wrap justify-end gap-2 pt-3 border-t border-gray-50">
+                  {(isPaid || isCompleted) && (
                     <Button
                       fullWidth={false}
                       variant="outline"
                       onClick={() => router.push(`/app/booking-requests/${booking.id}`)}
-                      className="px-4 py-2 text-xs font-black border-[#001A72] text-[#001A72] hover:bg-[#001A72]/5"
+                      className="px-3.5 py-2 text-xs font-black border-gray-200 text-gray-700 hover:bg-gray-50"
                     >
-                      <BookOpen size={14} /> View Details
+                      <BookOpen size={14} /> Details
                     </Button>
-                  </div>
-                ) : (
-                <div className="flex flex-wrap justify-end gap-2 pt-3 border-t border-gray-50">
-                  <Button
-                    fullWidth={false}
-                    variant="outline"
-                    onClick={() => router.push(`/app/booking-requests/${booking.id}`)}
-                    className="px-3.5 py-2 text-xs font-black border-gray-200 text-gray-700 hover:bg-gray-50"
-                  >
-                    <BookOpen size={14} /> Details
-                  </Button>
+                  )}
                   {isTeacher && isPending && (
                     <>
                       <Button fullWidth={false} variant="outline" onClick={() => openCancel(booking)} disabled={isUpdating} className="px-4 py-2 text-xs font-black border-gray-200 text-gray-500 hover:bg-gray-50">
@@ -910,7 +924,7 @@ export default function BookingRequestsPage() {
 
       {/* Full-page loading overlay */}
       {payingBookingId && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-white/80 backdrop-blur-sm">
+        <div className="fixed inset-0 m-0 z-[9999] flex items-center justify-center bg-white/80 backdrop-blur-sm">
           <div className="flex flex-col items-center gap-3 rounded-3xl border border-gray-100 bg-white p-8 shadow-xl">
             <Loader2 size={32} className="animate-spin text-[#001A72]" />
             <p className="text-sm font-black text-[#001A72]">Starting payment...</p>
@@ -929,6 +943,7 @@ export default function BookingRequestsPage() {
           partnerName={isTeacher ? fullName(notesBooking.parent) : fullName(notesBooking.teacher)}
           scheduledDate={formatDate(notesBooking.scheduledDate)}
           participantRole={isTeacher ? 'teacher' : 'parent'}
+          readOnly={!canCreateNotesFor(notesBooking)}
         />
       )}
     </div>
