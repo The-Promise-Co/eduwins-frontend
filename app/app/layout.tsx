@@ -33,11 +33,15 @@ const PAGE_TITLES: Record<string, string> = {
   '/app/courses/create': 'Create Course',
   '/app/referrals': 'Referrals',
   '/app/assessments': 'Assessments',
+  '/app/assessments/create': 'Create Assessment',
   '/app/children': 'My Children',
 };
 
 function getPageTitle(path: string): string {
   if (PAGE_TITLES[path]) return PAGE_TITLES[path];
+  if (path.match(/^\/app\/assessments\/[^/]+\/take/)) return 'Take Assessment';
+  if (path.match(/^\/app\/assessments\/[^/]+\/results/)) return 'Assessment Results';
+  if (path.match(/^\/app\/assessments\/[^/]+/)) return 'Assessment Details';
   if (path.startsWith('/app/courses/create')) return 'Create Course';
   if (path.match(/^\/app\/courses\/[^/]+\/edit/)) return 'Edit Course';
   if (path.match(/^\/app\/courses\/[^/]+\/learn/)) return 'Course Player';

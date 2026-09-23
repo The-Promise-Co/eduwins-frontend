@@ -3,9 +3,10 @@
 import { useState, useRef } from 'react';
 import { Send, Image, Paperclip, X } from 'lucide-react';
 import { toast } from 'sonner';
+import { useR2 } from '@/misc/hooks/useR2';
 
 interface ChatInputProps {
-  onSend: (content: string, type?: string, attachmentUrl?: string) => void;
+  onSend: (content: string, type?: string, attachmentUrl?: string) => boolean | void;
   onTyping: () => void;
 }
 
@@ -16,6 +17,7 @@ export default function ChatInput({ onSend, onTyping }: ChatInputProps) {
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
+  const { uploadFile } = useR2();
 
   const handleSend = async () => {
     const trimmed = text.trim();
@@ -24,30 +26,24 @@ export default function ChatInput({ onSend, onTyping }: ChatInputProps) {
     if (pendingFile) {
       setUploading(true);
       try {
-        // Upload to R2 via existing upload endpoint
-        const formData = new FormData();
-        formData.append('file', pendingFile);
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5002/api';
-        const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-        const res = await fetch(`${apiUrl}/uploads/file`, {
-          method: 'POST',
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-          body: formData,
-        });
-
-        if (!res.ok) throw new Error('Upload failed');
-        const { url } = await res.json();
+        // Upload to R2 via presigned URL (same pipeline as whiteboard snapshots)
+        const url = await uploadFile(pendingFile, 'chat');
+        if (!url) throw new Error('Upload failed');
         const isImage = pendingFile.type.startsWith('image/');
-        onSend(trimmed || (isImage ? 'Image' : pendingFile.name), isImage ? 'image' : 'file', url);
+        const sent = onSend(trimmed || (isImage ? 'Image' : pendingFile.name), isImage ? 'image' : 'file', url);
+        // Keep the pending file so the user can retry if sending failed
+        if (sent === false) return;
       } catch {
         toast.error('Failed to upload file');
+        return;
       } finally {
         setUploading(false);
-        setPendingFile(null);
-        setPreviewUrl(null);
       }
+      setPendingFile(null);
+      setPreviewUrl(null);
     } else {
-      onSend(trimmed);
+      // Keep the draft so the user can retry if sending failed
+      if (onSend(trimmed) === false) return;
     }
 
     setText('');

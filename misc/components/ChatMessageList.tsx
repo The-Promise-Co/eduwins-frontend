@@ -9,6 +9,7 @@ import ChatMessage from './ChatMessage';
 import ChatInput from './ChatInput';
 import TypingIndicator from './TypingIndicator';
 import type { Conversation, Message } from '@/misc/types/chat';
+import { toast } from 'sonner';
 
 interface ChatMessageListProps {
   conversation: Conversation | null;
@@ -17,7 +18,7 @@ interface ChatMessageListProps {
 
 export default function ChatMessageList({ conversation, onBack }: ChatMessageListProps) {
   const { user } = useUser();
-  const { joinConversation, leaveConversation, sendMessage: socketSendMessage, startTyping, stopTyping, on, off, typingUsers } = useSocket();
+  const { joinConversation, leaveConversation, sendMessage: socketSendMessage, startTyping, stopTyping, on, off, typingUsers, isConnected } = useSocket();
   const { data, isLoading } = useMessages(conversation?.id || null);
   const loadMore = useLoadMoreMessages(conversation?.id || '');
   const markRead = useMarkConversationRead();
@@ -48,24 +49,28 @@ export default function ChatMessageList({ conversation, onBack }: ChatMessageLis
     }
   }, [data?.messages]);
 
-  // Join/leave conversation room (only for accepted)
+  // Join/leave conversation room (only for accepted). Re-runs on reconnect
+  // because server-side room membership is lost on every disconnect.
   useEffect(() => {
-    if (!conversation?.id || !isAccepted) return;
+    if (!conversation?.id || !isAccepted || !isConnected) return;
     joinConversation(conversation.id);
     return () => leaveConversation(conversation.id);
-  }, [conversation?.id, isAccepted, joinConversation, leaveConversation]);
+  }, [conversation?.id, isAccepted, isConnected, joinConversation, leaveConversation]);
 
   // Listen for new messages (only for accepted)
   useEffect(() => {
     if (!conversation?.id || !isAccepted) return;
 
-    const handleNewMessage = ({ message }: { message: Message }) => {
-      if (message.conversationId === conversation.id) {
-        setLocalMessages((prev) => {
-          if (prev.some((m) => m.id === message.id)) return prev;
-          return [...prev, message];
-        });
-      }
+    const handleChatError = ({ message }: { message?: string }) => {
+      toast.error(message || 'Failed to send message');
+    };
+
+    const handleNewMessage = ({ message }: { message: Message | null }) => {
+      if (!message || message.conversationId !== conversation.id) return;
+      setLocalMessages((prev) => {
+        if (prev.some((m) => m.id === message.id)) return prev;
+        return [...prev, message];
+      });
     };
 
     const handleMessagesRead = ({ conversationId }: { conversationId: string }) => {
@@ -78,10 +83,12 @@ export default function ChatMessageList({ conversation, onBack }: ChatMessageLis
 
     on('chat:new_message', handleNewMessage);
     on('chat:messages_read', handleMessagesRead);
+    on('chat:error', handleChatError);
 
     return () => {
       off('chat:new_message', handleNewMessage);
       off('chat:messages_read', handleMessagesRead);
+      off('chat:error', handleChatError);
     };
   }, [conversation?.id, isAccepted, on, off, user?.id]);
 
@@ -126,11 +133,20 @@ export default function ChatMessageList({ conversation, onBack }: ChatMessageLis
     }, 2000);
   }, [conversation?.id, isAccepted, isTyping, startTyping, stopTyping]);
 
-  const handleSend = (content: string, type = 'text', attachmentUrl?: string) => {
-    if (!conversation?.id || !isAccepted) return;
-    socketSendMessage({ conversationId: conversation.id, content, type, attachmentUrl });
+  const handleSend = (content: string, type = 'text', attachmentUrl?: string): boolean => {
+    if (!conversation?.id || !isAccepted) return false;
+    if (!isConnected) {
+      toast.error('Not connected. Please wait a moment and try again.');
+      return false;
+    }
+    const sent = socketSendMessage({ conversationId: conversation.id, content, type, attachmentUrl });
+    if (!sent) {
+      toast.error('Failed to send message. Please try again.');
+      return false;
+    }
     setIsTyping(false);
     if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+    return true;
   };
 
   // Pending/declined state
