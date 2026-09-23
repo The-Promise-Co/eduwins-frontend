@@ -13,6 +13,7 @@ import { useUser } from '@/misc/context/UserContext';
 import { useSessionUi } from '@/misc/context/SessionUiContext';
 import { Booking } from '@/misc/types';
 import { computeSessionTiming } from '@/misc/utils/sessionTiming';
+import { getLagosTodayString, parseBookingDayStart } from '@/misc/utils/bookingTime';
 import { formatTimeRange } from '@/misc/utils/time';
 import { toast } from 'sonner';
 
@@ -21,7 +22,10 @@ function fullName(person?: { firstName?: string; lastName?: string } | null) {
 }
 
 const formatDate = (value?: string) => {
-  const date = new Date(`${value}T00:00:00`);
+  // Booking date is a Lagos calendar day — anchor so the label never shifts
+  // with browser timezone.
+  const date = value ? parseBookingDayStart(value) : null;
+  if (!date) return value || 'Date pending';
   return date.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
 };
 
@@ -256,13 +260,12 @@ export default function SessionPage() {
     }
   }, [tokenQuery.isError, router]);
 
-  // Auto-redirect if booking date is in the past
+  // Auto-redirect if booking date is in the past (Lagos calendar days)
   useEffect(() => {
     if (booking) {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const scheduled = new Date(`${booking.scheduledDate}T00:00:00`);
-      if (!Number.isNaN(scheduled.getTime()) && scheduled.getTime() < today.getTime()) {
+      const today = parseBookingDayStart(getLagosTodayString());
+      const scheduled = booking.scheduledDate ? parseBookingDayStart(booking.scheduledDate) : null;
+      if (today && scheduled && scheduled.getTime() < today.getTime()) {
         router.push('/app/schedule');
       }
     }

@@ -56,6 +56,7 @@ const FEATURE_CARDS: FeatureCard[] = [
     description: 'Review your wallet balances, transactions, and withdrawal activity.',
     href: '/app/earnings',
     color: 'bg-emerald-50 border-emerald-100',
+    role: 'teacher',
   },
   {
     icon: Handshake,

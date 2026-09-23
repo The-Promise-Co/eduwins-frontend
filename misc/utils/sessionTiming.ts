@@ -1,5 +1,6 @@
 import { SessionTiming, JOIN_WINDOW_MINUTES, END_NOTIFICATION_THRESHOLDS } from '@/misc/types/session';
 import { Booking } from '@/misc/types';
+import { parseBookingDateTime } from '@/misc/utils/bookingTime';
 
 export function computeSessionTiming(booking?: Booking | null): SessionTiming {
   if (!booking || !booking.scheduledDate || !booking.startTime) {
@@ -14,7 +15,21 @@ export function computeSessionTiming(booking?: Booking | null): SessionTiming {
       timeUntilEnd: 0,
     };
   }
-  const start = new Date(`${booking.scheduledDate}T${booking.startTime}`);
+  // Booking wall-clock is Africa/Lagos time — parse explicitly so countdown
+  // and canJoin agree with the server regardless of browser timezone.
+  const start = parseBookingDateTime(booking.scheduledDate, booking.startTime);
+  if (!start) {
+    const now = new Date();
+    return {
+      scheduledStart: now,
+      scheduledEnd: now,
+      joinWindowOpen: now,
+      canJoin: false,
+      isEnded: false,
+      timeUntilStart: 0,
+      timeUntilEnd: 0,
+    };
+  }
   const durationMs = Number(booking.durationHours || 1) * 60 * 60 * 1000;
   const end = new Date(start.getTime() + durationMs);
   const joinWindowOpen = new Date(start.getTime() - JOIN_WINDOW_MINUTES * 60 * 1000);

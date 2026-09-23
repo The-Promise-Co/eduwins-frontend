@@ -184,9 +184,11 @@ export default function AppHeader({ title, onToggleMobileMenu, menuDisabled = fa
                     <Link href="/app/schedule" onClick={() => setDropdownOpen(false)} className={`flex items-center gap-3 px-4 py-2.5 text-xs transition ${isDarkMode ? 'text-gray-200 hover:bg-gray-800' : 'text-gray-700 hover:bg-gray-50'}`}>
                       <Calendar size={14} className={isDarkMode ? 'text-gray-400' : 'text-gray-400'} /> Schedule
                     </Link>
-                    <Link href="/app/earnings" onClick={() => setDropdownOpen(false)} className={`flex items-center gap-3 px-4 py-2.5 text-xs transition ${isDarkMode ? 'text-gray-200 hover:bg-gray-800' : 'text-gray-700 hover:bg-gray-50'}`}>
-                      <Wallet size={14} className={isDarkMode ? 'text-gray-400' : 'text-gray-400'} /> Earnings
-                    </Link>
+                    {user?.role === 'teacher' && (
+                      <Link href="/app/earnings" onClick={() => setDropdownOpen(false)} className={`flex items-center gap-3 px-4 py-2.5 text-xs transition ${isDarkMode ? 'text-gray-200 hover:bg-gray-800' : 'text-gray-700 hover:bg-gray-50'}`}>
+                        <Wallet size={14} className={isDarkMode ? 'text-gray-400' : 'text-gray-400'} /> Earnings
+                      </Link>
+                    )}
                     <Link href="/app/profile/security" onClick={() => setDropdownOpen(false)} className={`flex items-center gap-3 px-4 py-2.5 text-xs transition ${isDarkMode ? 'text-gray-200 hover:bg-gray-800' : 'text-gray-700 hover:bg-gray-50'}`}>
                       <Settings size={14} className={isDarkMode ? 'text-gray-400' : 'text-gray-400'} /> Settings
                     </Link>

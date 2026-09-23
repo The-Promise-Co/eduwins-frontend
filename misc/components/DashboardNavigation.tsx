@@ -24,7 +24,7 @@ export default function DashboardNavigation({ user }: DashboardNavigationProps) 
     { label: 'Premium', href: '/app/premium-subscription', role: 'teacher' },
     { label: 'Welfare Fund', href: '/app/welfare-fund', role: 'teacher' },
     { label: 'View Schedule', href: '/app/schedule' },
-    { label: 'Earnings', href: '/app/earnings' },
+    { label: 'Earnings', href: '/app/earnings', role: 'teacher' },
     { label: 'Settings', href: '/app/profile/security' },
   ];
 

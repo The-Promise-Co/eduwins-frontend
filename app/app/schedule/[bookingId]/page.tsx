@@ -37,6 +37,7 @@ import { useUser } from '@/misc/context/UserContext';
 import { Booking } from '@/misc/types';
 import { NoteItem, StickyNoteColor, WhiteboardSnapshotItem } from '@/misc/types/session';
 import { computeSessionTiming } from '@/misc/utils/sessionTiming';
+import { parseBookingDayStart } from '@/misc/utils/bookingTime';
 import { formatTimeRange } from '@/misc/utils/time';
 import { toast } from 'sonner';
 
@@ -47,8 +48,10 @@ function fullName(person?: { firstName?: string; lastName?: string } | null) {
 
 const formatDate = (value?: string) => {
   if (!value) return 'Date pending';
-  const date = new Date(`${value}T00:00:00`);
-  return Number.isNaN(date.getTime())
+  // Booking date is a Lagos calendar day — anchor so the label never shifts
+  // with browser timezone.
+  const date = parseBookingDayStart(value);
+  return !date
     ? value
     : date.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
 };

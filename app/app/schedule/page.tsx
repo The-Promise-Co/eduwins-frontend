@@ -13,6 +13,7 @@ import { useSendChatRequest } from '@/misc/hooks/api/chat';
 import { useInitializeBookingPayment, useBookingPaymentQuote } from '@/misc/hooks/api/paystack';
 import { Booking } from '@/misc/types';
 import { computeSessionTiming, formatCountdown } from '@/misc/utils/sessionTiming';
+import { getLagosTodayString, parseBookingDateTime, parseBookingDayStart } from '@/misc/utils/bookingTime';
 import { formatTimeRange } from '@/misc/utils/time';
 import api from '@/misc/services/api';
 import { toast } from 'sonner';
@@ -24,8 +25,10 @@ const formatMoney = (value?: string | number) => {
 
 const formatDate = (value?: string) => {
   if (!value) return 'Date pending';
-  const date = new Date(`${value}T00:00:00`);
-  return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+  // Booking date is a Lagos calendar day — anchor so the label never shifts
+  // with browser timezone.
+  const date = parseBookingDayStart(value);
+  return !date ? value : date.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
 };
 
 const formatDateTime = (value?: string | null) => {
@@ -66,18 +69,17 @@ const statusLabel = (status: string, isTeacher: boolean) => {
  */
 const isSessionWindowPast = (booking?: Booking | null): boolean => {
   if (!booking || !booking.scheduledDate) return false;
+  // Lagos calendar-day boundaries — independent of browser timezone.
   const now = new Date();
-  const todayMidnight = new Date();
-  todayMidnight.setHours(0, 0, 0, 0);
-  const scheduled = new Date(`${booking.scheduledDate}T00:00:00`);
-  if (Number.isNaN(scheduled.getTime())) return false;
+  const todayMidnight = parseBookingDayStart(getLagosTodayString(now));
+  const scheduled = parseBookingDayStart(booking.scheduledDate);
+  if (!todayMidnight || !scheduled) return false;
   // Date is strictly before today
   if (scheduled.getTime() < todayMidnight.getTime()) return true;
   // Date is today — check whether endTime has elapsed
   if (scheduled.getTime() === todayMidnight.getTime() && booking.endTime) {
-    const [h, m, s] = booking.endTime.split(':').map(Number);
-    const sessionEnd = new Date();
-    sessionEnd.setHours(h || 0, m || 0, s || 0, 0);
+    const sessionEnd = parseBookingDateTime(booking.scheduledDate, booking.endTime);
+    if (!sessionEnd) return false;
     return now >= sessionEnd;
   }
   return false;
@@ -94,21 +96,20 @@ const isSessionStarted = (booking?: Booking | null): boolean => {
   return Date.now() >= timing.scheduledStart.getTime();
 };
 
-// Legacy alias — used for "Past" tab filtering (date-level only)
+// Legacy alias — used for "Past" tab filtering (date-level only, Lagos days)
 const isDatePast = (booking?: Booking | null): boolean => {
   if (!booking || !booking.scheduledDate) return false;
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const scheduled = new Date(`${booking.scheduledDate}T00:00:00`);
-  return !Number.isNaN(scheduled.getTime()) && scheduled.getTime() < today.getTime();
+  const today = parseBookingDayStart(getLagosTodayString());
+  const scheduled = parseBookingDayStart(booking.scheduledDate);
+  return Boolean(today && scheduled) && (scheduled as Date).getTime() < (today as Date).getTime();
 };
 
 const isDatePresent = (booking?: Booking | null): boolean => {
   if (!booking || !booking.scheduledDate) return true;
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const scheduled = new Date(`${booking.scheduledDate}T00:00:00`);
-  return Number.isNaN(scheduled.getTime()) || scheduled.getTime() >= today.getTime();
+  const today = parseBookingDayStart(getLagosTodayString());
+  const scheduled = parseBookingDayStart(booking.scheduledDate);
+  if (!today || !scheduled) return true;
+  return scheduled.getTime() >= today.getTime();
 };
 
 function EscrowBreakdownCard({ bookingId }: { bookingId: string }) {
