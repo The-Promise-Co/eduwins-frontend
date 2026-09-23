@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { Loader2, Send, Timer } from 'lucide-react';
 import PageHeader from '@/misc/components/PageHeader';
+import { groupQuestionsBySection } from '@/misc/components/assessments/sectionGroups';
 import { useAssessment, useAttempt, useSaveAttemptAnswers, useSubmitAttempt } from '@/misc/hooks/api/assessments';
 import { toast } from 'sonner';
 
@@ -133,59 +134,88 @@ export default function TakeAssessmentPage() {
         }
       />
 
-      <div className="space-y-4">
-        {assessment.questions.map((q, i) => (
-          <div key={q.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-            <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">
-              Q{i + 1} · {q.marks} marks
-            </p>
-            <p className="text-sm font-bold text-gray-900 mt-1">{q.prompt}</p>
+      <div className="space-y-5">
+        {(() => {
+          const renderCard = (q: (typeof assessment.questions)[number], n: number) => (
+            <div key={q.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+              <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">
+                Q{n} · {q.marks} marks
+              </p>
+              <p className="text-sm font-bold text-gray-900 mt-1">{q.prompt}</p>
 
-            {q.type === 'mcq_single' && (
-              <div className="mt-3 space-y-2">
-                {q.options?.map((opt) => (
-                  <label
-                    key={opt.id}
-                    className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-semibold border cursor-pointer transition ${answers[q.id] === opt.id ? 'bg-[#001A72]/5 border-[#001A72] text-[#001A72]' : 'bg-gray-50 border-gray-100 text-gray-700 hover:border-gray-300'}`}
-                  >
-                    <input
-                      type="radio"
-                      name={q.id}
-                      checked={answers[q.id] === opt.id}
-                      onChange={() => set(q.id, opt.id)}
-                      className="accent-[#001A72]"
-                    />
-                    {opt.label}
-                  </label>
-                ))}
-              </div>
-            )}
+              {q.type === 'mcq_single' && (
+                <div className="mt-3 space-y-2">
+                  {q.options?.map((opt) => (
+                    <label
+                      key={opt.id}
+                      className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-semibold border cursor-pointer transition ${answers[q.id] === opt.id ? 'bg-[#001A72]/5 border-[#001A72] text-[#001A72]' : 'bg-gray-50 border-gray-100 text-gray-700 hover:border-gray-300'}`}
+                    >
+                      <input
+                        type="radio"
+                        name={q.id}
+                        checked={answers[q.id] === opt.id}
+                        onChange={() => set(q.id, opt.id)}
+                        className="accent-[#001A72]"
+                      />
+                      {opt.label}
+                    </label>
+                  ))}
+                </div>
+              )}
 
-            {q.type === 'true_false' && (
-              <div className="mt-3 flex gap-2">
-                {['true', 'false'].map((v) => (
-                  <button
-                    key={v}
-                    onClick={() => set(q.id, v)}
-                    className={`flex-1 py-2.5 rounded-xl text-xs font-black uppercase border transition ${answers[q.id] === v ? 'bg-[#001A72] text-white border-[#001A72]' : 'bg-gray-50 text-gray-500 border-gray-100 hover:border-gray-300'}`}
-                  >
-                    {v}
-                  </button>
-                ))}
-              </div>
-            )}
+              {q.type === 'true_false' && (
+                <div className="mt-3 flex gap-2">
+                  {['true', 'false'].map((v) => (
+                    <button
+                      key={v}
+                      onClick={() => set(q.id, v)}
+                      className={`flex-1 py-2.5 rounded-xl text-xs font-black uppercase border transition ${answers[q.id] === v ? 'bg-[#001A72] text-white border-[#001A72]' : 'bg-gray-50 text-gray-500 border-gray-100 hover:border-gray-300'}`}
+                    >
+                      {v}
+                    </button>
+                  ))}
+                </div>
+              )}
 
-            {q.type === 'short_answer' && (
-              <textarea
-                value={answers[q.id] || ''}
-                onChange={(e) => set(q.id, e.target.value)}
-                rows={4}
-                placeholder="Type your answer..."
-                className="mt-3 w-full px-4 py-3 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#001A72]/20 focus:border-[#001A72]"
-              />
-            )}
-          </div>
-        ))}
+              {q.type === 'short_answer' && (
+                <textarea
+                  value={answers[q.id] || ''}
+                  onChange={(e) => set(q.id, e.target.value)}
+                  rows={4}
+                  placeholder="Type your answer..."
+                  className="mt-3 w-full px-4 py-3 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#001A72]/20 focus:border-[#001A72]"
+                />
+              )}
+            </div>
+          );
+
+          const hasSections = (assessment.sections || []).length > 0;
+          if (!hasSections) {
+            return assessment.questions.map((q, i) => renderCard(q, i + 1));
+          }
+          const { ordered, unassigned } = groupQuestionsBySection(assessment.questions, assessment.sections);
+          return (
+            <>
+              {ordered.map(({ section, items }) => (
+                <div key={section.id} className="space-y-3">
+                  <div className="bg-[#001A72]/5 border border-[#001A72]/10 rounded-2xl px-5 py-4">
+                    <p className="text-sm font-black text-[#001A72]">{section.title}</p>
+                    {section.instructions && (
+                      <p className="text-xs text-gray-500 mt-1">{section.instructions}</p>
+                    )}
+                  </div>
+                  {items.map(({ q, n }) => renderCard(q, n))}
+                </div>
+              ))}
+              {unassigned.length > 0 && (
+                <div className="space-y-3">
+                  <p className="text-sm font-black text-gray-400 px-1">Unassigned</p>
+                  {unassigned.map(({ q, n }) => renderCard(q, n))}
+                </div>
+              )}
+            </>
+          );
+        })()}
 
         <button
           onClick={() => handleSubmit(false)}

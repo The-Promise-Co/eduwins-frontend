@@ -11,6 +11,13 @@ export interface QuestionOption {
   label: string;
 }
 
+export interface AssessmentSection {
+  id: string;
+  title: string;
+  instructions?: string | null;
+  orderIndex: number;
+}
+
 export interface AssessmentQuestion {
   id: string;
   prompt: string;
@@ -19,6 +26,7 @@ export interface AssessmentQuestion {
   options?: QuestionOption[];
   correctOptionId?: string;
   correctBoolean?: boolean;
+  sectionId?: string | null;
 }
 
 export interface Assessment {
@@ -31,6 +39,7 @@ export interface Assessment {
   dueAt?: string | null;
   status: AssessmentStatus;
   questions: AssessmentQuestion[];
+  sections: AssessmentSection[];
   createdBy?: string;
   createdAt?: string;
   updatedAt?: string;
@@ -43,6 +52,7 @@ export interface AssessmentFormInput {
   durationMinutes: number;
   dueAt?: string;
   questions: AssessmentQuestion[];
+  sections: AssessmentSection[];
 }
 
 export interface AssigneeLookupResult {

@@ -41,6 +41,7 @@ function getPageTitle(path: string): string {
   if (PAGE_TITLES[path]) return PAGE_TITLES[path];
   if (path.match(/^\/app\/assessments\/[^/]+\/take/)) return 'Take Assessment';
   if (path.match(/^\/app\/assessments\/[^/]+\/results/)) return 'Assessment Results';
+  if (path.match(/^\/app\/assessments\/[^/]+\/edit/)) return 'Edit Assessment';
   if (path.match(/^\/app\/assessments\/[^/]+/)) return 'Assessment Details';
   if (path.startsWith('/app/courses/create')) return 'Create Course';
   if (path.match(/^\/app\/courses\/[^/]+\/edit/)) return 'Edit Course';
