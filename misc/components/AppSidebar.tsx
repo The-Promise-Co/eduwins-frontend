@@ -27,7 +27,7 @@ import {
   Users,
   ClipboardList,
   Baby,
-  LogOut
+  LogOut,
 } from 'lucide-react';
 
 interface AppSidebarProps {

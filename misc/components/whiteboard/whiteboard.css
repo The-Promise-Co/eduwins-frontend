@@ -1,0 +1,23 @@
+/**
+ * Whiteboard-scoped Excalidraw UI trims.
+ *
+ * The installed @excalidraw/excalidraw version exposes no UIOptions flag for
+ * the Library, so the sidebar trigger is hidden with scoped CSS instead
+ * (maintainer-endorsed workaround). Scoped to .eduwins-whiteboard so it can
+ * never leak into other Excalidraw instances. Covers desktop + mobile (same
+ * class). NOTE: if a future Excalidraw upgrade renames .sidebar-trigger, the
+ * Library button will visibly reappear — easy QA catch.
+ */
+.eduwins-whiteboard .sidebar-trigger {
+  display: none !important;
+}
+
+/**
+ * Help dialog header holds the only remaining external links (verified in
+ * the 0.18.1 bundle): Documentation, Read-our-blog, Found-an-issue (GitHub)
+ * and YouTube buttons. Hiding the header keeps the keyboard-shortcuts list
+ * while removing every outbound link in one stable rule.
+ */
+.eduwins-whiteboard .HelpDialog__header {
+  display: none !important;
+}

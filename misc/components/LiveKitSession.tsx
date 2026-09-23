@@ -16,15 +16,16 @@ import {
 import { ConnectionState, RoomEvent, Track, type RemoteParticipant } from 'livekit-client';
 import api from '@/misc/services/api';
 import { useSessionUi } from '@/misc/context/SessionUiContext';
-import SessionWhiteboard, { WhiteboardChanges } from './SessionWhiteboard';
+import Whiteboard from './whiteboard/Whiteboard';
+import { WB, type WhiteboardSnapshotData } from './whiteboard/types';
+import { clearSessionState } from './whiteboard/sessionStore';
 import SessionNotesSidebar from './SessionNotesSidebar';
-import { NoteItem, WhiteboardSnapshotItem } from '@/misc/types/session';
+import { NoteItem } from '@/misc/types/session';
 import {
   useSessionNotes,
   useSavePersonalNotes,
   useSaveSharedNotes,
   useSaveWhiteboardSnapshot,
-  saveStoredSharedNotes,
 } from '@/misc/hooks/api/notes';
 import '@livekit/components-styles';
 import {
@@ -91,6 +92,7 @@ function getGridCols(count: number): string {
 // ─── Participant Stage ────────────────────────────────────────────────────────
 
 interface ParticipantStageProps {
+  bookingId: string;
   raisedHands: Record<string, boolean>;
   getDisplayName: (p: { identity: string; name?: string; isLocal?: boolean }) => string;
   theme: 'light' | 'dark';
@@ -99,17 +101,13 @@ interface ParticipantStageProps {
   allowCollaboration: boolean;
   onToggleCollaboration: () => void;
   onCloseWhiteboard: () => void;
-  onBroadcastWbChanges: (changes: WhiteboardChanges) => void;
-  remoteWbChanges: WhiteboardChanges | null;
-  remoteWbSnapshot: any;
-  onGetWbSnapshot?: (snapshot: any) => void;
-  onTakeSnapshot?: (snapshot: WhiteboardSnapshotItem) => void;
-  onWbMounted?: () => void;
+  onTakeSnapshot?: (snapshot: WhiteboardSnapshotData) => void;
   participantName?: string;
   participantRole?: 'parent' | 'teacher' | 'child';
 }
 
 function ParticipantStage({
+  bookingId,
   raisedHands,
   getDisplayName,
   theme,
@@ -118,12 +116,7 @@ function ParticipantStage({
   allowCollaboration,
   onToggleCollaboration,
   onCloseWhiteboard,
-  onBroadcastWbChanges,
-  remoteWbChanges,
-  remoteWbSnapshot,
-  onGetWbSnapshot,
   onTakeSnapshot,
-  onWbMounted,
   participantName,
   participantRole,
 }: ParticipantStageProps) {
@@ -200,19 +193,15 @@ function ParticipantStage({
           {/* Main content display */}
           <div className="flex-1 min-h-0 min-w-0 relative rounded-2xl overflow-hidden">
             {activePresentation === 'whiteboard' ? (
-              <SessionWhiteboard
+              <Whiteboard
+                bookingId={bookingId}
                 isTeacher={isTeacher}
                 allowCollaboration={allowCollaboration}
                 onToggleCollaboration={onToggleCollaboration}
                 onClose={onCloseWhiteboard}
-                onBroadcastChanges={onBroadcastWbChanges}
-                onGetSnapshot={onGetWbSnapshot}
                 onTakeSnapshot={onTakeSnapshot}
-                onWbMounted={onWbMounted}
                 participantName={participantName}
                 participantRole={participantRole}
-                remoteChanges={remoteWbChanges}
-                remoteSnapshot={remoteWbSnapshot}
                 theme={theme}
               />
             ) : (
@@ -297,19 +286,15 @@ function ParticipantStage({
 
         {/* Main Stage: Whiteboard */}
         <div className="flex-1 min-h-0 min-w-0 relative rounded-2xl overflow-hidden">
-          <SessionWhiteboard
+          <Whiteboard
+            bookingId={bookingId}
             isTeacher={isTeacher}
             allowCollaboration={allowCollaboration}
             onToggleCollaboration={onToggleCollaboration}
             onClose={onCloseWhiteboard}
-            onBroadcastChanges={onBroadcastWbChanges}
-            onGetSnapshot={onGetWbSnapshot}
             onTakeSnapshot={onTakeSnapshot}
-            onWbMounted={onWbMounted}
             participantName={participantName}
             participantRole={participantRole}
-            remoteChanges={remoteWbChanges}
-            remoteSnapshot={remoteWbSnapshot}
             theme={theme}
           />
         </div>
@@ -1057,18 +1042,33 @@ function RoomContent({
   const [showNotes, setShowNotes] = useState(false);
   const [hasUnreadNotes, setHasUnreadNotes] = useState(false);
 
+  // Remount = full reload from the DB (source of truth). Reset locals, then
+  // refetch the whole session so late-arriving saves are never missed.
   useEffect(() => {
-    if (notesQuery.data) {
-      if (notesQuery.data.personalNotes) {
-        setPersonalNotes(notesQuery.data.personalNotes);
-      }
-      if (notesQuery.data.sharedNotes) {
-        setSharedNotes(notesQuery.data.sharedNotes);
-      }
-    }
+    setPersonalNotes([]);
+    setSharedNotes([]);
+    void notesQuery.refetch();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bookingId]);
+
+  // DB truth wins: unconditionally replace locals on every fresh payload so a
+  // remount loads all notes (including an empty list after deletes).
+  useEffect(() => {
+    if (!notesQuery.data) return;
+    setPersonalNotes(notesQuery.data.personalNotes ?? []);
+    setSharedNotes(notesQuery.data.sharedNotes ?? []);
   }, [notesQuery.data]);
 
-  // Broadcast shared notes over LiveKit data channel
+  useEffect(() => {
+    if (notesQuery.isError) {
+      toast.error('Notes not loaded.', {
+        action: { label: 'Retry', onClick: () => void notesQuery.refetch() },
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [notesQuery.isError]);
+
+  // Broadcast shared notes over LiveKit data channel (only after DB confirms)
   const handleBroadcastSharedNotes = useCallback(
     (notes: NoteItem[]) => {
       setSharedNotes(notes);
@@ -1092,36 +1092,47 @@ function RoomContent({
     [participantName, room],
   );
 
-  // Whiteboard manual snapshot capture handler
+  // Whiteboard manual snapshot capture handler. The database is the source
+  // of truth: peers are only notified after the server confirms (201), and a
+  // failed save stays in the pending outbox with a retry action — never a
+  // silent success.
   const handleTakeWhiteboardSnapshot = useCallback(
-    (snapshot: WhiteboardSnapshotItem) => {
-      saveWhiteboardSnapshot.mutate(snapshot);
-      if (!room?.localParticipant) return;
-      try {
-        const encoder = new TextEncoder();
-        void room.localParticipant.publishData(
-          encoder.encode(
-            JSON.stringify({
-              type: 'wb-snapshot-saved',
-              snapshot,
-              sender: participantName,
-            }),
-          ),
-          { reliable: true },
+    (snapshot: WhiteboardSnapshotData) => {
+      const attempt = (): Promise<void> =>
+        saveWhiteboardSnapshot.mutateAsync(snapshot).then(
+          () => {
+            if (!room?.localParticipant) return;
+            try {
+              const encoder = new TextEncoder();
+              void room.localParticipant.publishData(
+                encoder.encode(
+                  JSON.stringify({
+                    type: WB.SNAPSHOT_SAVED,
+                    snapshot,
+                    sender: participantName,
+                  }),
+                ),
+                { reliable: true },
+              );
+            } catch {
+              // best-effort
+            }
+          },
+          () => {
+            toast.error('Snapshot kept on this device — server save failed.', {
+              action: { label: 'Retry', onClick: () => void attempt() },
+            });
+          },
         );
-      } catch {
-        // best-effort
-      }
+      void attempt();
     },
     [participantName, room, saveWhiteboardSnapshot],
   );
 
-  // Whiteboard states
+  // Whiteboard states (drawing sync itself lives in the Whiteboard component —
+  // Yjs doc + LiveKit data channels; only open/close/collab flags are managed here)
   const [whiteboardActive, setWhiteboardActive] = useState(false);
   const [allowCollaboration, setAllowCollaboration] = useState(false);
-  const [remoteWbChanges, setRemoteWbChanges] = useState<WhiteboardChanges | null>(null);
-  const [remoteWbSnapshot, setRemoteWbSnapshot] = useState<any>(null);
-  const wbSnapshotRef = useRef<any>(null);
 
   // Profiles and custom names mapped by participant identity
   const [profiles, setProfiles] = useState<Record<string, ParticipantProfile>>({});
@@ -1232,13 +1243,21 @@ function RoomContent({
             }));
           }
         } else if (data.type === 'shared-notes-collection-update' && Array.isArray(data.notes)) {
+          // Peer already persisted to the DB before broadcasting, so accept as truth.
           setSharedNotes(data.notes);
-          saveStoredSharedNotes(bookingId, data.notes);
           if (!showNotes) {
             setHasUnreadNotes(true);
           }
-        } else if (data.type === 'wb-snapshot-saved' && data.snapshot) {
+        } else if (data.type === WB.SNAPSHOT_SAVED && data.snapshot) {
           toast.info(`Whiteboard snapshot captured by ${data.sender || 'peer'}!`);
+        } else if (data.type === WB.SESSION_ENDED) {
+          // Teacher closed the board or the session ended: drop local board state.
+          // (The Whiteboard component destroys its own Yjs doc on unmount.)
+          // Also drop the same-device session restore so a future session on
+          // this booking never resurrects the old board.
+          setWhiteboardActive(false);
+          setAllowCollaboration(false);
+          clearSessionState(bookingId);
         } else if (data.type === 'shared-notes-update') {
           // Legacy support
           if (typeof data.content === 'string') {
@@ -1252,29 +1271,13 @@ function RoomContent({
               updatedAt: new Date().toISOString(),
             }];
             setSharedNotes(legacyItems);
-            saveStoredSharedNotes(bookingId, legacyItems);
             if (!showNotes) {
               setHasUnreadNotes(true);
             }
           }
-        } else if (data.type === 'wb-state') {
+        } else if (data.type === WB.STATE) {
           setWhiteboardActive(!!data.active);
           setAllowCollaboration(!!data.allowCollaboration);
-          if (data.snapshot) {
-            setRemoteWbSnapshot(data.snapshot);
-          }
-        } else if (data.type === 'wb-diff') {
-          setRemoteWbChanges(data.changes);
-        } else if (data.type === 'wb-snapshot') {
-          if (data.snapshot) {
-            setRemoteWbSnapshot(data.snapshot);
-          }
-        } else if (data.type === 'wb-request-snapshot' && isTeacher && whiteboardActive) {
-          const encoder = new TextEncoder();
-          void room.localParticipant.publishData(
-            encoder.encode(JSON.stringify({ type: 'wb-snapshot', snapshot: wbSnapshotRef.current })),
-            { reliable: true },
-          );
         }
       } catch {
         // malformed data — ignore
@@ -1284,14 +1287,15 @@ function RoomContent({
     const handleParticipantConnected = () => {
       broadcastProfile();
       if (isTeacher && whiteboardActive) {
+        // Late joiners fetch the board themselves via the Yjs state-vector
+        // handshake; we only need to advertise that the board is open.
         const encoder = new TextEncoder();
         void room.localParticipant.publishData(
           encoder.encode(
             JSON.stringify({
-              type: 'wb-state',
+              type: WB.STATE,
               active: true,
               allowCollaboration,
-              snapshot: wbSnapshotRef.current,
             }),
           ),
           { reliable: true },
@@ -1322,18 +1326,9 @@ function RoomContent({
     };
   }, [room, participantName, broadcastProfile, isTeacher, whiteboardActive, allowCollaboration, sharedNotes, bookingId, showNotes]);
 
-  // Request snapshot if student joins while whiteboard is already active
-  useEffect(() => {
-    if (!isTeacher && whiteboardActive && room?.localParticipant) {
-      const encoder = new TextEncoder();
-      void room.localParticipant.publishData(
-        encoder.encode(JSON.stringify({ type: 'wb-request-snapshot' })),
-        { reliable: true },
-      );
-    }
-  }, [whiteboardActive, isTeacher, room]);
-
-  // Whiteboard Teacher Actions
+  // Whiteboard Teacher Actions.
+  // Drawing content syncs peer-to-peer via Yjs state-vector handshake inside
+  // the Whiteboard component — no snapshot bookkeeping needed here.
   const handleToggleWhiteboard = useCallback(() => {
     const next = !whiteboardActive;
     setWhiteboardActive(next);
@@ -1344,10 +1339,9 @@ function RoomContent({
     void room.localParticipant.publishData(
       encoder.encode(
         JSON.stringify({
-          type: 'wb-state',
+          type: WB.STATE,
           active: next,
           allowCollaboration: next ? allowCollaboration : false,
-          snapshot: wbSnapshotRef.current,
         }),
       ),
       { reliable: true },
@@ -1361,10 +1355,9 @@ function RoomContent({
     void room.localParticipant.publishData(
       encoder.encode(
         JSON.stringify({
-          type: 'wb-state',
+          type: WB.STATE,
           active: true,
           allowCollaboration: next,
-          snapshot: wbSnapshotRef.current,
         }),
       ),
       { reliable: true },
@@ -1374,71 +1367,15 @@ function RoomContent({
   const handleCloseWhiteboard = useCallback(() => {
     setWhiteboardActive(false);
     setAllowCollaboration(false);
+    clearSessionState(bookingId);
     const encoder = new TextEncoder();
+    // Tell peers to drop the board (each side destroys its in-memory Yjs doc
+    // when the whiteboard unmounts). Only user-created snapshots survive.
     void room.localParticipant.publishData(
-      encoder.encode(
-        JSON.stringify({
-          type: 'wb-state',
-          active: false,
-          allowCollaboration: false,
-        }),
-      ),
+      encoder.encode(JSON.stringify({ type: WB.SESSION_ENDED })),
       { reliable: true },
     );
-  }, [room]);
-
-  const handleBroadcastWbChanges = useCallback(
-    (changes: WhiteboardChanges) => {
-      if (!room?.localParticipant) return;
-      const encoder = new TextEncoder();
-      void room.localParticipant.publishData(
-        encoder.encode(
-          JSON.stringify({
-            type: 'wb-diff',
-            changes,
-          }),
-        ),
-        { reliable: true },
-      );
-    },
-    [room],
-  );
-
-  const handleGetWbSnapshot = useCallback(
-    (snapshot: any) => {
-      wbSnapshotRef.current = snapshot;
-      // Mirror the teacher's fresh snapshot so its own board can be restored on remount
-      // (tab switch / reopen), and so late joiners re-receive the fully merged board.
-      if (isTeacher) setRemoteWbSnapshot(snapshot);
-    },
-    [isTeacher],
-  );
-
-  // Called once a whiteboard has finished mounting/restoring: the teacher re-advertises
-  // the current full board to every participant; students re-request the latest snapshot.
-  const handleWbMounted = useCallback(() => {
-    if (!room?.localParticipant || room.state !== ConnectionState.Connected) return;
-    const encoder = new TextEncoder();
-    if (isTeacher) {
-      if (!whiteboardActive) return;
-      void room.localParticipant.publishData(
-        encoder.encode(
-          JSON.stringify({
-            type: 'wb-state',
-            active: true,
-            allowCollaboration,
-            snapshot: wbSnapshotRef.current,
-          }),
-        ),
-        { reliable: true },
-      );
-    } else {
-      void room.localParticipant.publishData(
-        encoder.encode(JSON.stringify({ type: 'wb-request-snapshot' })),
-        { reliable: true },
-      );
-    }
-  }, [room, isTeacher, whiteboardActive, allowCollaboration]);
+  }, [room, bookingId]);
 
   // Hand raise toggle
   const handleToggleHandRaise = useCallback(() => {
@@ -1482,15 +1419,33 @@ function RoomContent({
       {/* Session Notes sidebar — left */}
       {showNotes && (
         <SessionNotesSidebar
+          key={bookingId}
           personalNotes={personalNotes}
           sharedNotes={sharedNotes}
-          onSavePersonalNotes={(notes) => {
+          onSavePersonalNotes={async (notes) => {
+            // Optimistic: keep visible immediately; the sidebar flags + toasts on failure.
             setPersonalNotes(notes);
-            savePersonalNotes.mutate(notes);
+            try {
+              await savePersonalNotes.mutateAsync(notes);
+            } catch {
+              toast.error('Notes not saved — server save failed.', {
+                action: { label: 'Retry', onClick: () => void savePersonalNotes.mutateAsync(notes).catch(() => undefined) },
+              });
+              throw new Error('personal notes save failed');
+            }
           }}
-          onSaveSharedNotes={(notes) => {
+          onSaveSharedNotes={async (notes) => {
+            // Optimistic: keep visible immediately; broadcast only after DB confirms.
             setSharedNotes(notes);
-            saveSharedNotes.mutate(notes);
+            try {
+              await saveSharedNotes.mutateAsync(notes);
+              handleBroadcastSharedNotes(notes);
+            } catch {
+              toast.error('Notes not saved — server save failed.', {
+                action: { label: 'Retry', onClick: () => void saveSharedNotes.mutateAsync(notes).then(() => handleBroadcastSharedNotes(notes)).catch(() => undefined) },
+              });
+              throw new Error('shared notes save failed');
+            }
           }}
           onBroadcastSharedNotes={handleBroadcastSharedNotes}
           participantRole={participantRole}
@@ -1514,6 +1469,7 @@ function RoomContent({
       {/* Main: stage + toolbar */}
       <div className="flex flex-1 flex-col min-w-0">
         <ParticipantStage
+          bookingId={bookingId}
           raisedHands={allRaisedHands}
           getDisplayName={getDisplayName}
           theme={theme}
@@ -1522,12 +1478,7 @@ function RoomContent({
           allowCollaboration={allowCollaboration}
           onToggleCollaboration={handleToggleCollaboration}
           onCloseWhiteboard={handleCloseWhiteboard}
-          onBroadcastWbChanges={handleBroadcastWbChanges}
-          remoteWbChanges={remoteWbChanges}
-          remoteWbSnapshot={remoteWbSnapshot}
-          onGetWbSnapshot={handleGetWbSnapshot}
           onTakeSnapshot={handleTakeWhiteboardSnapshot}
-          onWbMounted={handleWbMounted}
           participantName={participantName}
           participantRole={participantRole}
         />

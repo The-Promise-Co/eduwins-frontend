@@ -68,7 +68,7 @@ const FEATURE_CARDS: FeatureCard[] = [
   {
     icon: Calendar,
     title: 'Schedule',
-    description: 'View your upcoming lessons, manage bookings, and confirm completed sessions.',
+    description: 'View requests, upcoming lessons, and session history.',
     href: '/app/schedule',
     color: 'bg-amber-50 border-amber-100',
   },

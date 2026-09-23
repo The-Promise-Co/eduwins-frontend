@@ -8,13 +8,13 @@ import PageHeader from '@/misc/components/PageHeader';
 import { AppNotification, useMarkNotificationRead, useMarkAllNotificationsRead, useNotifications } from '@/misc/hooks/api/notifications';
 
 const NOTIFICATION_ACTIONS: Record<string, { href: string; label: string }> = {
-  booking_request_pending: { href: '/app/booking-requests', label: 'View Request' },
-  booking_request_accepted: { href: '/app/booking-requests', label: 'View Booking' },
-  booking_request_denied: { href: '/app/booking-requests', label: 'View Request' },
-  booking_cancelled: { href: '/app/booking-requests', label: 'View Booking' },
-  booking_auto_cancelled: { href: '/app/booking-requests', label: 'View Booking' },
-  booking_payment_confirmed: { href: '/app/booking-requests', label: 'View Booking' },
-  booking_paid_escrow: { href: '/app/booking-requests', label: 'View Booking' },
+  booking_request_pending: { href: '/app/schedule', label: 'View Request' },
+  booking_request_accepted: { href: '/app/schedule', label: 'View Booking' },
+  booking_request_denied: { href: '/app/schedule', label: 'View Request' },
+  booking_cancelled: { href: '/app/schedule', label: 'View Booking' },
+  booking_auto_cancelled: { href: '/app/schedule', label: 'View Booking' },
+  booking_payment_confirmed: { href: '/app/schedule', label: 'View Booking' },
+  booking_paid_escrow: { href: '/app/schedule', label: 'View Booking' },
   course_payment: { href: '/app/courses', label: 'View Course' },
   withdrawal_initiated: { href: '/app/earnings', label: 'View Earnings' },
   withdrawal_completed: { href: '/app/earnings', label: 'View Earnings' },

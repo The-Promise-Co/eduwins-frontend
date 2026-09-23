@@ -11,8 +11,8 @@ import { toast } from 'sonner';
 interface SessionNotesSidebarProps {
   personalNotes: NoteItem[];
   sharedNotes: NoteItem[];
-  onSavePersonalNotes: (notes: NoteItem[]) => void;
-  onSaveSharedNotes: (notes: NoteItem[]) => void;
+  onSavePersonalNotes: (notes: NoteItem[]) => Promise<void>;
+  onSaveSharedNotes: (notes: NoteItem[]) => Promise<void>;
   onBroadcastSharedNotes?: (notes: NoteItem[]) => void;
   participantRole: 'parent' | 'teacher' | 'child';
   participantName?: string;
@@ -88,45 +88,62 @@ export default function SessionNotesSidebar({
   const [sharedIndex, setSharedIndex] = useState(0);
 
   const [isCopied, setIsCopied] = useState(false);
-  const [savedStatus, setSavedStatus] = useState<'saved' | 'saving'>('saved');
+  const [savedStatus, setSavedStatus] = useState<'saved' | 'saving' | 'error'>('saved');
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const personalDebounceRef = useRef<NodeJS.Timeout | null>(null);
   const sharedDebounceRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Sync external changes
+  const persistWithErrorHandling = useCallback(
+    async (isShared: boolean, notes: NoteItem[]) => {
+      setSavedStatus('saving');
+      setSaveError(null);
+      try {
+        if (isShared) {
+          await onSaveSharedNotes(notes);
+          onBroadcastSharedNotes?.(notes);
+        } else {
+          await onSavePersonalNotes(notes);
+        }
+        setSavedStatus('saved');
+      } catch {
+        // Keep the note visible; flag it unsaved and toast with retry.
+        setSavedStatus('error');
+        setSaveError('Notes not saved');
+        toast.error('Notes not saved — server save failed.', {
+          action: { label: 'Retry', onClick: () => void persistWithErrorHandling(isShared, notes) },
+        });
+      }
+    },
+    [onSavePersonalNotes, onSaveSharedNotes, onBroadcastSharedNotes],
+  );
+
+  // Sync DB truth into local state on every remount / refetch. Empty from the
+  // DB stays empty (no phantom blank note); the editor shows an empty state.
   useEffect(() => {
-    setLocalPersonal(personalNotes.length ? personalNotes : [
-      { id: 'p-1', title: 'Personal Note 1', content: '', color: 'yellow', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-    ]);
+    setLocalPersonal(personalNotes);
+    setPersonalIndex((prev) => Math.max(0, Math.min(prev, Math.max(0, personalNotes.length - 1))));
   }, [personalNotes]);
 
   useEffect(() => {
-    setLocalShared(sharedNotes.length ? sharedNotes : [
-      { id: 's-1', title: 'Shared Note 1', content: '', color: 'blue', authorName: participantName, authorRole: participantRole, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-    ]);
-  }, [sharedNotes, participantName, participantRole]);
+    setLocalShared(sharedNotes);
+    setSharedIndex((prev) => Math.max(0, Math.min(prev, Math.max(0, sharedNotes.length - 1))));
+  }, [sharedNotes]);
 
   const activeNotes = activeTab === 'shared' ? localShared : localPersonal;
   const activeIndex = activeTab === 'shared' ? sharedIndex : personalIndex;
-  const currentNote = activeNotes[activeIndex] || activeNotes[0] || {
-    id: 'default',
-    title: 'New Note',
-    content: '',
-    color: 'yellow',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  };
+  const currentNote: NoteItem | null = activeNotes[activeIndex] || activeNotes[0] || null;
 
   // Safe index setters
   const setIndex = (idx: number) => {
     if (activeTab === 'shared') {
-      setSharedIndex(Math.max(0, Math.min(idx, localShared.length - 1)));
+      setSharedIndex(Math.max(0, Math.min(idx, Math.max(0, localShared.length - 1))));
     } else {
-      setPersonalIndex(Math.max(0, Math.min(idx, localPersonal.length - 1)));
+      setPersonalIndex(Math.max(0, Math.min(idx, Math.max(0, localPersonal.length - 1))));
     }
   };
 
-  // Add new note
+  // Add new note — every note is PUT to the DB; failure keeps it visible with retry.
   const handleAddNote = () => {
     const isShared = activeTab === 'shared';
     const newNote: NoteItem = {
@@ -144,24 +161,18 @@ export default function SessionNotesSidebar({
     if (isShared) {
       setLocalShared(updated);
       setSharedIndex(updated.length - 1);
-      onSaveSharedNotes(updated);
-      onBroadcastSharedNotes?.(updated);
     } else {
       setLocalPersonal(updated);
       setPersonalIndex(updated.length - 1);
-      onSavePersonalNotes(updated);
     }
-    toast.success(`Added ${newNote.title}`);
+    void persistWithErrorHandling(isShared, updated).then(() => {
+      if (savedStatus !== 'error') toast.success(`Added ${newNote.title}`);
+    });
   };
 
   // Delete current note
   const handleDeleteNote = () => {
-    if (activeNotes.length <= 1) {
-      // Clear content instead of deleting the last one
-      handleUpdateCurrentNote({ content: '', title: 'Note 1' });
-      toast.info('Cleared note content');
-      return;
-    }
+    if (!currentNote) return;
     const isShared = activeTab === 'shared';
     const updated = activeNotes.filter((_, i) => i !== activeIndex);
     const nextIdx = Math.max(0, activeIndex - 1);
@@ -169,18 +180,18 @@ export default function SessionNotesSidebar({
     if (isShared) {
       setLocalShared(updated);
       setSharedIndex(nextIdx);
-      onSaveSharedNotes(updated);
-      onBroadcastSharedNotes?.(updated);
     } else {
       setLocalPersonal(updated);
       setPersonalIndex(nextIdx);
-      onSavePersonalNotes(updated);
     }
-    toast.success('Note deleted');
+    void persistWithErrorHandling(isShared, updated).then(() => {
+      if (savedStatus !== 'error') toast.success('Note deleted');
+    });
   };
 
   // Update current note fields
   const handleUpdateCurrentNote = (updates: Partial<NoteItem>) => {
+    if (!currentNote) return;
     const isShared = activeTab === 'shared';
     const updatedList = activeNotes.map((note, i) =>
       i === activeIndex
@@ -189,28 +200,26 @@ export default function SessionNotesSidebar({
     );
 
     setSavedStatus('saving');
+    setSaveError(null);
 
     if (isShared) {
       setLocalShared(updatedList);
       if (sharedDebounceRef.current) clearTimeout(sharedDebounceRef.current);
       sharedDebounceRef.current = setTimeout(() => {
-        onSaveSharedNotes(updatedList);
-        onBroadcastSharedNotes?.(updatedList);
-        setSavedStatus('saved');
-      }, 300);
+        void persistWithErrorHandling(true, updatedList);
+      }, 1500);
     } else {
       setLocalPersonal(updatedList);
       if (personalDebounceRef.current) clearTimeout(personalDebounceRef.current);
       personalDebounceRef.current = setTimeout(() => {
-        onSavePersonalNotes(updatedList);
-        setSavedStatus('saved');
-      }, 400);
+        void persistWithErrorHandling(false, updatedList);
+      }, 1500);
     }
   };
 
   // Copy note to clipboard
   const handleCopy = () => {
-    if (!currentNote.content.trim()) {
+    if (!currentNote || !currentNote.content.trim()) {
       toast.error('Current note is empty');
       return;
     }
@@ -225,7 +234,7 @@ export default function SessionNotesSidebar({
   const handleDownloadAll = () => {
     const isShared = activeTab === 'shared';
     const notesToExport = isShared ? localShared : localPersonal;
-    if (notesToExport.every((n) => !n.content.trim())) {
+    if (notesToExport.length === 0 || notesToExport.every((n) => !n.content.trim())) {
       toast.error('Notes are empty');
       return;
     }
@@ -245,7 +254,7 @@ export default function SessionNotesSidebar({
   };
 
   const isDark = theme === 'dark';
-  const colorConfig = STICKY_COLORS.find((c) => c.color === currentNote.color) || STICKY_COLORS[0];
+  const colorConfig = STICKY_COLORS.find((c) => c.color === currentNote?.color) || STICKY_COLORS[0];
 
   return (
     <aside
@@ -262,7 +271,7 @@ export default function SessionNotesSidebar({
           <div>
             <span className="text-sm font-bold block leading-tight">Session Notes</span>
             <span className={`text-[10px] ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-              {savedStatus === 'saving' ? 'Saving changes...' : 'All changes saved'}
+              {savedStatus === 'saving' ? 'Saving changes...' : savedStatus === 'error' ? 'Save failed — kept on screen' : 'All changes saved'}
             </span>
           </div>
         </div>
@@ -326,7 +335,7 @@ export default function SessionNotesSidebar({
             </button>
 
             <span className="text-xs font-black px-2 min-w-[70px] text-center">
-              Page {activeIndex + 1} of {Math.max(1, activeNotes.length)}
+              {activeNotes.length === 0 ? 'Page 0 of 0' : `Page ${activeIndex + 1} of ${activeNotes.length}`}
             </span>
 
             <button
@@ -354,7 +363,7 @@ export default function SessionNotesSidebar({
               <span>New Note</span>
             </button>
 
-            {activeNotes.length > 1 && (
+            {activeNotes.length >= 1 && currentNote && (
               <button
                 onClick={handleDeleteNote}
                 className="w-7 h-7 rounded-lg flex items-center justify-center border border-red-200 bg-red-50 text-red-600 hover:bg-red-100 transition"
@@ -369,6 +378,33 @@ export default function SessionNotesSidebar({
 
       {/* Editor Sticky Note Area */}
       <div className="flex-1 min-h-0 p-3 flex flex-col">
+        {saveError && (
+          <div className="mb-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-[11px] font-semibold text-red-700 flex items-center justify-between gap-2">
+            <span>{saveError}</span>
+            <button
+              type="button"
+              onClick={() => void persistWithErrorHandling(activeTab === 'shared', activeNotes)}
+              className="shrink-0 rounded-lg bg-red-600 px-2 py-1 text-[10px] font-bold text-white hover:bg-red-500 transition"
+            >
+              Retry
+            </button>
+          </div>
+        )}
+        {!currentNote ? (
+          <div className="flex-1 rounded-2xl border border-dashed border-gray-300 p-6 flex flex-col items-center justify-center text-center gap-2">
+            <FileText size={20} className="text-gray-400" />
+            <p className="text-xs font-bold text-gray-600">No {activeTab} notes yet</p>
+            <p className="text-[11px] text-gray-400">Notes load on open. Create the first one to get started.</p>
+            <button
+              type="button"
+              onClick={handleAddNote}
+              className="mt-1 flex items-center gap-1 px-3 py-2 rounded-lg bg-[#001A72] text-white text-xs font-bold hover:bg-[#001A72]/90 transition"
+            >
+              <Plus size={13} />
+              <span>New Note</span>
+            </button>
+          </div>
+        ) : (
         <div
           className={`flex-1 rounded-2xl border p-3.5 flex flex-col transition-colors shadow-sm ${
             isDark ? `${colorConfig.bgDark} ${colorConfig.borderDark}` : `${colorConfig.bgLight} ${colorConfig.borderLight}`
@@ -416,13 +452,14 @@ export default function SessionNotesSidebar({
             isDark={isDark}
           />
         </div>
+        )}
       </div>
 
       {/* Bottom Action Footer */}
       <div className={`p-3 border-t flex items-center justify-between gap-2 shrink-0 ${isDark ? 'border-gray-800 bg-gray-950/60' : 'border-gray-100 bg-gray-50/70'}`}>
         <div className="flex items-center gap-1.5 text-[10px] text-gray-400">
-          <Save size={12} className="text-emerald-500" />
-          <span>Autosaved</span>
+          <Save size={12} className={savedStatus === 'error' ? 'text-red-500' : 'text-emerald-500'} />
+          <span>{savedStatus === 'saving' ? 'Saving...' : savedStatus === 'error' ? 'Not saved' : 'Saved'}</span>
         </div>
 
         <div className="flex items-center gap-2">

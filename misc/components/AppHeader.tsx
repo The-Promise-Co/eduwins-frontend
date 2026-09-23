@@ -13,7 +13,6 @@ import {
   Wallet,
   Settings,
   LogOut,
-  ClipboardList,
   Loader2
 } from 'lucide-react';
 import { useNotifications, useMarkAllNotificationsRead } from '@/misc/hooks/api/notifications';
@@ -183,10 +182,7 @@ export default function AppHeader({ title, onToggleMobileMenu, menuDisabled = fa
                       <UserCog size={14} className={isDarkMode ? 'text-gray-400' : 'text-gray-400'} /> Edit Profile
                     </Link>
                     <Link href="/app/schedule" onClick={() => setDropdownOpen(false)} className={`flex items-center gap-3 px-4 py-2.5 text-xs transition ${isDarkMode ? 'text-gray-200 hover:bg-gray-800' : 'text-gray-700 hover:bg-gray-50'}`}>
-                      <Calendar size={14} className={isDarkMode ? 'text-gray-400' : 'text-gray-400'} /> My Schedule
-                    </Link>
-                    <Link href="/app/booking-requests" onClick={() => setDropdownOpen(false)} className={`flex items-center gap-3 px-4 py-2.5 text-xs transition ${isDarkMode ? 'text-gray-200 hover:bg-gray-800' : 'text-gray-700 hover:bg-gray-50'}`}>
-                      <ClipboardList size={14} className={isDarkMode ? 'text-gray-400' : 'text-gray-400'} /> Booking Requests
+                      <Calendar size={14} className={isDarkMode ? 'text-gray-400' : 'text-gray-400'} /> Schedule
                     </Link>
                     <Link href="/app/earnings" onClick={() => setDropdownOpen(false)} className={`flex items-center gap-3 px-4 py-2.5 text-xs transition ${isDarkMode ? 'text-gray-200 hover:bg-gray-800' : 'text-gray-700 hover:bg-gray-50'}`}>
                       <Wallet size={14} className={isDarkMode ? 'text-gray-400' : 'text-gray-400'} /> Earnings

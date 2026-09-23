@@ -76,17 +76,24 @@ export interface NoteItem {
 export interface WhiteboardSnapshotItem {
   id: string;
   title: string;
-  svg: string;
+  /** Full Excalidraw scene JSON (as produced by serializeAsJSON, type "database"). */
+  scene: string;
+  /** Public R2 URL of the PNG preview. May be empty when the upload failed. */
+  imageUrl: string;
   timestamp: string; // Formatted time string e.g. "10:15 AM" or ISO
   authorName?: string;
   authorRole?: 'parent' | 'teacher' | 'child';
   createdAt: string;
+  /** Client-only: not yet confirmed by the server (pending outbox). */
+  pending?: boolean;
 }
 
 export interface SessionNotes {
   personalNotes: NoteItem[];
   sharedNotes: NoteItem[];
   whiteboardSnapshots?: WhiteboardSnapshotItem[];
+  /** True when the authoritative server snapshot fetch failed (local/pending shown). */
+  snapshotSyncError?: boolean;
   updatedAt?: string;
 }
 

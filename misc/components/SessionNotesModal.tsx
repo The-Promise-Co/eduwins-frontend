@@ -58,7 +58,7 @@ export default function SessionNotesModal({
   participantRole,
   readOnly = false,
 }: SessionNotesModalProps) {
-  const { data: notes, isLoading } = useSessionNotes(isOpen ? bookingId : undefined);
+  const { data: notes, isLoading, isError, refetch } = useSessionNotes(isOpen ? bookingId : undefined);
   const savePersonalMutation = useSavePersonalNotes(bookingId);
   const saveSharedMutation = useSaveSharedNotes(bookingId);
 
@@ -66,7 +66,16 @@ export default function SessionNotesModal({
   const [personalContent, setPersonalContent] = useState('');
   const [sharedContent, setSharedContent] = useState('');
   const [isCopied, setIsCopied] = useState(false);
-  const [saveStatus, setSaveStatus] = useState<'saved' | 'saving'>('saved');
+  const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'error'>('saved');
+
+  // Remount / reopen = full reload from the DB (source of truth).
+  useEffect(() => {
+    if (isOpen && bookingId) {
+      setSaveStatus('saved');
+      void refetch();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, bookingId]);
 
   const personalDebounceRef = useRef<NodeJS.Timeout | null>(null);
   const sharedDebounceRef = useRef<NodeJS.Timeout | null>(null);
@@ -88,9 +97,16 @@ export default function SessionNotesModal({
     if (personalDebounceRef.current) clearTimeout(personalDebounceRef.current);
     personalDebounceRef.current = setTimeout(() => {
       const updated = textToNotes(value, notes?.personalNotes || [], participantRole);
-      savePersonalMutation.mutate(updated);
-      setSaveStatus('saved');
-    }, 500);
+      void savePersonalMutation.mutateAsync(updated).then(
+        () => setSaveStatus('saved'),
+        () => {
+          setSaveStatus('error');
+          toast.error('Notes not saved — server save failed.', {
+            action: { label: 'Retry', onClick: () => void savePersonalMutation.mutateAsync(updated).then(() => setSaveStatus('saved')).catch(() => undefined) },
+          });
+        },
+      );
+    }, 1500);
   };
 
   const handleSharedChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -102,9 +118,16 @@ export default function SessionNotesModal({
     if (sharedDebounceRef.current) clearTimeout(sharedDebounceRef.current);
     sharedDebounceRef.current = setTimeout(() => {
       const updated = textToNotes(value, notes?.sharedNotes || [], participantRole);
-      saveSharedMutation.mutate(updated);
-      setSaveStatus('saved');
-    }, 500);
+      void saveSharedMutation.mutateAsync(updated).then(
+        () => setSaveStatus('saved'),
+        () => {
+          setSaveStatus('error');
+          toast.error('Notes not saved — server save failed.', {
+            action: { label: 'Retry', onClick: () => void saveSharedMutation.mutateAsync(updated).then(() => setSaveStatus('saved')).catch(() => undefined) },
+          });
+        },
+      );
+    }, 1500);
   };
 
   const handleCopy = () => {
@@ -145,8 +168,10 @@ export default function SessionNotesModal({
       footer={
         <div className="w-full flex items-center justify-between gap-3">
           <div className="flex items-center gap-1.5 text-xs text-gray-500">
-            <Save size={13} className="text-emerald-500" />
-            <span>{saveStatus === 'saving' ? 'Saving...' : 'All changes saved'}</span>
+            <Save size={13} className={saveStatus === 'error' ? 'text-red-500' : 'text-emerald-500'} />
+            <span>
+              {saveStatus === 'saving' ? 'Saving...' : saveStatus === 'error' ? 'Save failed — retry available' : 'All changes saved'}
+            </span>
           </div>
 
           <div className="flex items-center gap-2">
@@ -229,6 +254,17 @@ export default function SessionNotesModal({
           {isLoading ? (
             <div className="flex-1 flex items-center justify-center text-xs text-gray-400">
               Loading notes...
+            </div>
+          ) : isError ? (
+            <div className="flex-1 flex flex-col items-center justify-center gap-2 text-xs text-red-600">
+              <span>Notes not loaded.</span>
+              <button
+                type="button"
+                onClick={() => void refetch()}
+                className="rounded-lg bg-red-600 px-3 py-1.5 text-[11px] font-bold text-white hover:bg-red-500 transition"
+              >
+                Retry
+              </button>
             </div>
           ) : activeTab === 'shared' ? (
             <textarea

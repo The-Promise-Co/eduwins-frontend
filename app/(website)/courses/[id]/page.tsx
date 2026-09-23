@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import Section from '@/misc/components/Section';
 import { usePublicCourse, useEnrollCourse } from '@/misc/hooks/api/courses';
+import { useCoursePaymentQuote } from '@/misc/hooks/api/paystack';
 import { useUser } from '@/misc/context/UserContext';
 import { Course } from '@/misc/types/course';
 
@@ -42,6 +43,8 @@ export default function PublicCourseDetailPage() {
 
   const courseQuery = usePublicCourse(id);
   const course = courseQuery.data || null;
+  const quoteQuery = useCoursePaymentQuote(!course?.is_free ? (id as string) : undefined);
+  const quote = quoteQuery.data;
   const modules = course?.modules || [];
   const loading = courseQuery.isLoading || courseQuery.isPending;
   const isCourseOwner = !!user?.id && !!course?.teacher_id && String(course.teacher_id) === String(user.id);
@@ -209,7 +212,19 @@ return (
                 <p className="text-3xl font-black mb-1">
                   {course.is_free ? <span className="text-emerald-300">Free</span> : `₦${formattedPrice}`}
                 </p>
-                {!course.is_free && <p className="text-xs text-white/50 mb-4">One-time access</p>}
+                {!course.is_free && <p className="text-xs text-white/50 mb-1">One-time access</p>}
+                {!course.is_free && (
+                  <div className="text-[11px] text-white/60 space-y-0.5 mb-4">
+                    <div className="flex justify-between">
+                      <span>Processing fee</span>
+                      <span>{quoteQuery.isPending ? '…' : `₦${Number(quote?.processingFee ?? 0).toLocaleString()}`}</span>
+                    </div>
+                    <div className="flex justify-between font-bold text-white/90">
+                      <span>Total charged</span>
+                      <span>{quote?.chargeAmount ? `₦${Number(quote.chargeAmount).toLocaleString()}` : '…'}</span>
+                    </div>
+                  </div>
+                )}
 
                 {isCourseOwner && isAuthenticated ? (
                   <div className="space-y-2">

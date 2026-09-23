@@ -252,7 +252,7 @@ export default function SessionPage() {
   // Auto-redirect on validation failure
   useEffect(() => {
     if (tokenQuery.isError) {
-      router.push('/app/booking-requests');
+      router.push('/app/schedule');
     }
   }, [tokenQuery.isError, router]);
 
@@ -263,7 +263,7 @@ export default function SessionPage() {
       today.setHours(0, 0, 0, 0);
       const scheduled = new Date(`${booking.scheduledDate}T00:00:00`);
       if (!Number.isNaN(scheduled.getTime()) && scheduled.getTime() < today.getTime()) {
-        router.push('/app/booking-requests');
+        router.push('/app/schedule');
       }
     }
   }, [booking, router]);
@@ -298,7 +298,7 @@ export default function SessionPage() {
     return (
       <div className="h-screen flex flex-col items-center justify-center bg-gray-50 gap-4">
         <p className="text-sm font-bold text-gray-700">Could not load session.</p>
-        <button onClick={() => router.push('/app/booking-requests')} className="text-xs font-bold text-[#001A72] underline">
+        <button onClick={() => router.push('/app/schedule')} className="text-xs font-bold text-[#001A72] underline">
           Return to Bookings
         </button>
       </div>
@@ -319,7 +319,7 @@ export default function SessionPage() {
           setJoinState('idle');
           void tokenQuery.refetch();
         }}
-        onReturn={() => router.push('/app/booking-requests')}
+        onReturn={() => router.push('/app/schedule')}
       />
     );
   }
@@ -365,7 +365,7 @@ export default function SessionPage() {
     <div className="space-y-6 pb-12">
       {/* Content */}
       <button
-        onClick={() => router.push('/app/booking-requests')}
+        onClick={() => router.push('/app/schedule')}
         className="w-10 h-10 rounded-xl border border-gray-200 bg-white flex items-center justify-center hover:bg-gray-50 transition shadow-sm"
       >
         <ArrowLeft size={18} className="text-gray-600" />
@@ -703,7 +703,7 @@ function PostSessionView({
 
           {/* Action to Details */}
           <button
-            onClick={() => router.push(`/app/booking-requests/${bookingId}`)}
+            onClick={() => router.push(`/app/schedule/${bookingId}`)}
             className="w-full p-4 rounded-2xl bg-[#001A72] text-white flex items-center justify-between hover:bg-[#001A72]/90 transition shadow-sm group"
           >
             <div className="flex items-center gap-3 text-left">
@@ -737,7 +737,7 @@ function PostSessionView({
               <ul className="list-disc pl-4 space-y-1 text-gray-600">
                 <li>All notes taken during this session are saved and accessible anytime.</li>
                 <li>Any whiteboard snapshots taken have been saved to the session details gallery.</li>
-                <li>You can review the complete session breakdown from your Booking Requests dashboard.</li>
+                <li>You can review the complete session breakdown from your Schedule.</li>
               </ul>
             </div>
 
@@ -753,7 +753,7 @@ function PostSessionView({
               )}
               <Button
                 fullWidth={false}
-                onClick={() => router.push(`/app/booking-requests/${bookingId}`)}
+                onClick={() => router.push(`/app/schedule/${bookingId}`)}
                 className="px-5 py-2.5 text-xs font-black"
               >
                 <BookOpen size={14} /> Open Full Session Details
@@ -764,7 +764,7 @@ function PostSessionView({
                 onClick={onReturn}
                 className="px-4 py-2.5 text-xs font-black border-gray-200 text-gray-600 hover:bg-gray-50"
               >
-                Return to Bookings
+          Return to Schedule
               </Button>
             </div>
           </div>

@@ -27,3 +27,14 @@ export interface InitializeBookingPaymentPayload {
   booking_id: string;
   callback_url?: string;
 }
+
+export interface BookingPaymentQuote {
+  bookingId: string;
+  /** Bare cost sent to Paystack on initialize. */
+  totalAmount: number;
+  /** Display-only estimated Paystack fee. */
+  processingFee: number;
+  /** Display-only estimate: totalAmount + processingFee (Pay button). */
+  chargeAmount: number;
+  currency: string;
+}

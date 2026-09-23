@@ -10,6 +10,9 @@ export interface EnrollCourseResponse {
   authorization_url?: string;
   reference?: string;
   access_code?: string;
+  coursePrice?: number;
+  processingFee?: number;
+  chargeAmount?: number;
 }
 
 export const usePublicCourses = (page: number) => {

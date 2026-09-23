@@ -28,7 +28,7 @@ export default function BookingSuccessModal({ isOpen, onClose, booking }: Bookin
 
   const handleViewBookings = () => {
     onClose();
-    router.push('/app/booking-requests');
+    router.push('/app/schedule');
   };
 
   return (
@@ -50,7 +50,7 @@ export default function BookingSuccessModal({ isOpen, onClose, booking }: Bookin
             onClick={handleViewBookings}
             className="rounded-xl bg-[#001A72] px-5 py-2.5 text-xs font-black uppercase tracking-wider text-white hover:bg-[#001A72]/90 transition"
           >
-            View Booking Requests
+            View Schedule
           </button>
         </div>
       }

@@ -33,7 +33,7 @@ function BookingPaymentConfirmContent() {
         }
 
         if (result.booking_id) {
-          setTimeout(() => router.replace('/app/booking-requests'), 1600);
+          setTimeout(() => router.replace('/app/schedule'), 1600);
           return;
         }
 
@@ -71,7 +71,7 @@ function BookingPaymentConfirmContent() {
             {reference && (
               <p className="mt-3 text-xs font-semibold text-gray-400">Ref: {reference}</p>
             )}
-            <p className="mt-3 text-xs text-gray-400">Redirecting to your booking requests...</p>
+            <p className="mt-3 text-xs text-gray-400">Redirecting to your schedule...</p>
           </>
         )}
 
@@ -89,8 +89,8 @@ function BookingPaymentConfirmContent() {
             <h1 className="text-xl font-black text-[#001A72]">Payment confirmation failed</h1>
             <p className="text-sm text-gray-500 mt-2">{error}</p>
             <div className="mt-6 flex items-center justify-center gap-3">
-              <Link href="/app/booking-requests" className="inline-flex bg-[#001A72] text-white px-5 py-3 rounded-xl text-sm font-bold hover:bg-[#001A72]/90 transition">
-                Back to bookings
+              <Link href="/app/schedule" className="inline-flex bg-[#001A72] text-white px-5 py-3 rounded-xl text-sm font-bold hover:bg-[#001A72]/90 transition">
+                Back to schedule
               </Link>
             </div>
           </>
