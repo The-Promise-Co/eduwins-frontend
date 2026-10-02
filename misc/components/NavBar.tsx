@@ -37,7 +37,7 @@ const SERVICES = [
 const CONTACT = [
   { label: 'Call Us', value: '+234 802 844 3141', href: 'tel:+2348028443141', icon: Phone },
   { label: 'WhatsApp', value: '+234 706 176 0933', href: 'https://wa.me/2347061760933', icon: MessageCircle },
-  { label: 'Email', value: 'info@eduwins.com', href: 'mailto:info@eduwins.com', icon: Mail },
+  { label: 'Email', value: process.env.NEXT_PUBLIC_CONTACT_EMAIL ?? 'info@eduwins.com', href: `mailto:${process.env.NEXT_PUBLIC_CONTACT_EMAIL ?? 'info@eduwins.com'}`, icon: Mail },
 ];
 
 export default function NavBar() {

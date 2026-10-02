@@ -81,7 +81,7 @@ export interface TeacherProfile extends Partial<User> {
   certifications?: TeacherCertification[];
   education?: TeacherEducation[];
   intro_video?: string | null;
-  isVerified?: boolean;
+  isAdminApproved?: boolean;
   educationLevels?: string[];
   sessionFormats?: string[];
   deliveryModes?: string[];

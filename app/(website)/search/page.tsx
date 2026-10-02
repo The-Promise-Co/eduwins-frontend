@@ -71,7 +71,10 @@ function ResultCard({ teacher }: ResultCardProps) {
   }, {});
   const subject = teacher.subject || (teacher.subjects && (subjectNameById[teacher.subjects[0]] || teacher.subjects[0])) || '—';
   const rate = teacher.hourlyRate ?? teacher.baseHourlyRate ?? 0;
-  const location = teacher.locationArea || teacher.locationLga || teacher.lga || teacher.location || '';
+  const locationParts = [teacher.locationState, teacher.locationLga].filter(Boolean);
+  const location = locationParts.length > 0 || teacher.locationArea
+    ? `${locationParts.join(', ')}${teacher.locationArea ? ` - ${teacher.locationArea}` : ''}`
+    : teacher.lga || teacher.location || '';
   const rating = teacher.ratingAvg;
   const reviews = teacher.students ?? teacher.reviewsCount ?? 0;
   const color = pickColor(teacher.id);
@@ -117,10 +120,12 @@ function ResultCard({ teacher }: ResultCardProps) {
           )}
         </div>
 
-        <div className="flex items-center gap-1.5 mb-3">
-          <CheckCircle2 size={12} className="text-emerald-500 shrink-0" />
-          <span className="text-[10px] font-bold text-emerald-700">Verified Tutor</span>
-        </div>
+        {teacher.isAdminApproved && (
+          <div className="flex items-center gap-1.5 mb-3">
+            <CheckCircle2 size={12} className="text-emerald-500 shrink-0" />
+            <span className="text-[10px] font-bold text-emerald-700">Verified Tutor</span>
+          </div>
+        )}
 
         <div className="flex gap-2">
           <Link

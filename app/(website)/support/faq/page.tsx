@@ -62,7 +62,7 @@ const FAQ_DATA = [
       },
       {
         q: 'How do I contact support?',
-        a: 'Our support team is available to help you with any questions or issues. You can reach us via email at support@eduwins.com or through our contact page. We typically respond within 24 hours.'
+        a: `Our support team is available to help you with any questions or issues. You can reach us via email at ${process.env.NEXT_PUBLIC_SUPPORT_EMAIL ?? 'support@eduwins.com'} or through our contact page. We typically respond within 24 hours.`
       }
     ]
   },
@@ -246,7 +246,7 @@ export default function FAQPage() {
               </p>
               <div className="flex flex-wrap justify-center md:justify-start gap-4">
                 <a 
-                  href="mailto:support@eduwins.com"
+                  href={`mailto:${process.env.NEXT_PUBLIC_SUPPORT_EMAIL ?? 'support@eduwins.com'}`}
                   className="inline-flex items-center gap-2 bg-[#001A72] text-white font-bold px-6 py-3.5 rounded-2xl hover:bg-[#001A72]/90 transition shadow-lg shadow-[#001A72]/20"
                 >
                   <Mail size={18} /> Email Support

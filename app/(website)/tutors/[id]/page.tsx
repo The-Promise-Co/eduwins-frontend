@@ -137,7 +137,7 @@ export default function TutorDetailPage() {
                     <div>
                       <div className="flex items-center gap-2">
                         <h1 className="text-2xl md:text-3xl font-black text-gray-900">{name}</h1>
-                        {t.isVerified && <CheckCircle2 size={19} className="text-emerald-500 shrink-0" />}
+                        {t.isAdminApproved && <CheckCircle2 size={19} className="text-emerald-500 shrink-0" />}
                       </div>
                     </div>
                     {rate > 0 && (
@@ -243,7 +243,7 @@ export default function TutorDetailPage() {
                 <StatRow icon={Star} label="Rating" value={`${Number(rating).toFixed(1)} / 5.0`} />
                 <StatRow icon={Users} label="Reviews" value={String(reviews)} />
                 <StatRow icon={Clock} label="Response" value="Usually within 1 hour" />
-                <StatRow icon={CheckCircle2} label="Status" value={t.isVerified ? 'Verified' : 'Unverified'} valueColor={t.isVerified ? 'text-emerald-600' : 'text-amber-600'} />
+                <StatRow icon={CheckCircle2} label="Status" value={t.isAdminApproved ? 'Verified' : 'Unverified'} valueColor={t.isAdminApproved ? 'text-emerald-600' : 'text-amber-600'} />
               </div>
             </div>
           </aside>
