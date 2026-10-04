@@ -1,7 +1,7 @@
 'use client';
 
-import { useRef } from 'react';
-import { useParams } from 'next/navigation';
+import { useRef, useState } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   AlertCircle,
@@ -24,6 +24,8 @@ import {
   Video,
 } from 'lucide-react';
 import { useTeacherProfile } from '@/misc/hooks/api/teachers';
+import { useDirectConversationWith } from '@/misc/hooks/api/chat';
+import MessageTutorModal from '@/misc/components/MessageTutorModal';
 import { TeacherProfile } from '@/misc/types';
 import { useSubjects } from '@/app/app/courses/misc/api';
 import VideoPlayer from '@/misc/components/VideoPlayer';
@@ -57,7 +59,10 @@ function initials(name: string | undefined) {
 
 export default function TutorDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const router = useRouter();
   const schedulePickerRef = useRef<TutorSchedulePickerRef>(null);
+  const [showChatModal, setShowChatModal] = useState(false);
+  const chat = useDirectConversationWith(id);
   const teacherQuery = useTeacherProfile(id);
   const subjectsQuery = useSubjects();
   const teacher = teacherQuery.data || null;
@@ -105,6 +110,18 @@ export default function TutorDetailPage() {
     ? Object.entries(availabilityConfig).filter(([, ranges]) => ranges.length > 0)
     : [];
   const hasAvailability = Boolean(t.availability) && availabilityEntries.length > 0;
+
+  const handleChat = () => {
+    if (!chat.isAuthed) {
+      router.push(`/login?redirect=${encodeURIComponent(`/tutors/${id}`)}`);
+      return;
+    }
+    if (chat.conversation) {
+      router.push(`/app/chat?conversationId=${chat.conversation.id}`);
+      return;
+    }
+    setShowChatModal(true);
+  };
 
   return (
     <div className="min-h-screen bg-[#F5F7FC] pb-16">
@@ -203,7 +220,7 @@ export default function TutorDetailPage() {
                 </div>
                 <p className="text-sm text-gray-500">{reviews} reviews</p>
               </div>
-              <EmptyPanel text="Student reviews will appear here after completed lessons." />
+              <EmptyPanel text="No review available" />
             </ProfileSection>
           </main>
 
@@ -219,7 +236,12 @@ export default function TutorDetailPage() {
               <button type="button" onClick={() => schedulePickerRef.current?.openBooking()} className="flex items-center justify-center gap-2 w-full bg-[#001A72] text-white py-3 rounded-xl font-black text-sm hover:bg-[#0028a8] transition">
                 <Calendar size={15} /> Book Now
               </button>
-              <button className="mt-3 flex items-center justify-center gap-2 w-full border border-gray-200 text-[#001A72] py-3 rounded-xl font-bold text-sm hover:border-[#001A72] transition">
+              <button
+                type="button"
+                onClick={handleChat}
+                disabled={chat.isLoading}
+                className="mt-3 flex items-center justify-center gap-2 w-full border border-gray-200 text-[#001A72] py-3 rounded-xl font-bold text-sm hover:border-[#001A72] transition disabled:opacity-60"
+              >
                 <MessageCircle size={15} /> Message Tutor
               </button>
             </div>
@@ -249,6 +271,13 @@ export default function TutorDetailPage() {
           </aside>
         </div>
       </div>
+
+      {showChatModal && (
+        <MessageTutorModal
+          tutor={{ id: t.id, name, photo: t.photo, subject }}
+          onClose={() => setShowChatModal(false)}
+        />
+      )}
     </div>
   );
 }

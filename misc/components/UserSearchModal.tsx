@@ -17,7 +17,7 @@ export default function UserSearchModal({ onClose }: UserSearchModalProps) {
   const handleSend = async () => {
     if (!user) return;
     try {
-      await sendRequest.mutateAsync(user.email);
+      await sendRequest.mutateAsync({ email: user.email });
       toast.success('Chat request sent!');
       onClose();
     } catch {

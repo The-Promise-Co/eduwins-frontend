@@ -356,7 +356,7 @@ export default function SchedulePage() {
       return;
     }
     try {
-      const conversation = await sendChatRequest.mutateAsync(email);
+      const conversation = await sendChatRequest.mutateAsync({ email });
       router.push(`/app/chat?conversationId=${conversation.id}`);
     } catch (err: any) {
       toast.error(err.response?.data?.error || 'Failed to start conversation.');

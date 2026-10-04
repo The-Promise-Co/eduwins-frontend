@@ -1,14 +1,17 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '@/misc/services/api';
+import { useUser } from '@/misc/context/UserContext';
 import type { Conversation, Message } from '@/misc/types/chat';
 
 export const useConversations = () => {
+  const { user } = useUser();
   return useQuery<{ conversations: Conversation[] }>({
     queryKey: ['chat', 'conversations'],
     queryFn: async () => {
       const response = await api.get('/chat/conversations');
       return response.data;
     },
+    enabled: !!user,
     refetchInterval: 30000,
   });
 };
@@ -46,18 +49,39 @@ export const useLoadMoreMessages = (conversationId: string) => {
   });
 };
 
+export interface ChatRequestPayload {
+  email?: string;
+  userId?: string;
+  note?: string;
+}
+
 export const useSendChatRequest = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (email: string) => {
-      const response = await api.post('/chat/conversations/request', { email });
+    mutationFn: async (payload: ChatRequestPayload) => {
+      const response = await api.post('/chat/conversations/request', payload);
       return response.data.conversation as Conversation;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['chat', 'conversations'] });
     },
   });
+};
+
+export const useDirectConversationWith = (userId?: string) => {
+  const { user } = useUser();
+  const { data, isLoading } = useConversations();
+  const conversation =
+    data?.conversations.find(
+      (c) => c.type === 'direct' && c.participants?.some((p) => p.id === userId)
+    ) || null;
+
+  return {
+    conversation,
+    isAuthed: !!user,
+    isLoading: !!user && isLoading,
+  };
 };
 
 export const useAcceptConversation = () => {
