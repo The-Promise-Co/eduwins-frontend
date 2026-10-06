@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import {
   Search,
   MapPin,
@@ -17,6 +17,8 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useTeacherSearch } from '@/misc/hooks/api/teachers';
+import { useDirectConversationWith } from '@/misc/hooks/api/chat';
+import MessageTutorModal from '@/misc/components/MessageTutorModal';
 import { TeacherProfile } from '@/misc/types';
 import { useSubjects } from '@/app/app/courses/misc/api';
 import { useStates, useLgas } from '@/misc/hooks/api/locations';
@@ -80,6 +82,22 @@ function ResultCard({ teacher }: ResultCardProps) {
   const color = pickColor(teacher.id);
   const photo = teacher.photo || teacher.photoUrl || teacher.photo_url;
 
+  const router = useRouter();
+  const [showChatModal, setShowChatModal] = useState(false);
+  const chat = useDirectConversationWith(teacher.id);
+
+  const handleChat = () => {
+    if (!chat.isAuthed) {
+      router.push(`/login?redirect=${encodeURIComponent('/search')}`);
+      return;
+    }
+    if (chat.conversation) {
+      router.push(`/app/chat?conversationId=${chat.conversation.id}`);
+      return;
+    }
+    setShowChatModal(true);
+  };
+
   return (
     <div className="group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-[#001A72]/20 transition overflow-hidden flex flex-col">
       {/* avatar header */}
@@ -134,11 +152,22 @@ function ResultCard({ teacher }: ResultCardProps) {
           >
             View &amp; Book
           </Link>
-          <button className="px-3 py-2.5 rounded-xl border border-[#FFB81C] text-[#FFB81C] text-xs font-bold hover:bg-[#FFB81C]/10 transition">
+          <button
+            onClick={handleChat}
+            disabled={chat.isLoading}
+            className="px-3 py-2.5 rounded-xl border border-[#FFB81C] text-[#FFB81C] text-xs font-bold hover:bg-[#FFB81C]/10 transition disabled:opacity-60"
+          >
             Chat
           </button>
         </div>
       </div>
+
+      {showChatModal && teacher.id && (
+        <MessageTutorModal
+          tutor={{ id: teacher.id, name, photo, subject }}
+          onClose={() => setShowChatModal(false)}
+        />
+      )}
     </div>
   );
 }

@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { ArrowLeft, Clock, XCircle } from 'lucide-react';
+import { ArrowLeft, Check, Clock, Lock, X, XCircle } from 'lucide-react';
 import { useUser } from '@/misc/context/UserContext';
-import { useMessages, useLoadMoreMessages, useMarkConversationRead } from '@/misc/hooks/api/chat';
+import { useMessages, useLoadMoreMessages, useMarkConversationRead, useAcceptConversation, useDeclineConversation } from '@/misc/hooks/api/chat';
 import { useSocket } from '@/misc/hooks/useSocket';
 import ChatMessage from './ChatMessage';
 import ChatInput from './ChatInput';
@@ -22,6 +22,8 @@ export default function ChatMessageList({ conversation, onBack }: ChatMessageLis
   const { data, isLoading } = useMessages(conversation?.id || null);
   const loadMore = useLoadMoreMessages(conversation?.id || '');
   const markRead = useMarkConversationRead();
+  const accept = useAcceptConversation();
+  const decline = useDeclineConversation();
   const [localMessages, setLocalMessages] = useState<Message[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -149,6 +151,26 @@ export default function ChatMessageList({ conversation, onBack }: ChatMessageLis
     return true;
   };
 
+  const handleAcceptRequest = async () => {
+    if (!conversation?.id) return;
+    try {
+      await accept.mutateAsync(conversation.id);
+      toast.success('Chat request accepted');
+    } catch {
+      toast.error('Failed to accept request');
+    }
+  };
+
+  const handleDeclineRequest = async () => {
+    if (!conversation?.id) return;
+    try {
+      await decline.mutateAsync(conversation.id);
+      toast.success('Chat request declined');
+    } catch {
+      toast.error('Failed to decline request');
+    }
+  };
+
   // Pending/declined state
   if (isPending || isDeclined) {
     return (
@@ -171,35 +193,84 @@ export default function ChatMessageList({ conversation, onBack }: ChatMessageLis
           </div>
         </div>
 
-        {/* Status message */}
-        <div className="flex-1 flex items-center justify-center px-6">
-          <div className="text-center max-w-xs">
-            {isPending && (
-              <>
-                <div className="w-14 h-14 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Clock size={24} className="text-amber-500" />
-                </div>
-                <p className="text-sm font-semibold text-gray-900">
-                  {isSender ? 'Waiting for response' : 'Chat request pending'}
-                </p>
-                <p className="text-xs text-gray-400 mt-1">
+        {isPending ? (
+          <>
+            {/* Request banner */}
+            <div className={`px-4 py-3 border-b border-gray-100 flex items-center gap-3 ${isSender ? 'bg-amber-50' : 'bg-[#001A72]/5'}`}>
+              <Clock size={16} className={isSender ? 'text-amber-500 shrink-0' : 'text-[#001A72] shrink-0'} />
+              <div className="flex-1 min-w-0">
+                <p className={`text-xs font-bold ${isSender ? 'text-amber-800' : 'text-[#001A72]'}`}>
                   {isSender
-                    ? `${other?.firstName || 'This user'} hasn't responded yet`
-                    : `${other?.firstName || 'Someone'} wants to chat with you. Accept from the conversation list.`}
+                    ? `Waiting for ${other?.firstName || 'them'} to accept your request`
+                    : `${other?.firstName || 'Someone'} wants to chat with you`}
                 </p>
-              </>
-            )}
-            {isDeclined && (
-              <>
-                <div className="w-14 h-14 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <XCircle size={24} className="text-red-400" />
+                <p className="text-[11px] text-gray-400 mt-0.5">
+                  {isSender ? 'Messages unlock once they accept.' : 'Accept to start the conversation.'}
+                </p>
+              </div>
+              {!isSender && (
+                <div className="flex gap-1.5 shrink-0">
+                  <button
+                    onClick={handleAcceptRequest}
+                    disabled={accept.isPending || decline.isPending}
+                    className="inline-flex items-center gap-1 bg-emerald-500 text-white text-[11px] font-bold px-3 py-1.5 rounded-lg hover:bg-emerald-600 transition disabled:opacity-50"
+                  >
+                    <Check size={13} /> Accept
+                  </button>
+                  <button
+                    onClick={handleDeclineRequest}
+                    disabled={accept.isPending || decline.isPending}
+                    className="inline-flex items-center gap-1 bg-white border border-gray-200 text-gray-500 text-[11px] font-bold px-3 py-1.5 rounded-lg hover:bg-red-50 hover:text-red-500 hover:border-red-200 transition disabled:opacity-50"
+                  >
+                    <X size={13} /> Decline
+                  </button>
                 </div>
-                <p className="text-sm font-semibold text-gray-900">Chat request declined</p>
-                <p className="text-xs text-gray-400 mt-1">This conversation is no longer active.</p>
-              </>
-            )}
+              )}
+            </div>
+
+            {/* Messages (the request note is the first message) */}
+            <div className="flex-1 overflow-y-auto px-4 py-4 space-y-1">
+              {isLoading ? (
+                <div className="flex items-center justify-center h-full">
+                  <div className="w-6 h-6 border-2 border-[#001A72] border-t-transparent rounded-full animate-spin" />
+                </div>
+              ) : localMessages.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-full text-center">
+                  <p className="text-sm text-gray-400">
+                    {isSender ? 'No note was attached to this request.' : 'This request has no message yet.'}
+                  </p>
+                </div>
+              ) : (
+                localMessages.map((msg, i) => {
+                  const showAvatar = i === 0 || localMessages[i - 1]?.senderId !== msg.senderId;
+                  return (
+                    <ChatMessage key={msg.id} message={msg} isOwn={msg.senderId === user?.id} showAvatar={showAvatar} />
+                  );
+                })
+              )}
+              <div ref={messagesEndRef} />
+            </div>
+
+            {/* Locked input */}
+            <div className="px-4 py-3 border-t border-gray-100 bg-gray-50">
+              <div className="flex items-center justify-center gap-2 text-xs text-gray-400 font-medium">
+                <Lock size={13} />
+                Chat unlocks once the request is accepted
+              </div>
+            </div>
+          </>
+        ) : (
+          /* Declined state */
+          <div className="flex-1 flex items-center justify-center px-6">
+            <div className="text-center max-w-xs">
+              <div className="w-14 h-14 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                <XCircle size={24} className="text-red-400" />
+              </div>
+              <p className="text-sm font-semibold text-gray-900">Chat request declined</p>
+              <p className="text-xs text-gray-400 mt-1">This conversation is no longer active.</p>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     );
   }

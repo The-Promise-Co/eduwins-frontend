@@ -106,7 +106,7 @@ export default function ConversationCard({ conversation, isSelected, onClick }: 
 
         {isPending && !isSender && (
           <p className="text-xs text-gray-400 truncate mt-0.5">
-            Tap accept to start chatting
+            {conversation.lastMessage?.content || 'Tap accept to start chatting'}
           </p>
         )}
 
