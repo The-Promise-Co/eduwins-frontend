@@ -15,25 +15,6 @@ import {
   MessageCircle,
 } from 'lucide-react';
 
-const SERVICES = [
-  {
-    category: 'African Languages',
-    items: ['Yoruba', 'Hausa', 'Igbo', 'Swahili', 'Zulu'],
-  },
-  {
-    category: 'International Languages',
-    items: ['French', 'Spanish', 'Deutsch', 'Italian', 'Chinese'],
-  },
-  {
-    category: 'Music & Arts',
-    items: ['Music', 'Guitar', 'Piano', 'Saxophone', 'Violin'],
-  },
-  {
-    category: 'Test Prep',
-    items: ['IELTS Prep', 'GMAT Prep', 'SAT Prep', 'GRE Prep', 'ACT Prep', 'Study Abroad', 'TEF', 'DELF'],
-  },
-];
-
 const CONTACT = [
   { label: 'Call Us', value: '+234 802 844 3141', href: 'tel:+2348028443141', icon: Phone },
   { label: 'WhatsApp', value: '+234 706 176 0933', href: 'https://wa.me/2347061760933', icon: MessageCircle },
@@ -43,6 +24,10 @@ const CONTACT = [
 export default function NavBar() {
   const pathname = usePathname();
   const router = useRouter();
+  const isActiveNavLink = (href: string) =>
+    href === '/search'
+      ? pathname === href || pathname.startsWith('/tutors/')
+      : pathname === href || (href !== '/' && pathname.startsWith(`${href}/`));
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -105,58 +90,19 @@ export default function NavBar() {
 
             {/* Desktop Nav */}
             <div className="hidden md:flex items-center gap-1">
-              {/* Services mega menu */}
-              <div className="relative group">
-                <button className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold text-gray-700 hover:text-[#001A72] hover:bg-[#001A72]/5 transition">
-                  Our Services
-                  <ChevronDown size={14} className="group-hover:rotate-180 transition-transform duration-200" />
-                </button>
-
-                {/* Mega dropdown */}
-                <div className="absolute left-0 top-full pt-2 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all duration-200 z-[9999]">
-                  <div className="bg-white border border-gray-100 rounded-2xl shadow-xl p-6 w-[620px]">
-                    <div className="grid grid-cols-4 gap-6">
-                      {SERVICES.map(({ category, items }) => (
-                        <div key={category}>
-                          <p className="text-[10px] font-black text-[#001A72] uppercase tracking-widest mb-3">{category}</p>
-                          <ul className="space-y-1.5">
-                            {items.map((item) => (
-                              <li key={item}>
-                                <Link
-                                  href={`/search?subject=${encodeURIComponent(item)}`}
-                                  className="text-xs text-gray-600 hover:text-[#001A72] hover:font-semibold transition block"
-                                >
-                                  {item}
-                                </Link>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="mt-5 pt-4 border-t border-gray-100 flex items-center justify-between">
-                      <span className="text-xs text-gray-400">Can't find your subject?</span>
-                      <Link href="/search" className="text-xs font-bold text-[#001A72] hover:text-[#FFB81C] transition">
-                        Search all tutors →
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <Link href="/search" className="px-3 py-2 rounded-lg text-sm font-semibold text-gray-700 hover:text-[#001A72] hover:bg-[#001A72]/5 transition">
+              <Link href="/search" className={`px-3 py-2 rounded-lg text-sm font-semibold ${isActiveNavLink('/search') ? 'text-[#001A72]' : 'text-gray-700'} hover:text-[#001A72] hover:bg-[#001A72]/5 transition`}>
                 Find a Tutor
               </Link>
 
-              <Link href="/for-parents" className="px-3 py-2 rounded-lg text-sm font-semibold text-gray-700 hover:text-[#001A72] hover:bg-[#001A72]/5 transition">
-                For Parents
-              </Link>
-
-              <Link href="/courses" className="px-3 py-2 rounded-lg text-sm font-semibold text-gray-700 hover:text-[#001A72] hover:bg-[#001A72]/5 transition">
+              <Link href="/courses" className={`px-3 py-2 rounded-lg text-sm font-semibold ${isActiveNavLink('/courses') ? 'text-[#001A72]' : 'text-gray-700'} hover:text-[#001A72] hover:bg-[#001A72]/5 transition`}>
                 Courses
               </Link>
 
-              <Link href="/about" className="px-3 py-2 rounded-lg text-sm font-semibold text-gray-700 hover:text-[#001A72] hover:bg-[#001A72]/5 transition">
+              <Link href="/for-parents" className={`px-3 py-2 rounded-lg text-sm font-semibold ${isActiveNavLink('/for-parents') ? 'text-[#001A72]' : 'text-gray-700'} hover:text-[#001A72] hover:bg-[#001A72]/5 transition`}>
+                For Parents
+              </Link>
+
+              <Link href="/about" className={`px-3 py-2 rounded-lg text-sm font-semibold ${isActiveNavLink('/about') ? 'text-[#001A72]' : 'text-gray-700'} hover:text-[#001A72] hover:bg-[#001A72]/5 transition`}>
                 About
               </Link>
 
@@ -254,11 +200,11 @@ export default function NavBar() {
         {mobileOpen && (
           <div className="md:hidden border-t border-gray-100 bg-white">
             <div className="max-w-7xl mx-auto px-4 py-4 space-y-1">
-              <Link href="/" onClick={() => setMobileOpen(false)} className="block px-3 py-2.5 rounded-xl text-sm font-semibold text-gray-700 hover:bg-[#001A72]/5 hover:text-[#001A72]">Home</Link>
-              <Link href="/search" onClick={() => setMobileOpen(false)} className="block px-3 py-2.5 rounded-xl text-sm font-semibold text-gray-700 hover:bg-[#001A72]/5 hover:text-[#001A72]">Find a Tutor</Link>
-              <Link href="/for-parents" onClick={() => setMobileOpen(false)} className="block px-3 py-2.5 rounded-xl text-sm font-semibold text-gray-700 hover:bg-[#001A72]/5 hover:text-[#001A72]">For Parents</Link>
-              <Link href="/courses" onClick={() => setMobileOpen(false)} className="block px-3 py-2.5 rounded-xl text-sm font-semibold text-gray-700 hover:bg-[#001A72]/5 hover:text-[#001A72]">Courses</Link>
-              <Link href="/about" onClick={() => setMobileOpen(false)} className="block px-3 py-2.5 rounded-xl text-sm font-semibold text-gray-700 hover:bg-[#001A72]/5 hover:text-[#001A72]">About</Link>
+              <Link href="/" onClick={() => setMobileOpen(false)} className={`block px-3 py-2.5 rounded-xl text-sm font-semibold ${pathname === '/' ? 'text-[#001A72]' : 'text-gray-700'} hover:bg-[#001A72]/5 hover:text-[#001A72]`}>Home</Link>
+              <Link href="/search" onClick={() => setMobileOpen(false)} className={`block px-3 py-2.5 rounded-xl text-sm font-semibold ${isActiveNavLink('/search') ? 'text-[#001A72]' : 'text-gray-700'} hover:bg-[#001A72]/5 hover:text-[#001A72]`}>Find a Tutor</Link>
+              <Link href="/courses" onClick={() => setMobileOpen(false)} className={`block px-3 py-2.5 rounded-xl text-sm font-semibold ${isActiveNavLink('/courses') ? 'text-[#001A72]' : 'text-gray-700'} hover:bg-[#001A72]/5 hover:text-[#001A72]`}>Courses</Link>
+              <Link href="/for-parents" onClick={() => setMobileOpen(false)} className={`block px-3 py-2.5 rounded-xl text-sm font-semibold ${isActiveNavLink('/for-parents') ? 'text-[#001A72]' : 'text-gray-700'} hover:bg-[#001A72]/5 hover:text-[#001A72]`}>For Parents</Link>
+              <Link href="/about" onClick={() => setMobileOpen(false)} className={`block px-3 py-2.5 rounded-xl text-sm font-semibold ${isActiveNavLink('/about') ? 'text-[#001A72]' : 'text-gray-700'} hover:bg-[#001A72]/5 hover:text-[#001A72]`}>About</Link>
 
               {/* Mobile subjects */}
               <div className="px-3 pt-3 pb-2">
