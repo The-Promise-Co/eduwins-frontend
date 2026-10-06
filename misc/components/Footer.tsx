@@ -12,8 +12,9 @@ export default function Footer(): React.ReactElement {
         </div>
         <div className="grid md:grid-cols-4 gap-8 mb-8">
           <div>
-            <h3 className="text-white font-bold mb-4">About Eduwins</h3>
+            <h3 className="text-white font-bold mb-4"><Link href="/about" className="hover:text-white">About Eduwins</Link></h3>
             <p className="text-sm">Connecting students with quality tutors for better learning outcomes.</p>
+            <Link href="/about" className="mt-3 inline-block text-sm hover:text-white">Our mission &amp; team</Link>
           </div>
           <div>
             <h3 className="text-white font-bold mb-4">For Parents</h3>

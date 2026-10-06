@@ -156,6 +156,10 @@ export default function NavBar() {
                 Courses
               </Link>
 
+              <Link href="/about" className="px-3 py-2 rounded-lg text-sm font-semibold text-gray-700 hover:text-[#001A72] hover:bg-[#001A72]/5 transition">
+                About
+              </Link>
+
               {/* Contact dropdown */}
               <div className="relative group">
                 <button className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold text-gray-700 hover:text-[#001A72] hover:bg-[#001A72]/5 transition">
@@ -254,6 +258,7 @@ export default function NavBar() {
               <Link href="/search" onClick={() => setMobileOpen(false)} className="block px-3 py-2.5 rounded-xl text-sm font-semibold text-gray-700 hover:bg-[#001A72]/5 hover:text-[#001A72]">Find a Tutor</Link>
               <Link href="/for-parents" onClick={() => setMobileOpen(false)} className="block px-3 py-2.5 rounded-xl text-sm font-semibold text-gray-700 hover:bg-[#001A72]/5 hover:text-[#001A72]">For Parents</Link>
               <Link href="/courses" onClick={() => setMobileOpen(false)} className="block px-3 py-2.5 rounded-xl text-sm font-semibold text-gray-700 hover:bg-[#001A72]/5 hover:text-[#001A72]">Courses</Link>
+              <Link href="/about" onClick={() => setMobileOpen(false)} className="block px-3 py-2.5 rounded-xl text-sm font-semibold text-gray-700 hover:bg-[#001A72]/5 hover:text-[#001A72]">About</Link>
 
               {/* Mobile subjects */}
               <div className="px-3 pt-3 pb-2">
