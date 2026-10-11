@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, Suspense } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import {
   Search,
@@ -50,6 +50,21 @@ function initials(name: string | undefined) {
     .slice(0, 2);
 }
 
+function highlightMatch(text: string, term: string) {
+  if (!term) return <span>{text}</span>;
+  const regex = new RegExp(`(${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+  const parts = text.split(regex);
+  return (
+    <span>
+      {parts.map((part, i) => regex.test(part) ? (
+        <mark key={i} className="bg-[#FFB81C]/30 px-0.5 rounded">{part}</mark>
+      ) : (
+        <span key={i}>{part}</span>
+      ))}
+    </span>
+  );
+}
+
 /* ─── Tutor result card ─── */
 interface ResultCardProps {
   teacher: Partial<TeacherProfile> & {
@@ -62,9 +77,10 @@ interface ResultCardProps {
     subject?: string;
     ratingAvg?: number | string;
   };
+  searchTerm: string;
 }
 
-function ResultCard({ teacher }: ResultCardProps) {
+function ResultCard({ teacher, searchTerm }: ResultCardProps) {
   const name = teacher.full_name || teacher.fullName || 'Tutor';
   const subjectsQuery = useSubjects();
   const subjectNameById = (subjectsQuery.data || []).reduce<Record<string, string>>((acc, item) => {
@@ -109,8 +125,8 @@ function ResultCard({ teacher }: ResultCardProps) {
             {initials(name)}
           </div>
         )}
-        <p className="font-bold text-white text-sm text-center">{name}</p>
-        <p className="text-white/80 text-xs text-center mt-0.5">{subject}</p>
+        <p className="font-bold text-white text-sm text-center">{highlightMatch(name, searchTerm)}</p>
+        <p className="text-white/80 text-xs text-center mt-0.5">{highlightMatch(subject, searchTerm)}</p>
       </div>
 
       {/* body */}
@@ -193,15 +209,22 @@ function EmptyState({ query }: { query: string }) {
 function SearchContent() {
   const searchParams = useSearchParams();
   const [filters, setFilters] = useState({
-    subject: searchParams.get('subject') ?? '',
+    search: searchParams.get('search') ?? '',
     locationState: '',
     locationLga: '',
     maxRate: '',
   });
+  const [debouncedSearch, setDebouncedSearch] = useState(filters.search);
   const [submittedFilters, setSubmittedFilters] = useState(filters);
   const [showFilters, setShowFilters] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(filters.search), 300);
+    return () => clearTimeout(timer);
+  }, [filters.search]);
+
   const params = new URLSearchParams(
-    Object.fromEntries(Object.entries(submittedFilters).filter(([_, v]) => v))
+    Object.fromEntries(Object.entries({ ...submittedFilters, search: debouncedSearch }).filter(([_, v]) => v))
   ).toString();
   const teachersQuery = useTeacherSearch(params);
   const teachers = (teachersQuery.data?.data || []) as ResultCardProps['teacher'][];
@@ -217,7 +240,7 @@ function SearchContent() {
     setSubmittedFilters(filters);
   };
 
-  const clearFilter = (key: 'subject' | 'locationState' | 'locationLga' | 'maxRate') =>
+  const clearFilter = (key: 'search' | 'locationState' | 'locationLga' | 'maxRate') =>
     setFilters((f) => ({ ...f, [key]: '' }));
 
   const activeFilters = Object.entries(filters).filter(([_, v]) => v);
@@ -237,20 +260,14 @@ function SearchContent() {
           {/* label */}
           <div className="inline-flex items-center gap-2 bg-[#FFB81C]/15 border border-[#FFB81C]/30 text-[#FFB81C] text-sm font-semibold px-4 py-1.5 rounded-full mb-5">
             <Sparkles size={14} />
-            Browse All Tutors
+            Find Tutors
           </div>
 
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-white mb-3 leading-tight">
-            Find Your Perfect{' '}
-            <span className="text-[#FFB81C] relative">
-              Tutor
-              <svg className="absolute -bottom-1 left-0 w-full" viewBox="0 0 200 8" fill="none">
-                <path d="M0 6 Q100 0 200 6" stroke="#FFB81C" strokeWidth="3" strokeLinecap="round" fill="none" opacity="0.5" />
-              </svg>
-            </span>
+            Find Your Perfect <span className="text-[#FFB81C]">Tutor</span>
           </h1>
           <p className="text-white/60 text-sm mb-8 max-w-lg">
-            Search by subject, location, or rate. Every tutor is verified and rated by real students.
+            Search by name, subject, location, or rate. Every tutor is verified and rated by real students.
           </p>
 
           {/* main search */}
@@ -259,13 +276,13 @@ function SearchContent() {
               <Search size={18} className="text-[#001A72] shrink-0" />
               <input
                 type="text"
-                value={filters.subject}
-                onChange={(e) => setFilters((f) => ({ ...f, subject: e.target.value }))}
-                placeholder="Subject, e.g. Mathematics, IELTS…"
+                value={filters.search}
+                onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value }))}
+                placeholder="Search tutors by name, subject, e.g. Mathematics, IELTS…"
                 className="flex-1 text-sm text-gray-800 placeholder-gray-400 bg-transparent outline-none"
               />
-              {filters.subject && (
-                <button type="button" onClick={() => clearFilter('subject')} className="text-gray-300 hover:text-gray-500 transition">
+              {filters.search && (
+                <button type="button" onClick={() => clearFilter('search')} className="text-gray-300 hover:text-gray-500 transition">
                   <X size={14} />
                 </button>
               )}
@@ -351,7 +368,7 @@ function SearchContent() {
           <div className="flex flex-wrap gap-2 mb-6">
             {activeFilters.map(([key, value]) => {
               const labels: Record<string, string> = {
-                subject: 'Subject',
+                search: 'Search',
                 locationState: 'State',
                 locationLga: 'LGA',
                 maxRate: 'Max Rate',
@@ -390,11 +407,11 @@ function SearchContent() {
         ) : teachers.length > 0 ? (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
             {teachers.map((teacher) => (
-              <ResultCard key={teacher.id} teacher={teacher} />
+              <ResultCard key={teacher.id} teacher={teacher} searchTerm={debouncedSearch} />
             ))}
           </div>
         ) : (
-          <EmptyState query={filters.subject} />
+          <EmptyState query={filters.search} />
         )}
       </section>
 
