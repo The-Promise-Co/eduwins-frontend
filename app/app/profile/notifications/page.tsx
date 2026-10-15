@@ -16,8 +16,12 @@ const NOTIFICATION_ACTIONS: Record<string, { href: string; label: string }> = {
   booking_payment_confirmed: { href: '/app/schedule', label: 'View Booking' },
   booking_paid_escrow: { href: '/app/schedule', label: 'View Booking' },
   course_payment: { href: '/app/courses', label: 'View Course' },
-  withdrawal_initiated: { href: '/app/earnings', label: 'View Earnings' },
-  withdrawal_completed: { href: '/app/earnings', label: 'View Earnings' },
+  withdrawal_initiated: { href: '/app/payouts', label: 'View Payouts' },
+  withdrawal_completed: { href: '/app/payouts', label: 'View Payouts' },
+  payout_requested: { href: '/app/payouts', label: 'View Payouts' },
+  payout_completed: { href: '/app/payouts', label: 'View Payouts' },
+  payout_declined: { href: '/app/payouts', label: 'View Payouts' },
+  payout_failed: { href: '/app/payouts', label: 'View Payouts' },
 };
 
 const getNotificationAction = (type: string) => NOTIFICATION_ACTIONS[type] || null;

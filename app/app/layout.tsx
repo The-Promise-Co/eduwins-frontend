@@ -19,6 +19,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/app/schedule': 'Schedule',
   '/app/booking-requests': 'Schedule',
   '/app/earnings': 'Earnings',
+  '/app/payouts': 'Payout History',
   '/app/progress': 'Progress Report',
   '/app/profile/notifications': 'Notifications',
   '/app/profile/security': 'Security & Settings',

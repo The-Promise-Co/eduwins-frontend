@@ -131,12 +131,20 @@ export default function EarningsPage(): ReactElement {
               <p className="text-sm font-bold text-gray-900">Withdraw to your bank account</p>
               <p className="text-xs text-gray-500">Cash out your accessible earnings after adding a bank account.</p>
             </div>
-            <button
-              onClick={() => setShowPayoutModal(true)}
-              className="bg-[#FFB81C] text-[#001A72] font-black px-5 py-2.5 rounded-xl hover:bg-[#ffd06f] transition"
-            >
-              Withdraw
-            </button>
+            <div className="flex items-center gap-3">
+              <Link
+                href="/app/payouts"
+                className="text-xs font-bold text-[#001A72] hover:underline whitespace-nowrap"
+              >
+                Track payout request
+              </Link>
+              <button
+                onClick={() => setShowPayoutModal(true)}
+                className="bg-[#FFB81C] text-[#001A72] font-black px-5 py-2.5 rounded-xl hover:bg-[#ffd06f] transition"
+              >
+                Withdraw
+              </button>
+            </div>
           </div>
 
           <WalletSection
