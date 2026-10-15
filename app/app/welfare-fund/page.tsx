@@ -2,11 +2,10 @@
 
 import { useState, useEffect, ReactElement } from 'react';
 import { useRouter } from 'next/navigation';
-import { useWelfareFund, useWithdrawWelfare } from '@/misc/hooks/api/welfare';
+import { useWelfareFund } from '@/misc/hooks/api/welfare';
 import { useUser } from '@/misc/context/UserContext';
 import { User } from '@/misc/types';
 import {
-  HeartPulse,
   Wallet,
   Lock,
   TrendingUp,
@@ -34,15 +33,8 @@ interface Contribution {
 export default function WelfareFundPage(): ReactElement {
   const router = useRouter();
   const { user } = useUser();
-  const [withdrawAmount, setWithdrawAmount] = useState('');
-  const [showWithdrawForm, setShowWithdrawForm] = useState(false);
-  const [message, setMessage] = useState<{ type: 'success' | 'error' | ''; text: string }>({
-    type: '',
-    text: '',
-  });
   const [showInfo, setShowInfo] = useState(false);
   const welfareQuery = useWelfareFund(user?.id);
-  const withdrawMutation = useWithdrawWelfare(user!.id);
 
   useEffect(() => {
     if (!user) return;
@@ -52,38 +44,6 @@ export default function WelfareFundPage(): ReactElement {
       return;
     }
   }, [user, router]);
-
-  const handleWithdraw = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setMessage({ type: '', text: '' });
-
-    const amount = parseFloat(withdrawAmount);
-
-    if (!amount || amount <= 0) {
-      setMessage({ type: 'error', text: 'Please enter a valid amount' });
-      return;
-    }
-
-    if (amount > (welfareFund?.available_balance || 0)) {
-      setMessage({ type: 'error', text: 'Insufficient available balance' });
-      return;
-    }
-
-    try {
-      await withdrawMutation.mutateAsync({ amount });
-      setMessage({
-        type: 'success',
-        text: `Withdrawal request of ₦${amount.toLocaleString()} submitted successfully!`,
-      });
-      setWithdrawAmount('');
-      setShowWithdrawForm(false);
-    } catch (err: any) {
-      setMessage({
-        type: 'error',
-        text: err.response?.data?.error || 'Withdrawal failed',
-      });
-    }
-  };
 
   const emptyWelfareFund: WelfareFund | null = user?.id ? {
     teacherId: user.id,
@@ -121,18 +81,6 @@ export default function WelfareFundPage(): ReactElement {
         }
       />
 
-      {/* Alert message */}
-      {message.text && (
-        <div
-          className={`p-4 rounded-xl text-sm font-medium border ${message.type === 'success'
-            ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
-            : 'bg-red-50 text-red-700 border-red-100'
-            }`}
-        >
-          {message.text}
-        </div>
-      )}
-
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <StatCard
@@ -143,7 +91,7 @@ export default function WelfareFundPage(): ReactElement {
           bg="bg-purple-50"
         />
         <StatCard
-          label="Available to Withdraw"
+          label="Available Balance"
           value={`₦${(welfareFund?.available_balance || 0).toLocaleString()}`}
           icon={Wallet}
           color="text-[#001A72]"
@@ -208,7 +156,6 @@ export default function WelfareFundPage(): ReactElement {
               'Secure Account Management',
               'Refund Coverage Protection',
               'Transparent Tracking',
-              'Anytime Withdrawal Access*',
               'No Hidden Fees',
             ].map((benefit) => (
               <li key={benefit} className="flex items-center gap-3">
@@ -220,64 +167,6 @@ export default function WelfareFundPage(): ReactElement {
           <p className="text-[10px] text-gray-400 mt-5">*Subject to monthly lock period</p>
         </div>
       </div>}
-
-      {/* Withdraw section */}
-      <div className="bg-white rounded-2xl border-2 border-purple-100 shadow-sm p-6">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h2 className="text-sm font-black text-gray-900 uppercase tracking-widest">
-              Withdraw Funds
-            </h2>
-            <p className="text-xs text-gray-400 mt-0.5">
-              Available: ₦{(welfareFund?.available_balance || 0).toLocaleString()}
-            </p>
-          </div>
-          <button
-            onClick={() => {
-              setShowWithdrawForm((v) => !v);
-              setMessage({ type: '', text: '' });
-            }}
-            className="bg-[#001A72] text-white text-xs font-bold px-5 py-2.5 rounded-xl hover:bg-[#001A72]/90 transition"
-          >
-            {showWithdrawForm ? 'Cancel' : 'Withdraw Now'}
-          </button>
-        </div>
-
-        {showWithdrawForm && (
-          <form onSubmit={handleWithdraw} className="space-y-4 mt-2">
-            <div>
-              <label className="block text-xs font-bold text-gray-700 mb-1.5">
-                Withdrawal Amount (₦)
-              </label>
-              <input
-                type="number"
-                value={withdrawAmount}
-                onChange={(e) => setWithdrawAmount(e.target.value)}
-                placeholder="Enter amount to withdraw"
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#001A72] focus:ring-1 focus:ring-[#001A72]/20 transition"
-                min="1"
-                step="0.01"
-                required
-              />
-            </div>
-
-            <div className="bg-blue-50 border border-blue-100 rounded-xl p-3">
-              <p className="text-xs text-gray-600">
-                <strong>Processing:</strong> Withdrawals are processed within 2–3 business days to
-                your registered account.
-              </p>
-            </div>
-
-            <button
-              type="submit"
-              disabled={withdrawMutation.isPending}
-              className="w-full bg-[#001A72] text-white py-3 rounded-xl text-sm font-bold hover:bg-[#001A72]/90 transition disabled:opacity-60"
-            >
-              {withdrawMutation.isPending ? 'Submitting…' : 'Submit Withdrawal Request'}
-            </button>
-          </form>
-        )}
-      </div>
 
       {/* Recent contributions table */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">

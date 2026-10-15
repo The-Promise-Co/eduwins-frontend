@@ -12,11 +12,13 @@ export const useMyWallets = () => {
   });
 };
 
-export const useWalletTransactions = (walletId?: string) => {
+export const useWalletTransactions = (walletId?: string, page = 1, limit = 20) => {
   return useQuery<WalletTransactionsResponse>({
-    queryKey: ['wallets', walletId, 'transactions'],
+    queryKey: ['wallets', walletId, 'transactions', page, limit],
     queryFn: async () => {
-      const response = await api.get<WalletTransactionsResponse>(`/wallets/${walletId}/transactions`);
+      const response = await api.get<WalletTransactionsResponse>(`/wallets/${walletId}/transactions`, {
+        params: { page, limit },
+      });
       return response.data;
     },
     enabled: !!walletId,

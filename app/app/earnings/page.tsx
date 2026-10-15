@@ -15,10 +15,13 @@ import {
   Brain,
   Undo2,
   ArrowDownLeft,
-  ArrowUpRight
+  ArrowUpRight,
+  CheckCircle2,
 } from 'lucide-react';
 import PageHeader from '@/misc/components/PageHeader';
 import StatCard from '@/misc/components/StatCard';
+import PayoutModal from '@/misc/components/PayoutModal';
+import Modal from '@/misc/components/Modal';
 
 interface HistoryEntry {
   date: string;
@@ -48,11 +51,15 @@ export default function EarningsPage(): ReactElement {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [showPayoutModal, setShowPayoutModal] = useState<boolean>(false);
+  const [payoutSuccess, setPayoutSuccess] = useState<string | null>(null);
+  const [txPage, setTxPage] = useState<number>(1);
   const walletsQuery = useMyWallets();
   const wallets = walletsQuery.data?.wallets || [];
   const mainWallet = wallets.find((wallet) => wallet.walletType === 'main');
-  const walletTransactionsQuery = useWalletTransactions(mainWallet?.id);
+  const walletTransactionsQuery = useWalletTransactions(mainWallet?.id, txPage);
   const walletTransactions = walletTransactionsQuery.data?.transactions || [];
+  const txPagination = walletTransactionsQuery.data?.pagination;
   const referralWallet = wallets.find((wallet) => wallet.walletType === 'referrals');
   const welfareWallet = wallets.find((wallet) => wallet.walletType === 'welfare');
 
@@ -113,17 +120,31 @@ export default function EarningsPage(): ReactElement {
       {isTeacher ? (
         <div className="space-y-6">
           {/* Teacher Stats Grid */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
             <StatCard label="Main Wallet" value={formatMoney(mainWallet?.balance)} color="text-[#001A72]" bg="bg-[#001A72]/5" icon={Wallet} />
             <StatCard label="Referral Wallet" value={formatMoney(referralWallet?.balance)} color="text-emerald-600" bg="bg-emerald-50" icon={Gift} />
             <StatCard label="Welfare Wallet" value={formatMoney(welfareWallet?.balance)} color="text-purple-600" bg="bg-purple-50" icon={HeartPulse} />
-            <StatCard label="Wallets" value={String(wallets.length)} color="text-[#001A72]" bg="bg-[#FFB81C]/10" icon={Calendar} />
+          </div>
+
+          <div className="flex items-center justify-between bg-white rounded-2xl border border-gray-100 shadow-sm px-6 py-4">
+            <div>
+              <p className="text-sm font-bold text-gray-900">Withdraw to your bank account</p>
+              <p className="text-xs text-gray-500">Cash out your accessible earnings after adding a bank account.</p>
+            </div>
+            <button
+              onClick={() => setShowPayoutModal(true)}
+              className="bg-[#FFB81C] text-[#001A72] font-black px-5 py-2.5 rounded-xl hover:bg-[#ffd06f] transition"
+            >
+              Withdraw
+            </button>
           </div>
 
           <WalletSection
             wallet={mainWallet}
             transactions={walletTransactions}
             loading={walletsQuery.isLoading || walletsQuery.isPending || walletTransactionsQuery.isLoading || walletTransactionsQuery.isPending}
+            pagination={txPagination}
+            onPageChange={setTxPage}
           />
 
 
@@ -142,6 +163,8 @@ export default function EarningsPage(): ReactElement {
             wallet={mainWallet}
             transactions={walletTransactions}
             loading={walletsQuery.isLoading || walletsQuery.isPending || walletTransactionsQuery.isLoading || walletTransactionsQuery.isPending}
+            pagination={txPagination}
+            onPageChange={setTxPage}
           />
 
           {/* Parent Table */}
@@ -185,6 +208,35 @@ export default function EarningsPage(): ReactElement {
           </div>
         </div>
       )}
+      {showPayoutModal && (
+        <PayoutModal
+          onClose={() => setShowPayoutModal(false)}
+          onSuccess={(message) => setPayoutSuccess(message)}
+        />
+      )}
+
+      <Modal
+        isOpen={!!payoutSuccess}
+        onClose={() => setPayoutSuccess(null)}
+        size="sm"
+      >
+        <div className="flex flex-col items-center text-center py-4">
+          <div className="w-14 h-14 rounded-2xl bg-emerald-50 flex items-center justify-center mb-4">
+            <CheckCircle2 size={30} className="text-emerald-600" />
+          </div>
+          <h3 className="text-lg font-black text-gray-900">Payout Request Submitted</h3>
+          <p className="text-sm text-gray-500 mt-2">{payoutSuccess}</p>
+          <p className="text-xs text-gray-400 mt-4">
+            Your request is now pending admin approval. You'll be notified once it's processed.
+          </p>
+          <button
+            onClick={() => setPayoutSuccess(null)}
+            className="mt-6 w-full bg-[#001A72] text-white py-3 rounded-xl text-sm font-bold hover:bg-[#001A72]/90 transition"
+          >
+            Done
+          </button>
+        </div>
+      </Modal>
     </div>
   );
 }
@@ -200,9 +252,38 @@ interface WalletSectionProps {
   wallet?: WalletRecord;
   transactions: WalletTransaction[];
   loading: boolean;
+  pagination?: { page: number; totalPages: number; total: number } | null;
+  onPageChange?: (page: number) => void;
 }
 
-function WalletSection({ wallet, transactions, loading }: WalletSectionProps): ReactElement {
+function TransactionDescription({ transaction }: { transaction: WalletTransaction }): ReactElement {
+  const fallback = transaction.description || transaction.type.replaceAll('_', ' ');
+  if (transaction.referenceType === 'booking' && transaction.referenceId) {
+    const id = transaction.referenceId;
+    const idx = fallback.indexOf(id);
+    if (idx >= 0) {
+      return (
+        <p className="font-bold text-sm text-gray-900 truncate">
+          {fallback.slice(0, idx)}
+          <Link
+            href={`/app/session/${id}`}
+            className="text-[#001A72] underline decoration-[#001A72]/40 hover:text-[#001A72]/70"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {id}
+          </Link>
+          {fallback.slice(idx + id.length)}
+        </p>
+      );
+    }
+  }
+  return <p className="font-bold text-sm text-gray-900 truncate">{fallback}</p>;
+}
+
+function WalletSection({ wallet, transactions, loading, pagination, onPageChange }: WalletSectionProps): ReactElement {
+  const page = pagination?.page ?? 1;
+  const totalPages = pagination?.totalPages ?? 1;
+
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
       <div className="px-6 py-4 border-b border-gray-50 flex items-center justify-between">
@@ -210,6 +291,9 @@ function WalletSection({ wallet, transactions, loading }: WalletSectionProps): R
           <h2 className="text-sm font-black text-gray-900 uppercase tracking-widest">Main Wallet Transactions</h2>
           <p className="text-xs text-gray-500 mt-1">{wallet ? getWalletLabel(wallet.walletType) : 'Main wallet not available yet'}</p>
         </div>
+        {pagination && (
+          <span className="text-xs text-gray-400 font-medium">{pagination.total} total</span>
+        )}
       </div>
 
       {loading ? (
@@ -219,32 +303,54 @@ function WalletSection({ wallet, transactions, loading }: WalletSectionProps): R
       ) : transactions.length === 0 ? (
         <div className="p-8 text-center text-sm text-gray-500">No wallet transactions yet.</div>
       ) : (
-        <div className="divide-y divide-gray-50">
-          {transactions.map((transaction) => {
-            const isCredit = transaction.direction === 'credit';
-            return (
-              <div key={transaction.id} className="px-6 py-4 flex items-center justify-between gap-4">
-                <div className="flex items-center gap-3 min-w-0">
-                  <span className={`h-10 w-10 rounded-2xl flex items-center justify-center ${isCredit ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>
-                    {isCredit ? <ArrowDownLeft size={18} /> : <ArrowUpRight size={18} />}
-                  </span>
-                  <div className="min-w-0">
-                    <p className="font-bold text-sm text-gray-900 truncate">{transaction.description || transaction.type.replaceAll('_', ' ')}</p>
-                    <p className="text-xs text-gray-500 mt-0.5">
-                      {transaction.createdAt ? new Date(transaction.createdAt).toLocaleString() : 'Recently'}
+        <>
+          <div className="divide-y divide-gray-50">
+            {transactions.map((transaction) => {
+              const isCredit = transaction.direction === 'credit';
+              return (
+                <div key={transaction.id} className="px-6 py-4 flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <span className={`h-10 w-10 rounded-2xl flex items-center justify-center ${isCredit ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>
+                      {isCredit ? <ArrowDownLeft size={18} /> : <ArrowUpRight size={18} />}
+                    </span>
+                    <div className="min-w-0">
+                      <TransactionDescription transaction={transaction} />
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        {transaction.createdAt ? new Date(transaction.createdAt).toLocaleString() : 'Recently'}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <p className={`font-black ${isCredit ? 'text-emerald-600' : 'text-red-600'}`}>
+                      {isCredit ? '+' : '-'}{formatMoney(transaction.amount)}
                     </p>
+                    <p className="text-xs text-gray-400 mt-0.5">Bal: {formatMoney(transaction.balanceAfter)}</p>
                   </div>
                 </div>
-                <div className="text-right shrink-0">
-                  <p className={`font-black ${isCredit ? 'text-emerald-600' : 'text-red-600'}`}>
-                    {isCredit ? '+' : '-'}{formatMoney(transaction.amount)}
-                  </p>
-                  <p className="text-xs text-gray-400 mt-0.5">Bal: {formatMoney(transaction.balanceAfter)}</p>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+
+          {totalPages > 1 && (
+            <div className="px-6 py-3 border-t border-gray-50 flex items-center justify-between">
+              <button
+                onClick={() => onPageChange?.(Math.max(1, page - 1))}
+                disabled={page <= 1}
+                className="text-xs font-bold text-[#001A72] hover:underline disabled:opacity-40 disabled:no-underline"
+              >
+                Previous
+              </button>
+              <span className="text-xs text-gray-500">Page {page} of {totalPages}</span>
+              <button
+                onClick={() => onPageChange?.(Math.min(totalPages, page + 1))}
+                disabled={page >= totalPages}
+                className="text-xs font-bold text-[#001A72] hover:underline disabled:opacity-40 disabled:no-underline"
+              >
+                Next
+              </button>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

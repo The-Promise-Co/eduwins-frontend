@@ -35,4 +35,10 @@ export interface MyWalletsResponse {
 export interface WalletTransactionsResponse {
   wallet: Wallet;
   transactions: WalletTransaction[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
 }
