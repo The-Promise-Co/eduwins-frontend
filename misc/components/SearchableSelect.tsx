@@ -22,6 +22,7 @@ interface DropdownRect {
   top: number;
   left: number;
   width: number;
+  maxHeight: number;
 }
 
 export default function SearchableSelect({
@@ -68,7 +69,16 @@ export default function SearchableSelect({
   const toggle = () => {
     if (!open && buttonRef.current) {
       const r = buttonRef.current.getBoundingClientRect();
-      setRect({ top: r.bottom + 4, left: r.left, width: r.width });
+      const maxHeight = Math.min(280, window.innerHeight - 24);
+      const spaceBelow = window.innerHeight - r.bottom - 12;
+      const spaceAbove = r.top - 12;
+      const openAbove = spaceBelow < maxHeight && spaceAbove > spaceBelow;
+      setRect({
+        top: openAbove ? Math.max(12, r.top - Math.min(maxHeight, spaceAbove) - 4) : r.bottom + 4,
+        left: r.left,
+        width: r.width,
+        maxHeight: Math.min(maxHeight, openAbove ? spaceAbove : spaceBelow),
+      });
     }
     if (open) {
       setQuery('');
@@ -91,7 +101,16 @@ export default function SearchableSelect({
       }
     };
 
-    const handleScroll = () => {
+    const handleScroll = (event: Event) => {
+      const target = event.target;
+      if (target instanceof Node && dropdownRef.current?.contains(target)) return;
+
+      setOpen(false);
+      setQuery('');
+      setRect(null);
+    };
+
+    const handleResize = () => {
       setOpen(false);
       setQuery('');
       setRect(null);
@@ -99,11 +118,11 @@ export default function SearchableSelect({
 
     document.addEventListener('mousedown', handleClickOutside);
     window.addEventListener('scroll', handleScroll, true);
-    window.addEventListener('resize', handleScroll);
+    window.addEventListener('resize', handleResize);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
       window.removeEventListener('scroll', handleScroll, true);
-      window.removeEventListener('resize', handleScroll);
+      window.removeEventListener('resize', handleResize);
     };
   }, [open]);
 
@@ -111,7 +130,7 @@ export default function SearchableSelect({
     <div
       ref={dropdownRef}
       className="fixed z-[9999] bg-white border border-gray-100 rounded-xl shadow-2xl overflow-hidden"
-      style={{ top: rect.top, left: rect.left, width: rect.width }}
+      style={{ top: rect.top, left: rect.left, width: rect.width, maxHeight: rect.maxHeight }}
     >
       <div className="relative border-b border-gray-100">
         <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -124,7 +143,7 @@ export default function SearchableSelect({
           className="w-full pl-9 pr-4 py-2.5 text-sm focus:outline-none bg-transparent placeholder-gray-400"
         />
       </div>
-      <div className="max-h-56 overflow-y-auto">
+      <div className="overflow-y-auto overscroll-contain touch-pan-y" style={{ maxHeight: Math.max(0, rect.maxHeight - 44) }}>
         {loading ? (
           <div className="px-4 py-6 flex items-center justify-center gap-2 text-xs text-gray-400">
             <Loader2 size={14} className="animate-spin" /> Loading…

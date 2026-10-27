@@ -153,17 +153,6 @@ export default function EditCoursePage() {
     setVideoPreviewUrl(null);
   };
 
-  const handleClearVideo = () => {
-    setValue('video_url', '');
-    setValue('duration_seconds', 0);
-    setVideoFileName(null);
-    setPendingVideoFile(null);
-    if (videoPreviewUrl && videoPreviewUrl.startsWith('blob:')) {
-      URL.revokeObjectURL(videoPreviewUrl);
-    }
-    setVideoPreviewUrl(null);
-  };
-
   // ── video upload helper ────────────────────────────────────────────
   const handleVideoUpload = async (file: File) => {
     // ── Validation ──
@@ -180,6 +169,9 @@ export default function EditCoursePage() {
     setVideoFileName(file.name);
     setPendingVideoFile(file);
 
+    if (videoPreviewUrl?.startsWith('blob:')) {
+      URL.revokeObjectURL(videoPreviewUrl);
+    }
     const tempUrl = URL.createObjectURL(file);
     setVideoPreviewUrl(tempUrl);
 
@@ -378,7 +370,6 @@ export default function EditCoursePage() {
             setField={setField}
             videoFileName={videoFileName}
             videoPreviewUrl={videoPreviewUrl}
-            onClearVideo={handleClearVideo}
             isUploadingVideo={isUploadingVideo}
             uploadProgress={uploadProgress}
             uploadError={uploadError}
@@ -409,5 +400,4 @@ export default function EditCoursePage() {
     </div>
   );
 }
-
 

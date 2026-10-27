@@ -3,9 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useUser } from '@/misc/context/UserContext';
-import { User, Booking } from '@/misc/types';
 import { useChildren } from '@/misc/hooks/useChildren';
-import { usePendingLessons, useConfirmLesson } from '@/misc/hooks/useLessons';
 import { useMyWallets } from '@/misc/hooks/api/wallets';
 import { useProfileCompletion } from '@/misc/hooks/api/uploads';
 import { getNextProfileStep, getProfileCompletionHref } from '@/misc/utils/profileCompletion';
@@ -20,7 +18,6 @@ import {
   Award,
   MessageSquare,
   Settings,
-  Lock,
   BookOpen,
   ChevronRight,
   LucideIcon,
@@ -115,14 +112,9 @@ export default function DashboardPage() {
   const { user, loading: userLoading } = useUser();
 
   const { data: children = [], isLoading: childrenLoading } = useChildren(user?.role);
-  const { data: pendingLessons = [], isLoading: lessonsLoading } = usePendingLessons(user?.role);
   const walletsQuery = useMyWallets();
   const completionQuery = useProfileCompletion(user?.role === 'teacher');
-  const confirmLessonMutation = useConfirmLesson();
 
-  const [otpInput, setOtpInput] = useState<Record<string, string>>({});
-  const [confirmMessage, setConfirmMessage] = useState('');
-  const [confirmError, setConfirmError] = useState('');
   const [profileBannerVisible, setProfileBannerVisible] = useState(false);
 
   useEffect(() => {
@@ -134,29 +126,6 @@ export default function DashboardPage() {
     }
   }, [userLoading, user]);
 
-  const handleApproveLesson = async (lessonId: any) => {
-    setConfirmMessage('');
-    setConfirmError('');
-    const otp = otpInput[lessonId];
-    if (!otp) {
-      setConfirmError('OTP is required to confirm this lesson.');
-      return;
-    }
-
-    confirmLessonMutation.mutate(
-      { lessonId, otp },
-      {
-        onSuccess: () => {
-          setConfirmMessage('Lesson confirmed successfully!');
-          setOtpInput((prev) => ({ ...prev, [lessonId]: '' }));
-        },
-        onError: (err: any) => {
-          setConfirmError(err.response?.data?.error || 'Unable to confirm lesson.');
-        },
-      }
-    );
-  };
-
   const handleDismissProfileBanner = () => {
     if (user?.id) {
       localStorage.setItem(`profileSetupDismissed_${user.id}`, '1');
@@ -164,7 +133,7 @@ export default function DashboardPage() {
     setProfileBannerVisible(false);
   };
 
-  const loading = userLoading || (user?.role === 'parent' && (childrenLoading || lessonsLoading));
+  const loading = userLoading || (user?.role === 'parent' && childrenLoading);
 
   if (loading) {
     return (
@@ -271,67 +240,6 @@ export default function DashboardPage() {
           ))}
         </div>
       </div>
-
-      {/* Parent: Lesson Confirmation */}
-      {user?.role === 'parent' && (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-          <h3 className="text-base font-bold text-[#001A72] mb-1 flex items-center gap-2">
-            <Lock size={18} /> Lesson Confirmation
-          </h3>
-          <p className="text-xs text-gray-500 mb-4">
-            After a teacher marks a lesson complete, you receive an OTP via SMS. Enter it below to release payment.
-          </p>
-
-          {confirmMessage && (
-            <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded-lg text-sm">{confirmMessage}</div>
-          )}
-          {confirmError && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">{confirmError}</div>
-          )}
-
-          {pendingLessons.length === 0 ? (
-            <p className="text-sm text-gray-400 italic">No lessons pending confirmation.</p>
-          ) : (
-            <div className="space-y-3">
-              {pendingLessons.map((lesson) => (
-                <div key={lesson.lesson_id || lesson.id} className="border border-gray-100 rounded-xl p-4 bg-gray-50">
-                  <div className="flex items-start justify-between gap-4 mb-3">
-                    <div>
-                      <p className="font-semibold text-sm text-gray-800">{lesson.subject || 'Lesson'}</p>
-                      <p className="text-xs text-gray-500 mt-0.5">Teacher: {lesson.teacher_name || lesson.teacherName}</p>
-                      <p className="text-xs text-gray-500">
-                        When: {lesson.scheduled_time ? new Date(lesson.scheduled_time).toLocaleString() : 'TBD'}
-                      </p>
-                    </div>
-                    <span className="text-[10px] font-bold text-amber-600 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
-                      {lesson.status || 'Pending'}
-                    </span>
-                  </div>
-                  <div className="flex gap-2">
-                    <input
-                      value={otpInput[lesson.lesson_id || lesson.id || ''] || ''}
-                      onChange={(e) =>
-                        setOtpInput((prev) => ({
-                          ...prev,
-                          [lesson.lesson_id || lesson.id || '']: e.target.value,
-                        }))
-                      }
-                      placeholder="Enter OTP"
-                      className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#001A72]/20"
-                    />
-                    <button
-                      onClick={() => handleApproveLesson(lesson.lesson_id || lesson.id)}
-                      className="bg-[#001A72] text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-[#001A72]/90 transition"
-                    >
-                      Confirm
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
 
     </div>
   );

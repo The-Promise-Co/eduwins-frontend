@@ -1,7 +1,8 @@
 'use client';
 
+import { useRef, useState } from 'react';
 import { UseFormRegister, UseFormSetValue } from 'react-hook-form';
-import { X, Video, FileText, Upload, Loader2 } from 'lucide-react';
+import { X, Video, FileText, Upload, Loader2, Play, Pause } from 'lucide-react';
 import Editor from '@/misc/components/Editor';
 
 export type LessonDraft = {
@@ -20,7 +21,6 @@ interface LessonFormProps {
   setField: (k: keyof LessonDraft, v: any) => void;
   videoFileName: string | null;
   videoPreviewUrl: string | null;
-  onClearVideo: () => void;
   isUploadingVideo: boolean;
   uploadProgress: number;
   uploadError: string | null;
@@ -40,7 +40,6 @@ export default function LessonForm({
   draft,
   videoFileName,
   videoPreviewUrl,
-  onClearVideo,
   isUploadingVideo,
   uploadProgress,
   uploadError,
@@ -50,6 +49,10 @@ export default function LessonForm({
   isSaving,
   isEdit,
 }: LessonFormProps) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const videoInputRef = useRef<HTMLInputElement>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+
   return (
     <div className="border-t border-[#001A72]/10 p-6 space-y-5 bg-[#001A72]/[0.02]">
       <div className="flex items-center justify-between">
@@ -101,36 +104,84 @@ export default function LessonForm({
             <div className="space-y-4">
               {/* Premium video player preview */}
               {videoPreviewUrl && (
-                <div className="relative rounded-2xl overflow-hidden border border-gray-100 bg-black aspect-video max-w-md mx-auto shadow-md">
-                  <video
-                    src={videoPreviewUrl}
-                    controls
-                    className="w-full h-full object-contain"
+                <div className="group relative block w-full overflow-hidden rounded-2xl border border-gray-100 bg-black shadow-md">
+                  <input
+                    ref={videoInputRef}
+                    type="file"
+                    accept="video/*"
+                    className="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0"
+                    aria-label="Click to change video"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (file) await handleVideoUpload(file);
+                      e.target.value = '';
+                    }}
                   />
+                  <video
+                    ref={videoRef}
+                    src={videoPreviewUrl}
+                    preload="metadata"
+                    className="block h-[360px] max-h-[55vw] min-h-[220px] w-full object-contain"
+                    onPlay={() => setIsPlaying(true)}
+                    onPause={() => setIsPlaying(false)}
+                    onEnded={() => setIsPlaying(false)}
+                  />
+                  <button
+                    type="button"
+                    aria-label={isPlaying ? 'Pause video' : 'Play video'}
+                    title={isPlaying ? 'Pause video' : 'Play video'}
+                    className="absolute left-1/2 top-1/2 z-20 flex h-14 w-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-[#001A72] shadow-lg transition hover:scale-105 hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#FFB81C]"
+                    onClick={() => {
+                      const video = videoRef.current;
+                      if (!video) return;
+
+                      if (video.paused) {
+                        void video.play().catch(() => setIsPlaying(false));
+                      } else {
+                        video.pause();
+                      }
+                    }}
+                  >
+                    {isPlaying ? <Pause size={22} fill="currentColor" /> : <Play size={22} fill="currentColor" className="ml-1" />}
+                  </button>
+                  <button
+                    type="button"
+                    className="absolute bottom-4 right-4 z-20 flex items-center gap-2 rounded-lg bg-white/95 px-3 py-2 text-xs font-bold text-[#001A72] opacity-0 shadow-md transition hover:bg-white focus:opacity-100 group-hover:opacity-100"
+                    onClick={() => videoInputRef.current?.click()}
+                  >
+                    <Upload size={14} /> Click to change video
+                  </button>
                 </div>
               )}
 
-              <div className="flex items-center gap-3 p-3 bg-emerald-50 border border-emerald-200 rounded-xl">
-                <Video size={18} className="text-emerald-600 shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-bold text-emerald-800 truncate">
+              <label className="group relative flex w-full items-center gap-3 overflow-hidden rounded-xl border border-emerald-200 bg-emerald-50 p-3 cursor-pointer transition hover:border-emerald-400 focus-within:ring-2 focus-within:ring-[#001A72]/20">
+                <input
+                  type="file"
+                  accept="video/*"
+                  className="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0"
+                  aria-label="Click to change video"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (file) await handleVideoUpload(file);
+                    e.target.value = '';
+                  }}
+                />
+                <Video size={18} className="shrink-0 text-emerald-600" />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-xs font-bold text-emerald-800">
                     {videoFileName || (draft.video_url ? 'Saved Video' : 'Selected Video')}
                   </p>
                   {draft.duration_seconds > 0 && (
                     <p className="text-[10px] text-emerald-600">{Math.round(draft.duration_seconds / 60)} min detected</p>
                   )}
                   {videoPreviewUrl && videoPreviewUrl.startsWith('blob:') && (
-                    <p className="text-[10px] text-amber-600 font-semibold mt-0.5">⚠️ Unsaved changes (Click Save to upload)</p>
+                    <p className="mt-0.5 text-[10px] font-semibold text-amber-600">⚠️ Unsaved changes (Click Save to upload)</p>
                   )}
                 </div>
-                <button
-                  type="button"
-                  onClick={onClearVideo}
-                  className="text-[10px] font-bold text-emerald-500 hover:text-red-500 transition"
-                >
-                  Change
-                </button>
-              </div>
+                <span className="pointer-events-none absolute inset-0 flex items-center justify-center bg-[#001A72]/85 text-sm font-bold text-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
+                  Click to change video
+                </span>
+              </label>
             </div>
           ) : (
             <label className={`relative flex flex-col items-center justify-center gap-2 border-2 border-dashed rounded-xl p-8 cursor-pointer transition border-gray-200 bg-white hover:bg-gray-50 hover:border-[#001A72]/30`}>

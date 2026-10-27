@@ -20,7 +20,6 @@ interface LessonManagementProps {
   setField: (k: keyof LessonDraft, v: any) => void;
   videoFileName: string | null;
   videoPreviewUrl: string | null;
-  onClearVideo: () => void;
   isUploadingVideo: boolean;
   uploadProgress: number;
   uploadError: string | null;
@@ -44,7 +43,6 @@ export default function LessonManagement({
   setField,
   videoFileName,
   videoPreviewUrl,
-  onClearVideo,
   isUploadingVideo,
   uploadProgress,
   uploadError,
@@ -139,7 +137,6 @@ export default function LessonManagement({
                   setField={setField}
                   videoFileName={videoFileName}
                   videoPreviewUrl={videoPreviewUrl}
-                  onClearVideo={onClearVideo}
                   isUploadingVideo={isUploadingVideo}
                   uploadProgress={uploadProgress}
                   uploadError={uploadError}
@@ -164,7 +161,6 @@ export default function LessonManagement({
           setField={setField}
           videoFileName={videoFileName}
           videoPreviewUrl={videoPreviewUrl}
-          onClearVideo={onClearVideo}
           isUploadingVideo={isUploadingVideo}
           uploadProgress={uploadProgress}
           uploadError={uploadError}
